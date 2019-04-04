@@ -1,0 +1,1 @@
+from .fastgit import commit

@@ -1,0 +1,5 @@
+*.py
+ex.*
+useless-*.java
+data/code
+logs/results.txt
