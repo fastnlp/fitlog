@@ -1,2 +1,3 @@
-from fastlog.logger import Logger
-from src.fastlog.writer import Event
+from .logger import Logger
+from .writer import Event
+from .reader import LogReader
