@@ -36,7 +36,7 @@ def _get_work_dir(config_file):
     return work_dir
 
 
-def _find_config_file(config_file, show=True):
+def _find_config_file(config_file, cli=True):
     path = os.getcwd()
     home_path = os.path.abspath("~")
     root_path = "/"
@@ -45,7 +45,7 @@ def _find_config_file(config_file, show=True):
     while 1:
         depth_cnt += 1
         if max_depth == depth_cnt:
-            if show:
+            if cli:
                 print(colored_string("Folder depth out of limitation.", "red"))
                 print(colored_string("Can not find the config file.", "red"))
             return None
@@ -56,7 +56,7 @@ def _find_config_file(config_file, show=True):
             config_file = path + "/.fitlog/" + config_file
             break
         if path == home_path or path == root_path:
-            if show:
+            if cli:
                 print(colored_string("Reach the root or home.", "red"))
                 print(colored_string("Can not find the config file.", "red"))
             return None
@@ -65,7 +65,7 @@ def _find_config_file(config_file, show=True):
 
 
 def _get_watched_files(config_file, work_dir):
-    with open(config_file, "r") as fin:
+    with open(work_dir + '/' + config_file, "r") as fin:
         lines = [line.strip() for line in fin.readlines()]
     rules = []
     for line in lines:
@@ -195,11 +195,15 @@ def _init_project(pj_name, version="normal", hide=False, git=True):
     return 0
 
 
-def _get_commit_ids(work_dir=None):
+def _get_commits(work_dir=None, git=False):
     if work_dir is None:
         work_dir = os.path.abspath('.')
     try:
-        with open(work_dir + ".fitlog/logs/refs/heads/master", "r") as fin:
+        if git:
+            master = work_dir + "/.git/logs/refs/heads/master"
+        else:
+            master = work_dir + "/.fitlog/logs/refs/heads/master"
+        with open(master, "r") as fin:
             lines = fin.readlines()
         commit_ids = []
         for line in lines:
@@ -209,31 +213,31 @@ def _get_commit_ids(work_dir=None):
         return make_info(1, "Error: Some error occurs")
 
 
-def _get_commit_id(work_dir=None):
+def _get_last_commit(work_dir=None, git=False):
     if work_dir is None:
         work_dir = os.path.abspath('.')
-    info = _get_commit_ids(work_dir)
+    info = _get_commits(work_dir, git)
     if info["status"] == 1:
         return make_info(1, "Error: Not a git repository (or no commit)")
     else:
         commit_ids = info["msg"]
         if len(commit_ids) >= 1:
-            return make_info(0, commit_ids[0])
+            return make_info(0, commit_ids[-1])
         else:
             return make_info(1, "Error: Not a git repository (or no commit)")
 
 
-def _revert(commit_id, work_dir=None, path=None, local=False, show=False):
+def _revert(commit_id, work_dir=None, path=None, cli=False, id_suffix=False):
     if work_dir is None:
-        work_dir = os.path.abspath('.')
+        work_dir = '.'
+    work_dir = os.path.abspath(work_dir)
+    path = os.path.abspath(path)
     if len(commit_id) < 6:
-        if show:
+        if cli:
             print(colored_string("Commit-id's length is at least 6", "red"))
         return make_info(1, "Error: Commit-id's length is at least 6")
-    if path is None:
-        path = os.path.abspath('..')
     if _check_directory(work_dir, display=False):
-        commit_ids = _get_commit_ids(work_dir)
+        commit_ids = _get_commits(work_dir)['msg']
         flag = False
         for full_commit_id in commit_ids:
             if full_commit_id.startswith(commit_id):
@@ -241,44 +245,44 @@ def _revert(commit_id, work_dir=None, path=None, local=False, show=False):
                 commit_id = full_commit_id
                 break
         if not flag:
-            if show:
+            if cli:
                 print(colored_string('Can not find the commit %s' % commit_id, 'red'))
             return make_info(1, 'Error: Can not find the commit %s' % commit_id)
         else:
-            if not local:
-                if os.path.abspath(path).startswith(work_dir):
-                    if show:
-                        print(colored_string("The <path> can't in your project directory.", "red"))
-                    return make_info(1, "Error: The <path> can't in your project directory.")
-                else:
-                    path = os.path.abspath(path + '/fitlog_revert_' + commit_id[:6])
-                    ret_code = os.system("/bin/cp -rf %s %s" % (work_dir, path))
-                    if ret_code != 0:
-                        if show:
-                            print(colored_string("Some error occurs in cp", "red"))
-                        return make_info(1, "Error: Some error occurs in cp")
+            if path is None:
+                path = work_dir + "-revert"
+            if id_suffix:
+                path += "-" + commit_id[:6]
+            if os.path.abspath(path).startswith(work_dir+'/'):
+                if cli:
+                    print(colored_string("The <path> can't in your project directory.", "red"))
+                return make_info(1, "Error: The <path> can't in your project directory.")
             else:
-                path = work_dir
+                ret_code = os.system("mkdir -p %s && /bin/cp -rf %s/.fitlog %s/.fitlog" % (path, work_dir, path))
+                if ret_code != 0:
+                    if cli:
+                        print(colored_string("Some error occurs in cp", "red"))
+                    return make_info(1, "Error: Some error occurs in cp")
             _switch_to_fast_git(path)
             ret_code = os.system("cd %s && git reset --hard %s" % (path, commit_id))
             _switch_to_standard_git(path)
             if ret_code != 0:
-                if show:
+                if cli:
                     print(colored_string("Some error occurs in git reset", "red"))
                 return "Error: Some error occurs in git reset"
             print("Your code is reverted at " + colored_string(path, "green"))
             return make_info(0, path)
     else:
-        if show:
+        if cli:
             print(colored_string('Not in a fitlog directory', 'red'))
         return make_info(1, "Error: Not in a fitlog directory")
 
 
 def _commit(commit_message=None, config_file=".fitconfig"):
-    config_file = _find_config_file(config_file)
-    if config_file is None:
+    config_file_path = _find_config_file(config_file)
+    if config_file_path is None:
         return make_info(1, "Error: Config file is not found")
-    work_dir = _get_work_dir(config_file)
+    work_dir = _get_work_dir(config_file_path)
     if not os.path.exists(work_dir + "/.fitlog"):
         print(colored_string(".fitlog folder is not found", "red"))
         return make_info(1, "Error: .fitlog folder is not found")
@@ -292,8 +296,8 @@ def _commit(commit_message=None, config_file=".fitconfig"):
     logs += msg
     if msg:
         print(colored_string('Auto commit by fitlog', 'blue'))
-    commit_id = _get_commit_id(work_dir)['msg']
     logs += _switch_to_standard_git(work_dir)
+    commit_id = _get_last_commit(work_dir)['msg']
     logs = [commit_id, '\n'] + logs
     logs = [datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "\n"] + logs
     logs = [_commit_flag] + logs
@@ -306,9 +310,7 @@ def short_logs(show_now=False, last_num=None):
         try:
             if show_now:
                 work_dir = os.path.abspath('.')
-                _switch_to_fast_git(work_dir)
-                head_id = _get_commit_id(work_dir)
-                _switch_to_standard_git(work_dir)
+                head_id = _get_last_commit(work_dir)["msg"]
             with open('.fitlog/fit_logs', 'r') as fin:
                 lines = fin.readlines()
             cnt = 0

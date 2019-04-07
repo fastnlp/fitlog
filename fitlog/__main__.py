@@ -5,7 +5,7 @@ from .fastgit import init_example, init_project, revert_to_directory, short_logs
 __doc__ = """
 Usage:
     fitlog init [<name>] [--hide] [--no-git] [-e | --example]
-    fitlog revert <commit_id>  [<path>] [--local]
+    fitlog revert <commit_id>  [<path>] [--id-suffix]
     fitlog log [--show] [--last=<last_num>]
     fitlog -h | --help
     fitlog -v | --version
@@ -22,7 +22,7 @@ Options:
     -e --example            Initialize an example project
     --hide                  Hide .fitconfig inside .fitlog folder
     --not-git               Not initialize with a standard git
-    --local                 Not create a new folder for reverted version
+    --id-suffix             Use commit id as the suffix of reverted folder
     --show                  Show the head commit of fitlog
 
 Examples:
@@ -41,12 +41,9 @@ if __name__ == '__main__':
             name = args['<name>'] if args['<name>'] else '.'
             init_project(name, hide=args["--hide"], git=not args["--no-git"])
     elif args['revert']:
-        if args["--local"]:
-            revert_to_directory(args["<commit_id>"], local=True, show=True)
-        else:
-            revert_to_directory(args["<commit_id>"], path=args["<path>"], show=True)
+        revert_to_directory(args["<commit_id>"], path=args["<path>"], cli=True, id_suffix=args["--id-suffix"])
     elif args['log']:
         # This will be replaced by fastlog function #
-        short_logs()
+        short_logs(show_now=args['--show'])
         # This will be replaced by fastlog function #
 
