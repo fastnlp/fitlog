@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Fastgit result visualization</title>
+     <link rel="shortcut icon" href="#" />
+
+    <link href="/static/css/bootstrap.css" rel="stylesheet" />
+    <link href="/static/css/bootstrap-table.css" rel="stylesheet" />
+    <link href="/static/css/bootstrap-table-filter-control.css" rel="stylesheet"/>
+    <link href="/static/css/table.css" rel="stylesheet"/>
+    <link href="/static/css/bootstrap-table-reorder-rows.css" rel="'stylesheet"/>
+
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+    <script src="/static/js/bootstrap-editable.js"></script>
+    <script src="/static/js/jquery.tablednd.js"></script>
+    <script src="/static/js/bootstrap-table.js"></script>
+    <script src="/static/js/bootbox.js"></script>
+    <script src="/static/js/bootstrap-table-editable.js"></script>
+
+    <script src="/static/js/tableExport.js"></script>
+    <script src="/static/js/bootstrap-table-export.js"></script>
+    <script src="/static/js/clone.js"></script>
+    <script src="/static/js/table.js"></script>
+    <script src="/static/js/table_page_utils.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/bootstrap-table-filter-control.js"></script>
+    <script src="/static/js/bootstrap-table-reorder-rows.js"></script>
+    <script src="/static/js/Sortable.js"></script>
+</head>
+<body>
+
+    <div id="toolbar" class="btn-group" style="margin-left: 20px">
+        <button id="delete" class="btn btn-danger" disabled style="margin-right: 5px">
+            <i class="glyphicon glyphicon-remove"></i> Delete
+        </button>
+        <button id="hide" type="button" class="btn btn-warning" disabled style="margin-left: 5px;margin-right: 5px">
+            <i class="glyphicon glyphicon-eye-close"></i> Hide
+        </button>
+        <button id="display" type="button" class="btn btn-success" disabled style="margin-left: 5px;margin-right: 5px">
+            <i class="glyphicon glyphicon-eye-open"></i> Display
+        </button>
+        <button id="checkInvert" type="button" class="btn btn-default" style="margin-left: 5px;margin-right: 5px;
+                background: #dca7a7;">
+            <i class="glyphicon glyphicon-retweet"></i> InvertCheck
+        </button>
+        <!--model button, choose columns-->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#columns_box"
+                style="margin-left: 5px;margin-right: 5px" id="choose_columns">
+          <i class="glyphicon glyphicon-th icon-th"></i> Columns
+        </button>
+
+        <!--setting-->
+        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#setting_box"
+                style="margin-left: 5px;margin-right: 5px" id="setting">
+          <i class="glyphicon glyphicon-option-horizontal"></i> Setting
+        </button>
+
+    </div>
+
+    <!--setting Modal -->
+    <div class="modal fade" id="setting_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 18px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Settings</h4>
+          </div>
+          <div class="modal-body " id="setting_div">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" data-dismiss="modal" id="setting_cancel">Cancel</button>
+            <button type="button" class="btn btn-primary" id="setting_confirm">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--sortable modal-->
+    <div class="modal fade" id="columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="">Columns(uncheck to hide, drag to reorder)</h4>
+          </div>
+          <div class="modal-body" id="columns_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel_columns">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_columns">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{#     style="overflow-x: auto; max-width: 90%; margin-left: 5%; margin-right: 5%"#}
+    <div>
+        <table id="tb_departments" style="margin-left:20px; margin-right:10px"></table>
+    </div>
+
+</body>
+
+<script>
+   var $delete = $('#delete');
+   var $hide = $('#hide');
+   var $table = $('#tb_departments');
+   var $display = $('#display');
+   var $checkInvert = $('#checkInvert');
+   var $setting = $('#setting');
+   var $setting_confirm = $('#setting_confirm');
+   var $choose_columns = $('#choose_columns');
+   var $confirm_columns = $('#confirm_columns');
+
+   var col_sortables = [];
+
+   // 如果存在hidden_rows，那么应该是需要显示的
+   var hidden_rows = $table.bootstrapTable('getHiddenRows');
+   if(hidden_rows.length>0){
+       $display.prop('disabled', false);
+   }
+
+   // 点击setting
+    $setting.click(function () {
+        var settings = window.settings;
+        for(var setting in settings)
+        {
+            var checked;
+            checked = settings[setting];
+            if(checked)
+            {
+              checked = 'checked'
+            }else {
+              checked = ""
+            }
+            $("#setting_div").append("<div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
+                "                                      <label class=\"toggle\" style=\"margin-bottom: 0\">\n" +
+                "                                        <input class=\"toggle__input\""  +
+                                                    checked +  " name='setting-check-box'  type=\"checkbox\">\n" +
+                "                                        <span class=\"toggle__label\">\n" +
+                "                                          <span class=\"toggle__text\">"  + setting + "</span>\n" +
+                "                                        </span>\n" +
+                "                                      </label>\n" +
+                "                                    </div>");
+
+            {#$("#setting_div").append("<div class=\"pretty p-default col-sm-10\"><input type='checkbox' " +#}
+            {#  checked + " name='setting-check-box' style='min-width:20px;margin-left: 5px;margin-right: 5px;'/>" +#}
+            {#  "<div class='state p-primary'><label>" + setting + "</checkbox></label></div></div>");#}
+        }
+    });
+    //点击reorder columns
+   $choose_columns.click(function () {
+       generate_sortable_columns(window.column_order, window.column_dict, window.hidden_columns,
+           $("#columns_dialogue"));
+       var nestedSortables = [].slice.call(document.querySelectorAll('.nested-sortable'));
+
+       col_sortables = [];
+       for (var i = 0; i < nestedSortables.length; i++) {
+            col_sortables.push(new Sortable(nestedSortables[i], {
+                group: {
+                    'name': nestedSortables[i].getAttribute('id'),
+                    'pull':false,
+                    'put':false},
+                animation: 150,
+                fallbackOnBody:true,
+                swapThreshold:0.65,
+                dataIdAttr: 'title'
+            }));
+        }
+       //检查是否所有的checkbox都已经正确运行了
+        check_checkbox_valid($("#choose_column_nested"));
+
+        // 触发column的点击
+       $('input').change(function () {
+          var $cb = $(this);
+          if($cb[0].getAttribute('id')==='choose_column_checkbox') {
+              var $group_item = $cb.closest('.list-group-item');
+              var state = $cb.prop('checked');
+              change_children_state($group_item, state);
+              change_parent_state($group_item, state);
+          }
+       });
+   });
+
+   //setting确认
+   $setting_confirm.click(function () {
+       var checkboxes = document.getElementsByName('setting-check-box');
+       var index = 0;
+       var update = false;
+       var update_to_server = false;
+       for(var setting in window.settings)
+       {
+            if((setting==='Pagination' && (window.settings[setting]!==checkboxes[index].checked)))
+            {
+                update = true;
+                window.settings['Pagination'] = checkboxes[index].checked;
+            }
+            else if((setting==='Wrap display' && (window.settings[setting]!==checkboxes[index].checked)))
+            {
+                update = true;
+                window.settings['Wrap display'] = checkboxes[index].checked;
+            }else if(window.settings[setting]!==checkboxes[index].checked){
+                window.settings[setting] = checkboxes[index].checked;
+                update_to_server = true;
+            }
+            index += 1;
+       }
+       $("#setting_box").modal('hide');
+       if (update){
+           initalizeTable();
+       }
+
+       if(update_to_server || update)
+           update_settings(window.settings);
+   });
+
+   // 确认选择columns
+   $confirm_columns.click(function () {
+
+       var new_column_order = get_new_column_order($("#choose_column_nested"), window.column_order);
+       var new_hidden_columns = window.hidden_columns;
+       get_new_hidden_columns($("#choose_column_nested"), new_hidden_columns, '');
+
+
+       $("#columns_box").modal('hide');
+       // 更新columns
+       if(window.column_order_updated) {
+           window.column_order = new_column_order;
+           update_column_order(new_column_order);
+       }
+       if(window.hidden_columns_updated){
+           window.hidden_columns = new_hidden_columns;
+           update_hidden_columns(new_hidden_columns);
+       }
+
+       if(window.column_order_updated || window.hidden_columns_updated)
+           initalizeTable();
+       window.column_order_updated = false;
+       window.hidden_columns_updated = false;
+
+       for(var i=0;i<col_sortables.length;i++)
+       {
+           var sortable = col_sortables.pop();
+           sortable.destroy();
+       }
+   });
+
+
+   // 清除内容
+   $("#columns_box").on('hide.bs.modal', function (e) {
+       $("#columns_dialogue").empty();
+    });
+   $("#setting_box").on('hide.bs.modal', function (e) {
+       $("#setting_div").empty();
+    });
+
+   // 当前选中的row的id
+   function getIdSelections() {
+    return $.map($table.bootstrapTable('getSelections'), function (row) {
+      return row.id
+    })
+  }
+
+    // 是否运行点击相应的按钮
+   $table.on('check.bs.table uncheck.bs.table ' +
+      'check-all.bs.table uncheck-all.bs.table',
+    function () {
+      $delete.prop('disabled', !$table.bootstrapTable('getSelections').length);
+      $hide.prop('disabled',!$table.bootstrapTable('getSelections').length);
+    });
+
+   //点击delete
+    $delete.click(function () {
+        var ids = getIdSelections();
+        var msg = "This action will mark rows with id=" + JSON.stringify(ids) + " as delete in hard disk, and they will " +
+            " not be displayed any more but you can still read them in server, are sure to go on?";
+        bootbox.confirm(msg, function(result){
+            if(!window.settings['Offline']){
+                if(result){
+                    $.ajax({
+                        url: '/table/delete_records',
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                            ids: ids,
+                            uuid: window.server_uuid
+                        }),
+                        success: function(value){
+                            //delete success.
+                            $table.bootstrapTable('remove', {
+                                field: 'id',
+                                values: ids
+                              });
+                            $delete.prop('disabled', true);
+                            $hide.prop('disabled', true);
+                            success_prompt("Deletion succeed.", 1500);
+                        },
+                        error: function(error){
+                            bootbox.alert("Fail to execute deletion, please delete in server.")
+                        }
+                     })
+                }
+            }
+        });
+    });
+
+    // 点击hide
+    $hide.click(function () {
+        var ids = getIdSelections();
+        $table.bootstrapTable('uncheckAll');
+        hide_row_by_ids(ids, $table);
+
+        $delete.prop('disabled', true);
+        $hide.prop('disabled', true);
+        $display.prop('disabled', false);
+
+        window.hidden_rows = window.hidden_rows.concat(ids);
+        update_hide_row_ids(window.hidden_rows);
+    });
+    
+    //点击checkInvert
+   $checkInvert.click(function () {
+       $table.bootstrapTable('checkInvert');
+   });
+    
+    //点击diplay
+    $display.click(function () {
+        $table.bootstrapTable('getHiddenRows', true);
+        $display.prop('disabled', true);
+        window.hidden_rows = [];
+        update_hide_row_ids([]);
+    });
+
+    //获取对应的index
+    function getRowOrderByProperty(table, key, value) {
+      var data = $(table).bootstrapTable("getData");
+      var result = [];
+      data.filter(function (o, i) {
+          {#console.log(parseInt(o[key]), parseInt(value));#}
+        if (parseInt(o[key]) === parseInt(value)) {
+          result.push(i);
+        }
+      });
+      return result;
+    }
+
+    function hide_row_by_ids(ids, $table) {
+    // 传入table对象和ids的array，将这些隐藏
+    var results = [];
+    ids.forEach( function(id, i)
+    {
+       var result = getRowOrderByProperty($table, 'id', id);
+       results = results.concat(result);
+    });
+
+    results.forEach(function (index, i) {
+        $table.bootstrapTable('hideRow', {'index': index})
+    });
+}
+
+</script>
+
+</html>

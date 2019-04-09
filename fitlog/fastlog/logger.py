@@ -3,7 +3,7 @@ import os
 from os import path
 import datetime
 import time as T
-import random, numpy, torch
+import random
 import argparse
 import string
 from fitlog import fastgit
