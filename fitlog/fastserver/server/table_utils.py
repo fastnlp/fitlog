@@ -88,7 +88,7 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
         for key, value in field_values.items():
             value_set = set(value)
             if len(value_set) == 1 and key not in editable_columns: # 每次都是一样的结果, 但排除可修改的column
-                unchange_columns[key] = 1  # 防止加入column中
+                unchange_columns[key] = value[0]  # 防止加入column中
         exclude_columns.update(unchange_columns) # 所有不变的column都不选择了
         for fields in data:
             for key, value in exclude_columns.items():
@@ -138,7 +138,7 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
             first_column_keys.append(key)
     new_column_order['OrderKeys'] = first_column_keys # 使用一个OrderKeys保存没一层的key的顺序
 
-    res = {'data': data, 'unchange_columns':unchange_columns, 'column_order': new_column_order, 'column_dict':new_column_dict,
+    res = {'data': data, 'unchanged_columns':unchange_columns, 'column_order': new_column_order, 'column_dict':new_column_dict,
            'hidden_columns': new_hidden_columns}
 
     return res

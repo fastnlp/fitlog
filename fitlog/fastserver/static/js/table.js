@@ -9,6 +9,7 @@ $(function () {
     _settings['Offline'] = false;
     _settings['Save settings'] = true;
     _settings['Refresh from disk'] = false;
+    _settings['Reorderable rows'] = false;
     window.settings = _settings;
 
     //0. 从后台获取必要的数据，然后用于创建Table
@@ -41,7 +42,15 @@ $(function () {
             window.hidden_rows = value['hidden_rows'];
             window.column_order_updated = false;
             window.hidden_columns_updated = false;
+            window.unchanged_columns = value['unchanged_columns'];
             initalizeTable();
+            // 如果unchanged_columns不为空，则使得button可见，否则不可见
+           if($.isEmptyObject(window.unchanged_columns)){
+               document.getElementById('consistent_cols').style.visibility = 'hidden';
+           }else{
+               document.getElementById('consistent_cols').style.visibility = 'visible';
+           }
+
         },
         error: function(error){
             bootbox.alert("Some error happens when initialize table.");
@@ -139,9 +148,15 @@ function initalizeTable(){
         });
 
         //1.初始化Table
-        TableInit().Init(columns, window.table_data, filterControl, window.settings['Pagination']);
+        TableInit().Init(columns, window.table_data, filterControl, window.settings['Pagination'],
+                window.settings['Reorderable rows']);
         //2. 将不需要的row隐藏
         hide_row_by_ids(window.hidden_rows, $('#tb_departments'));
+        // 如果存在hidden_rows，那么应该是需要显示的
+       var hidden_rows = $table.bootstrapTable('getHiddenRows');
+       if(hidden_rows.length>0){
+           $display.prop('disabled', false);
+       }
 }
 
 
@@ -149,7 +164,8 @@ function initalizeTable(){
 var TableInit = function () {
     var oTableInit = new Object();
     //初始化Table
-    oTableInit.Init = function (use_columns, table_data, filterControl, pagination) {
+    oTableInit.Init = function (use_columns, table_data, filterControl, pagination,
+                                reorderable_row) {
         $('#tb_departments').bootstrapTable('destroy').bootstrapTable({
             // url: '/table/data',         //请求后台的URL（*）
             // method: 'get',                      //请求方式（*）
@@ -166,14 +182,14 @@ var TableInit = function () {
             sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
             pageNumber: 1,                       //初始化加载第一页，默认第一页
             pageSize: 10,                       //每页的记录行数（*）
-            pageList: [5, 20, 30, 50, 'All'],        //可供选择的每页的行数（*）
+            pageList: [5, 10, 20, 30, 50, 'All'],        //可供选择的每页的行数（*）
             search: true,                       //是否显示表格搜索，此搜索是客户端搜索，不会进服务端，所以，个人感觉意义不大
             strictSearch: true,
             filterControl:filterControl,                 // 是否显示filter栏
-            filterShowClear: true,              // 是否显示一键删除所有fitler条件的按钮, 不要使用，有bug
+            filterShowClear: true,              // 是否显示一键删除所有fitler条件的按钮
             hideUnusedSelectOptions: false,       //不要显示不存在的filter对象，如果为true再选择某个filter之后，这个filter其它选项都消失了
             showColumns: false,                  //是否显示所有的列
-            // stickyHeader: false,               //是否固定header, 有bug，不能正常使用
+            stickyHeader: false,                 //是否固定header, 多级header时有bug，不能正常使用
             showRefresh: false,                  //是否显示刷新按钮
             minimumCountColumns: 2,             //最少允许的列数
             clickToSelect: true,                //是否启用点击选中行
@@ -186,8 +202,7 @@ var TableInit = function () {
             showExport: true,                     //是否显示导出
             exportDataType: "basic",              //basic', 'all', 'selected'.
             exportTypes: ['json', 'csv', 'txt', 'excel'],
-            reorderableRows:true,
-            maxMovingRows:0,
+            reorderableRows:reorderable_row,              //使用的话会导致无法选中copy
             undefinedText: '-',
             columns: use_columns,
             paginationVAlign: 'both',

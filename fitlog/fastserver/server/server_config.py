@@ -14,6 +14,8 @@ Offline=False
 Save_settings=True
 # wheter to reload from disk when refresh
 Refresh_from_disk=False
+# Wheter the rows are reorderable, when they are reorderable, they cannot be selected or copied
+Reorderable_rows=False
 
 [basic_settings]
 # any data longer than this value will be partly replaced by '...'
@@ -137,7 +139,7 @@ def save_config(all_data, config_path):
     config.set('data_settings', 'deleted_logs', ','.join(deleted_logs))
 
     # column_settings
-    for option in ['hidden_columns', 'exclude_columns', 'editable_columns']:
+    for option in ['hidden_columns', 'editable_columns']:
         save_list_to_config(config, 'column_settings', option, all_data[option])
     column_order = refine_column_order(all_data['column_order'])
     column_order = json.dumps(column_order)

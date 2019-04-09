@@ -17,7 +17,7 @@ from fitlog.fastgit import revert_to_directory
 app = Flask(__name__)
 
 
-all_data = {'debug':False} # when in debug mode, no call to other modules will be initialized.
+all_data = {'debug':True} # when in debug mode, no call to other modules will be initialized.
 log_dir = ''
 log_config_path = ''
 first_time_access_table = True
@@ -25,12 +25,6 @@ first_time_access_table = True
 def hello_world():
     return redirect(url_for('table'))
     # return render_template('index.html')
-
-@app.route('/table/unchange_columns')
-def get_unchanged_columns():
-    global all_data
-    return jsonify(unchange_columns=all_data['unchange_columns'])
-
 
 @app.route('/table/table')
 def get_table():
@@ -50,7 +44,8 @@ def get_table():
                    hidden_columns=all_data['hidden_columns'], data=data,
                    settings={key.replace('_', ' '):value for key, value in all_data['settings'].items()},
                    uuid=all_data['uuid'],
-                   hidden_rows=list(all_data['hidden_rows'].keys()))
+                   hidden_rows=list(all_data['hidden_rows'].keys()),
+                   unchanged_columns=all_data['unchanged_columns'])
 
 @app.route('/table/delete_records', methods=['POST'])
 def delete_records():
@@ -185,9 +180,9 @@ if __name__ == '__main__':
     # 准备数据
     all_data.update(prepare_data(log_dir, log_config_path, all_data['debug']))
     print("Finish preparing data. Found {} records in {}.".format(len(all_data['data']), log_dir))
+    all_data['uuid'] = str(uuid.uuid1())
 
     port = get_usage_port(start_port=start_port)
-    all_data['uuid'] = str(uuid.uuid1())
     app.run(host='0.0.0.0', port=port)
 
     save_all_data(all_data, log_dir, log_config_path)

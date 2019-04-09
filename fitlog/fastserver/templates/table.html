@@ -9,15 +9,15 @@
     <link href="/static/css/bootstrap-table.css" rel="stylesheet" />
     <link href="/static/css/bootstrap-table-filter-control.css" rel="stylesheet"/>
     <link href="/static/css/table.css" rel="stylesheet"/>
-    <link href="/static/css/bootstrap-table-reorder-rows.css" rel="'stylesheet"/>
 
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.js"></script>
     <script src="/static/js/bootstrap-editable.js"></script>
-    <script src="/static/js/jquery.tablednd.js"></script>
     <script src="/static/js/bootstrap-table.js"></script>
     <script src="/static/js/bootbox.js"></script>
     <script src="/static/js/bootstrap-table-editable.js"></script>
+    <script src="/static/js/jquery.tablednd.js"></script>
+    <script src="/static/js/bootstrap-table-reorder-rows.js"></script>
 
     <script src="/static/js/tableExport.js"></script>
     <script src="/static/js/bootstrap-table-export.js"></script>
@@ -26,7 +26,6 @@
     <script src="/static/js/table_page_utils.js"></script>
     <script src="/static/js/utils.js"></script>
     <script src="/static/js/bootstrap-table-filter-control.js"></script>
-    <script src="/static/js/bootstrap-table-reorder-rows.js"></script>
     <script src="/static/js/Sortable.js"></script>
 </head>
 <body>
@@ -55,6 +54,12 @@
         <button type="button" class="btn btn-info" data-toggle="modal" data-target="#setting_box"
                 style="margin-left: 5px;margin-right: 5px" id="setting">
           <i class="glyphicon glyphicon-option-horizontal"></i> Setting
+        </button>
+
+        <!--consisten columns-->
+        <button type="button" class="btn btn-basic" data-toggle="modal" data-target="#unchanged_columns_box"
+                style="margin-left: 5px;margin-right: 5px" id="consistent_cols">
+          <i class="glyphicon glyphicon-minus"></i> Con. cols.
         </button>
 
     </div>
@@ -99,9 +104,28 @@
       </div>
     </div>
 
+
+    <!--consistent_columns-->
+    <div class="modal fade" id="unchanged_columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 18px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">The following columns have consistent value.</h4>
+          </div>
+          <div class="modal-body" id="unchanged_column_modal">
+
+          </div>
+          <div class="modal-footer" >
+          </div>
+        </div>
+      </div>
+    </div>
+
 {#     style="overflow-x: auto; max-width: 90%; margin-left: 5%; margin-right: 5%"#}
-    <div>
-        <table id="tb_departments" style="margin-left:20px; margin-right:10px"></table>
+    <div  style="padding-left:15px; padding-right:15px">
+        <table id="tb_departments"></table>
     </div>
 
 </body>
@@ -119,11 +143,6 @@
 
    var col_sortables = [];
 
-   // 如果存在hidden_rows，那么应该是需要显示的
-   var hidden_rows = $table.bootstrapTable('getHiddenRows');
-   if(hidden_rows.length>0){
-       $display.prop('disabled', false);
-   }
 
    // 点击setting
     $setting.click(function () {
@@ -147,10 +166,6 @@
                 "                                        </span>\n" +
                 "                                      </label>\n" +
                 "                                    </div>");
-
-            {#$("#setting_div").append("<div class=\"pretty p-default col-sm-10\"><input type='checkbox' " +#}
-            {#  checked + " name='setting-check-box' style='min-width:20px;margin-left: 5px;margin-right: 5px;'/>" +#}
-            {#  "<div class='state p-primary'><label>" + setting + "</checkbox></label></div></div>");#}
         }
     });
     //点击reorder columns
@@ -187,6 +202,18 @@
        });
    });
 
+   //点击con. cols.
+   $("#consistent_cols").click(function () {
+       var unchanged_columns = window.unchanged_columns;
+       for(var key in unchanged_columns)
+      {
+          var value = unchanged_columns[key];
+          $("#unchanged_column_modal").append("<div class=\"pretty p-default\" " +
+              "style='min-width:20px;margin-left: 5px;margin-right: 5px;'>" +
+              "<div class='state p-primary'><label>" + key + ": " + value + "</label></div></div>");
+      }
+   });
+
    //setting确认
    $setting_confirm.click(function () {
        var checkboxes = document.getElementsByName('setting-check-box');
@@ -204,7 +231,13 @@
             {
                 update = true;
                 window.settings['Wrap display'] = checkboxes[index].checked;
-            }else if(window.settings[setting]!==checkboxes[index].checked){
+            }
+            else if((setting==='Reorderable rows' && (window.settings[setting]!==checkboxes[index].checked)))
+            {
+                update = true;
+                window.settings['Reorderable rows'] = checkboxes[index].checked;
+            }
+            else if(window.settings[setting]!==checkboxes[index].checked){
                 window.settings[setting] = checkboxes[index].checked;
                 update_to_server = true;
             }
@@ -257,6 +290,9 @@
     });
    $("#setting_box").on('hide.bs.modal', function (e) {
        $("#setting_div").empty();
+    });
+   $("#unchanged_columns_box").on('hide.bs.modal', function (e) {
+       $("#unchanged_column_modal").empty();
     });
 
    // 当前选中的row的id

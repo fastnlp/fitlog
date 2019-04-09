@@ -38,7 +38,7 @@ def generate_data(num_records=3):
         if np.random.randint(100)<90:
             c_res['fit_id'] = hex(np.random.randint(1e10))[2:10]
         c_res['git_id'] = hex(np.random.randint(1e10))[2:10]
-        c_res['commit_info'] = chr(np.random.randint(65, 123))*np.random.randint(5, 100)
+        c_res['git_msg'] = chr(np.random.randint(65, 123))*np.random.randint(5, 100)
         c_res['time'] = randomDate("1/1/2008 1:30 PM", "1/1/2009 4:50 AM", random.random())
         res['meta'] = c_res
 
@@ -67,7 +67,7 @@ def generate_data(num_records=3):
         # # other
         if np.random.random()<0.5:
             c_res = OrderedDict()
-            c_res['loss'] = np.random.randn()
+            c_res['loss'] = np.random.rand()
             c2_res = OrderedDict()
             c3_res = OrderedDict()
             for i in range(2):
@@ -82,8 +82,5 @@ def generate_data(num_records=3):
 
 
 if __name__ == '__main__':
-    res = generate_columns(generate_data(num_records=2))
-    print(res)
-    # print(fields_lst)
-    # print(unchange_columns)
+    pass
 
