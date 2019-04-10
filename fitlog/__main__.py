@@ -1,5 +1,5 @@
 from docopt import docopt
-from .fastgit import init_example, init_project, revert_to_directory, short_logs
+from .fastgit import committer
 
 
 __doc__ = """
@@ -36,14 +36,14 @@ if __name__ == '__main__':
     args = docopt(__doc__, version='fitlog v1.0')
     if args['init']:
         if args['--example']:
-            init_example(args['<name>'])
+            committer.init_example(args['<name>'])
         else:
             name = args['<name>'] if args['<name>'] else '.'
-            init_project(name, hide=args["--hide"], git=not args["--no-git"])
+            committer.init_project(name, hide=args["--hide"], git=not args["--no-git"])
     elif args['revert']:
-        revert_to_directory(args["<commit_id>"], path=args["<path>"], cli=True, id_suffix=args["--id-suffix"])
+        committer.revert_to_directory(args["<commit_id>"], args["<path>"], args["--id-suffix"])
     elif args['log']:
         # This will be replaced by fastlog function #
-        short_logs(show_now=args['--show'])
+        committer.short_logs(show_now=args['--show'])
         # This will be replaced by fastlog function #
 
