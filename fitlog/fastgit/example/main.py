@@ -1,11 +1,11 @@
 import fitlog
 
-fitlog.commit()  # use 'fitlog.commit()' before your training code
+fitlog.commit(__file__)  # use 'fitlog.commit()' before your training code
 """
     Your training code here
 """
 
-fitlog.commit()  # you can commit more than once in your programme
+fitlog.commit(__file__)  # you can commit more than once in your programme
 """
     Your training code here
 """
