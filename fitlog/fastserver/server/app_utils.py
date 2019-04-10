@@ -44,7 +44,6 @@ def net_is_used(port, ip='0.0.0.0'):
         return False
 
 
-
 def prepare_data(log_dir, log_config_path, debug=False): # 准备好需要的数据， 应该包含从log dir中读取数据
     """
 

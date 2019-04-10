@@ -105,8 +105,8 @@ function generate_checkbox(title, path, checked) {
     var html = "              <div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
         "                      <label class=\"toggle\" style=\"margin-bottom: 0\">\n" +
         "                        <input class=\"toggle__input\" type=\"checkbox\" id='choose_column_checkbox' " +
-        " name='" + path + "' " + checked + " style='position: static;margin: 0; height: 0' >\n" +
-        "                        <span class=\"toggle__label\" style='padding: 0 0 0 8px'>\n" +
+        " name='" + path + "' " + checked + " style='position:static;margin:0;display:none'>\n" +
+        "                        <span class=\"toggle__label\" style='padding: 0 0 0 24px'>\n" +
         "                          <span class=\"toggle__text\">" + title + "</span>\n" +
         "                        </span>\n" +
         "                      </label>\n" +

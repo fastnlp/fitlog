@@ -8,13 +8,13 @@ Ignore_null_value_when_filter=True
 Wrap_display=True
 Pagination=True
 Hide_hidden_columns_when_reorder=False
-# will not upload your changes to the server
+# Will not try to upload your changes to the server
 Offline=False
 # whether save your changes
 Save_settings=True
-# wheter to reload from disk when refresh
+# whether to reload from disk when refresh
 Refresh_from_disk=False
-# Wheter the rows are reorderable, when they are reorderable, they cannot be selected or copied
+# Whether the rows are reorderable, when they are reorderable, they cannot be selected or copied
 Reorderable_rows=False
 
 [basic_settings]
@@ -26,15 +26,15 @@ round_to=6
 ignore_unchanged_columns=True
 
 [data_settings]
-# log dirs in this list are not displayed. Use ',' to separate columns, no space is allowed
+# log dirs in this list are not displayed. Use ',' to separate columns
 hidden_logs=
 # log dirs in this list are ignore.
 deleted_logs=
 
 [column_settings]
-# columns are not displayed, but can be chosen to display. Use ',' to separate columns, no space is allowed
+# columns are not displayed, but can be chosen to display. Use ',' to separate columns
 hidden_columns=
-# columns are ignored, use ',' to separate columns, no space is allowed
+# columns are ignored, use ',' to separate columns
 exclude_columns=
 # editable columns, you have to be specific to the root
 editable_columns=memo,meta-fig_msg,meta-git_msg

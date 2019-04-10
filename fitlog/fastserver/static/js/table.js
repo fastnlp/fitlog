@@ -54,6 +54,7 @@ $(function () {
         },
         error: function(error){
             bootbox.alert("Some error happens when initialize table.");
+            console.log(error);
         }
      });
 

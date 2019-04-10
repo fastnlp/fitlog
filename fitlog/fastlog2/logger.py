@@ -17,6 +17,9 @@ def check_log_dir(func):
     def wrapper(*args, **kwargs):
         assert args[0].initialzed, "You have to call `logger.set_log_dir()` to set where to save log first."
         return func(*args, **kwargs)
+        # 1. 如果没有initialize, 说明还没有设置
+        #   1.1 如果default_log_dir不为None，设置使用default_log_dir调用set_log_dir
+        #       否则报错
     return wrapper
 
 class Logger:
@@ -25,6 +28,8 @@ class Logger:
         self.initialzed = False
         self.save_on_first_metric = True
 
+        # TODO 从config中读取默认的值
+        self._default_log_dir = None
         self._cache = []
 
     def set_save_on_first_metric(self, flag=True):
@@ -52,7 +57,7 @@ class Logger:
                 return
 
         if not os.path.exists(log_dir):
-            raise FileExistsError("`{}` is not exist.".format(log_dir))
+            raise FileNotFoundError("`{}` is not exist.".format(log_dir))
         if not os.path.isdir(log_dir):
             raise FileExistsError("`{}` is not a directory.".format(log_dir))
 
@@ -88,18 +93,21 @@ class Logger:
             self.hyper_logger = logging.getLogger('hyper')
             self.metric_logger = logging.getLogger('metric')
             self.other_logger = logging.getLogger('other')
+            self.loss_logger = logging.getLogger('loss')
 
             formatter = logging.Formatter('%(message)s') # 只保存记录的时间与记录的内容
             meta_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'meta.log'), encoding='utf-8')
             hyper_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'hyper.log'), encoding='utf-8')
             metric_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'metric.log'), encoding='utf-8')
+            loss_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'loss.log'), encoding='utf-8')
             other_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'other.log'), encoding='utf-8')
 
-            for handler in [meta_handler, hyper_handler, metric_handler, other_handler]:
+            for handler in [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler]:
                 handler.setFormatter(formatter)
 
-            for _logger, _handler in zip([self.meta_logger, self.hyper_logger, self.metric_logger, self.other_logger],
-                               [meta_handler, hyper_handler, metric_handler, other_handler]):
+            for _logger, _handler in zip([self.meta_logger, self.hyper_logger, self.metric_logger, self.other_logger,
+                                                                                        self.loss_logger],
+                               [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler]):
                 _handler.setLevel(logging.INFO)
                 _logger.setLevel(logging.INFO)
                 _logger.addHandler(_handler)
@@ -148,7 +156,7 @@ class Logger:
             self._write_to_logger({'meta': {'state':'finish'}}, 'meta_logger')
 
     @check_log_dir
-    def add_metric(self, value, name=None):
+    def add_best_metric(self, value, name=None):
         """
         value put in this function will be placed in a column named 'metric'
 
@@ -198,11 +206,10 @@ class Logger:
             raise KeyError("Don't use {} as a name. Use logger.add_{}() to save it.".format(name, name))
 
         _dict = _parse_value(value, name=name)
-
         self._write_to_logger(_dict, 'other_logger')
 
     @check_log_dir
-    def add_file(self, filepath, name='hyper'):
+    def add_py_file(self, filepath):
         """
         Read parameters from a file. Like the follow example, it will extract equations between two "#######"(at least 7,
             can have more) and transform into dict. Every parameter can have at most one line, if a value spans multiple
@@ -236,6 +243,8 @@ class Logger:
         filepath = os.path.abspath(filepath)
         if not os.path.isfile(filepath):
             raise RuntimeError("{} is not a regular file.".format(filepath))
+        if not filepath.endswith('.py'):
+            raise RuntimeError("{} is not a python file.".format(filepath))
         _dict = {}
         between = False
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -252,12 +261,11 @@ class Logger:
                         values = line.split('=')
                         for value in values[:-1]:
                             _dict[value] = values[-1]
-        if name=='hyper':
-            self.add_hyper(_dict)
-        elif name=='metric':
-            self.add_metric(_dict)
-        else:
-            self.add_record(_dict, name=name)
+        self.add_hyper(_dict)
+
+    @check_log_dir
+    def add_loss(self, value, name):
+        pass
 
     @check_log_dir
     def save(self):

@@ -14,13 +14,17 @@ from fitlog.fastserver.server.server_config import save_extra_data
 
 from fitlog.fastgit import revert_to_directory
 
+from fitlog.fastserver.chart_app import chart_page
+
 app = Flask(__name__)
 
+app.register_blueprint(chart_page)
 
 all_data = {'debug':True} # when in debug mode, no call to other modules will be initialized.
 log_dir = ''
 log_config_path = ''
 first_time_access_table = True
+
 @app.route('/')
 def hello_world():
     return redirect(url_for('table'))
@@ -136,6 +140,10 @@ def column_order():
     all_data['column_order'] = column_order
     return jsonify(status='success', msg='')
 
+@app.route('/table')
+def table():
+    return render_template('table.html')
+
 def check_uuid(gold_uuid, _uuid):
     if gold_uuid==_uuid:
         return None
@@ -143,13 +151,9 @@ def check_uuid(gold_uuid, _uuid):
         return {'status': 'fail',
                 'msg': "The data are out-of-date, please refresh this page."}
 
-@app.route('/table')
-def table():
-    return render_template('table.html')
-
 
 def save_all_data(all_data, log_dir, log_config_path):
-    if all_data['settings']['Save_settings']:  # 如果需要保存
+    if all_data['settings']['Save_settings'] and not all_data['debug']:  # 如果需要保存
         save_config(all_data, config_path=log_config_path)
 
         # save editable columns
@@ -171,6 +175,8 @@ if __name__ == '__main__':
         log_dir = os.path.join(cwd, log_dir)
     if not os.path.isdir(log_dir):
         raise IsADirectoryError("{} is not a directory.".format(log_dir))
+
+    log_dir = os.path.abspath(log_dir)
 
     if os.path.dirname(args.log_config_name)!='':
         raise ValueError("log_config_name can only be a filename.")
