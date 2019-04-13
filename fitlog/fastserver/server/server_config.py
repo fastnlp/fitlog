@@ -16,6 +16,8 @@ Save_settings=True
 Refresh_from_disk=False
 # Whether the rows are reorderable, when they are reorderable, they cannot be selected or copied
 Reorderable_rows=False
+# Where should fitlog revert codes to: ../<pj_name>-revert or ../<pj_name>-revert-<fit_id>
+No_suffix=True
 
 [basic_settings]
 # any data longer than this value will be partly replaced by '...'
@@ -41,6 +43,13 @@ editable_columns=memo,meta-fig_msg,meta-git_msg
 # recommend not to modify by hand, use the front page to change this
 column_order=
 
+[chart_settings]
+# The maximum points one line can hold.
+max_points=400
+# If in `wait_seconds`, no update detected, the auto refresh will close.
+wait_seconds=180
+# columns are not displayed in the chart, not share with the one in the column_settings
+chart_exclude_columns=
 """
 
 from fitlog.fastserver.server.log_config_parser import ConfigParser
@@ -112,6 +121,14 @@ def read_server_config(config_path):
 
     # 保存config对象, 因为需要保留下注释
     all_data['config'] = config
+
+    # TODO 读取chart的setting
+    _dict = {}
+    chart_exclude_columns = read_list_from_config(config, 'chart_settings', 'chart_exclude_columns', ',')
+    _dict['chart_exclude_columns'] = {column:1 for column in chart_exclude_columns}
+    _dict['max_points'] = config.getint('chart_settings', 'max_points')
+    _dict['wait_seconds'] = config.getint('chart_settings', 'wait_seconds')
+    all_data['chart_settings'] = _dict
 
     return all_data
 

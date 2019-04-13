@@ -1,7 +1,7 @@
 [fit_settings]
 revert_with_commit_id = False
-watched_files = *.py,
+watched_files = *.py
 
 [log_settings]
 default_log_dir = ./logs
-save_on_first_metric = True
+save_on_first_metric_or_loss = True

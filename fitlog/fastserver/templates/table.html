@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width" />
-    <title>Fastgit result visualization</title>
+    <title>Fitlog Table</title>
      <link rel="shortcut icon" href="#" />
 
     <link href="/static/css/bootstrap.css" rel="stylesheet" />
@@ -59,7 +59,7 @@
         <!--consisten columns-->
         <button type="button" class="btn btn-basic" data-toggle="modal" data-target="#unchanged_columns_box"
                 style="margin-left: 5px;margin-right: 5px" id="consistent_cols">
-          <i class="glyphicon glyphicon-minus"></i> Con. cols.
+          <i class="glyphicon glyphicon-th-list"></i> Con. cols.
         </button>
 
     </div>
@@ -142,7 +142,6 @@
    var $confirm_columns = $('#confirm_columns');
 
    var col_sortables = [];
-
 
    // 点击setting
     $setting.click(function () {
@@ -387,18 +386,65 @@
     }
 
     function hide_row_by_ids(ids, $table) {
-    // 传入table对象和ids的array，将这些隐藏
-    var results = [];
-    ids.forEach( function(id, i)
-    {
-       var result = getRowOrderByProperty($table, 'id', id);
-       results = results.concat(result);
-    });
+        // 传入table对象和ids的array，将这些隐藏
+        var results = [];
+        ids.forEach( function(id, i)
+        {
+           var result = getRowOrderByProperty($table, 'id', id);
+           results = results.concat(result);
+        });
 
-    results.forEach(function (index, i) {
-        $table.bootstrapTable('hideRow', {'index': index})
-    });
-}
+        results.forEach(function (index, i) {
+            $table.bootstrapTable('hideRow', {'index': index})
+        });
+    }
+
+$table.on('refresh.bs.table', function () {
+      $.ajax({
+            url: '/table/refresh',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify({
+                 uuid: window.server_uuid
+            }),
+            success: function(value){
+                var status = value['status'];
+                var msg = value['msg'];
+                if(status==='success'){
+                    if(value['new_logs'].length===0 && value['updated_logs'].length===0){
+                        success_prompt(msg, 2000);
+                    }else {
+                        new_logs = value['new_logs'];
+                        updated_logs = value['updated_logs'];
+                        if(new_logs.length>0){
+                            $('#tb_departments').bootstrapTable('prepend', new_logs);
+                            for(var index=0;index<new_logs.length;index++){
+                                window.table_data[new_logs[index]['id']] = new_logs[index];
+                            }
+                        }
+                        if(updated_logs.length>0){
+                            for(var index=0;index<updated_logs.length;index++){
+                                $('#tb_departments').bootstrapTable('updateByUniqueId', {
+                                    id: updated_logs[index]['id'],
+                                    row: updated_logs[index]
+                                });
+                                window.table_data[updated_logs[index]['id']] = updated_logs[index];
+                            }
+                        }
+                        success_prompt(msg, 2000);
+                    }
+                }
+                else{
+                    bootbox.alert("Update failed! " + msg);
+                }
+            },
+            error: function(error){
+                bootbox.alert('Error encountered. ' + error);
+            }
+    })
+});
+
 
 </script>
 

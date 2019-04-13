@@ -3,6 +3,7 @@ import sys
 import configparser
 from datetime import datetime
 from fnmatch import fnmatch
+import subprocess
 
 _commit_flag = '-------commit-------\n'
 _system_flag = '-------system-------\n'
@@ -54,7 +55,7 @@ class Committer:
             path = os.getcwd()
         else:
             path = os.path.abspath(run_file_path)
-        home_path = os.path.abspath("~")
+        home_path = os.path.expanduser('~')
         root_path = "/"
         depth_cnt = 0
         max_depth = 8
@@ -77,10 +78,11 @@ class Committer:
                     print(colored_string("Can not find the config file.", "red"))
                 return
             path = os.path.dirname(path)
-    
+
     def __read_config(self):
         config = configparser.ConfigParser()
         config.read(self.config_file_path)
+        self.config = config
         if 'fit_settings' in config:
             if 'watched_files' in config['fit_settings']:
                 tmp = config['fit_settings']['watched_files']
@@ -142,7 +144,7 @@ class Committer:
                 print(colored_string("Fitlog project has been initialized. ", "red"))
             return True
         return False
-    
+
     def __commit_files(self, watched_files, commit_message):
         commands = ["cd " + self.work_dir]
         for file in watched_files:
@@ -198,9 +200,9 @@ class Committer:
                 print(colored_string("Commit-id's length is at least 6", "red"))
             return make_info(1, "Error: Commit-id's length is at least 6")
         if self.__check_directory(work_dir, display=False):
-            commit_ids = self.__get_commits(work_dir)['msg']
+            commit_ids = self.__get_commits()['msg']
             flag = False
-            print(commit_ids)
+            # print(commit_ids)
             for full_commit_id in commit_ids:
                 if full_commit_id.startswith(commit_id):
                     flag = True
@@ -235,8 +237,9 @@ class Committer:
                     if cli:
                         print(colored_string("Some error occurs in git reset", "red"))
                     return "Error: Some error occurs in git reset"
-                print("Your code is reverted at " + colored_string(path, "green"))
-                return make_info(0, path)
+                if cli:
+                    print("Your code is reverted to " + colored_string(path, "green"))
+                return make_info(0, "Your code is reverted to " + path)
         else:
             if cli:
                 print(colored_string('Not in a fitlog directory', 'red'))
@@ -277,25 +280,41 @@ class Committer:
     
     # PACKAGE FUNCTIONS
     def fitlog_last_commit(self):
-        return self.commits
+        return self.last_commit
     
     def fitlog_commits(self):
-        return self.last_commit
+        return self.commits
     
     @staticmethod
     def git_last_commit(work_dir):
         work_dir = os.path.abspath(work_dir)
         try:
-            master = work_dir + "/.git/logs/HEAD"
-            with open(master, "r") as fin:
-                line = fin.readline()
-            commit_id = line.split()[1]
-            commit_message = line.split()[-1].strip()
-            return make_info(1, [commit_id, commit_message])
+            # 忽略错误信息
+            lines = subprocess.Popen("cd %s && git log --oneline"%work_dir, shell=True,
+                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.readlines()
+            if len(lines)!=0:
+                git_id = lines[0][:lines[0].index(' ')]
+                git_msg = lines[0][lines[0].index(' ')+1:].strip()
+            else:
+                git_id = None
+                git_msg = None
+            return make_info(0, [git_id, git_msg])
         except FileNotFoundError:
             return make_info(1, "Error: Some error occurs")
-    
-    def fitlog_revert(self, commit_id, id_suffix=False):
+
+    def get_config(self, run_file_path=None):
+        self.__find_config_file(run_file_path, cli=False)
+        if self.config_file_path is None:
+            return make_info(1, "Error: Config file is not found")
+        self.__read_config()
+        self.__get_work_dir()
+        return make_info(0, self.work_dir)
+
+    def fitlog_revert(self, commit_id, run_file_path=None, id_suffix=False):
+        if self.work_dir is None:
+            info = self.get_config(run_file_path)
+            if info['status'] == 1:
+                return info
         return self.__revert(commit_id, id_suffix=id_suffix, cli=False)
     
     # CLI FUNCTIONS
@@ -339,7 +358,8 @@ class Committer:
                 if hide:
                     open('.gitignore', 'a').write(".fitlog\n")
                 else:
-                    open('.gitignore', 'a').write(".fitlog\n.fitconfig\n")
+                    # TODO 可能存在一个问题是，如果.gitignore已经被git管理
+                    open('.gitignore', 'a').write(".fitlog\n.fitconfig\nlogs\n.gitignore\n")
             else:
                 commands = [
                     "cd " + pj_name,
@@ -347,11 +367,11 @@ class Committer:
                 if hide:
                     commands += ["echo .fitlog > .gitignore"]
                 else:
-                    commands += ["echo \".fitlog/\\n.fitconfig\" > .gitignore"]
-                commands += [
-                    "git add .gitignore *",
-                    "git commit -m \"Project initialized.\"",
-                ]
+                    commands += ["echo \".gitignore\\n.fitlog/\\n.fitconfig\\nlogs/\" > .gitignore"]
+                # commands += [
+                #     # "git add .gitignore *",
+                #     # "git commit -m \"Project initialized.\"",
+                # ]
                 ret_code = os.system(" && ".join(commands))
                 if ret_code != 0:
                     print(colored_string("Some error occurs.", "red"))

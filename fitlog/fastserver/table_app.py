@@ -4,15 +4,17 @@ from flask import request, jsonify, redirect, url_for
 import uuid
 import os
 
-from fitlog.fastserver.server.app_utils import prepare_data
-from fitlog.fastserver.server.app_utils import replace_with_extra_data
+from fitlog.fastserver.server.table_utils import prepare_data, prepare_incremental_data
+from fitlog.fastserver.server.table_utils import replace_with_extra_data
 from fitlog.fastserver.server.app_utils import cmd_parser
 from fitlog.fastserver.server.app_utils import get_usage_port
 
 from fitlog.fastserver.server.server_config import save_config
 from fitlog.fastserver.server.server_config import save_extra_data
-
-from fitlog.fastgit import revert_to_directory
+from fitlog.fastserver.server.data_container import all_data
+from fitlog.fastserver.server.data_container import all_handlers, handler_watcher
+from fitlog.fastgit import committer
+from fitlog.fastlog import log_reader
 
 from fitlog.fastserver.chart_app import chart_page
 
@@ -20,7 +22,7 @@ app = Flask(__name__)
 
 app.register_blueprint(chart_page)
 
-all_data = {'debug':True} # when in debug mode, no call to other modules will be initialized.
+all_data['debug'] = False # when in debug mode, no call to other modules will be initialized.
 log_dir = ''
 log_config_path = ''
 first_time_access_table = True
@@ -36,13 +38,14 @@ def get_table():
     if not first_time_access_table:
         if all_data['settings']['Refresh_from_disk']:
             save_all_data(all_data, log_dir, log_config_path)
-            all_data.update(prepare_data(None, log_config_path, all_data['debug']))
+            log_reader = all_data['log_reader']
+            log_reader.set_log_dir(log_dir)
+            all_data.update(prepare_data(log_reader, log_dir, log_config_path, all_data['debug']))
         else:
             replace_with_extra_data(all_data['data'], all_data['extra_data'])
 
     first_time_access_table = False
     data = all_data['data']
-    data = [_ for _ in data if _['id'] not in all_data['deleted_rows'] ]
 
     return jsonify(column_order=all_data['column_order'], column_dict=all_data['column_dict'],
                    hidden_columns=all_data['hidden_columns'], data=data,
@@ -50,6 +53,24 @@ def get_table():
                    uuid=all_data['uuid'],
                    hidden_rows=list(all_data['hidden_rows'].keys()),
                    unchanged_columns=all_data['unchanged_columns'])
+
+@app.route('/table/refresh', methods=['POST'])
+def refresh_table():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res != None:
+        return jsonify(res)
+    log_reader = all_data['log_reader']
+    new_logs = log_reader.read_logs(all_data['deleted_rows'])
+    try:
+        if len(new_logs)==0:
+            return jsonify(status='success', msg='Update successfully, no update found.', new_logs=[], updated_logs=[])
+        else:
+            new_logs, updated_logs = prepare_incremental_data(all_data['data'], new_logs, all_data['field_columns'])
+            return jsonify(status='success', msg='Update successfully, {} log have updates, {} newly added.'\
+                           .format(len(updated_logs), len(new_logs)),
+                           new_logs=new_logs, updated_logs=updated_logs)
+    except:
+        return jsonify(status='fail', msg="Unknown error from server.")
 
 @app.route('/table/delete_records', methods=['POST'])
 def delete_records():
@@ -59,6 +80,7 @@ def delete_records():
     ids = request.json['ids']
     for id in ids:
         all_data['deleted_rows'][id] = 1
+    all_data['data'] = {log['id']:log for log in all_data['data'] if log['id'] not in all_data['deleted_rows']}
 
     return jsonify(status='success', msg='')
 
@@ -90,11 +112,12 @@ def table_reset():
             return jsonify(res)
         if not all_data['debug']:
             fit_id = request.json['fit_id']
-            response = revert_to_directory(fit_id)
-            if response['status']==0:
-                jsonify(status='success', msg=response['msg'])
+            _suffix = request.json['suffix']
+            response = committer.fitlog_revert(fit_id, all_data['root_log_dir'], _suffix)
+            if response['status'] == 0:
+                return jsonify(status='success', msg=response['msg'])
             else:
-                jsonify(status='fail', msg=response['msg'])
+                return jsonify(status='fail', msg=response['msg'])
         return jsonify(status='success', msg="")
     except Exception as e:
         print(e)
@@ -177,14 +200,17 @@ if __name__ == '__main__':
         raise IsADirectoryError("{} is not a directory.".format(log_dir))
 
     log_dir = os.path.abspath(log_dir)
-
+    all_data['root_log_dir'] = log_dir # will be used by chart_app.py
     if os.path.dirname(args.log_config_name)!='':
         raise ValueError("log_config_name can only be a filename.")
 
     log_config_path = os.path.join(log_dir, args.log_config_name)
 
+    log_reader.set_log_dir(log_dir)
+    all_data['log_reader'] = log_reader
+
     # 准备数据
-    all_data.update(prepare_data(log_dir, log_config_path, all_data['debug']))
+    all_data.update(prepare_data(log_reader, log_dir, log_config_path, all_data['debug']))
     print("Finish preparing data. Found {} records in {}.".format(len(all_data['data']), log_dir))
     all_data['uuid'] = str(uuid.uuid1())
 
@@ -192,3 +218,4 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)
 
     save_all_data(all_data, log_dir, log_config_path)
+    handler_watcher.stop()

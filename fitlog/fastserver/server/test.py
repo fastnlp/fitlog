@@ -30,11 +30,11 @@ def randomDate(start, end, prop):
 def generate_data(num_records=3):
     logs = []
     for i in range(num_records):
-        res = OrderedDict()
+        res = {}
         res['id'] = str(i) # id比如放在第一位
 
         # commid info
-        c_res = OrderedDict()
+        c_res = {}
         if np.random.randint(100)<90:
             c_res['fit_id'] = hex(np.random.randint(1e10))[2:10]
         c_res['git_id'] = hex(np.random.randint(1e10))[2:10]
@@ -43,7 +43,7 @@ def generate_data(num_records=3):
         res['meta'] = c_res
 
         # hyper param
-        c_res = OrderedDict()
+        c_res = {}
         c_res['lr'] = np.random.rand()
         if np.random.randn()<0.1:
             c_res['hidden_size'] = np.random.randint(100, 103)
@@ -53,12 +53,12 @@ def generate_data(num_records=3):
         res['hyper'] = c_res
 
         # metric
-        c_res = OrderedDict()
-        c1_res = OrderedDict()
+        c_res = {}
+        c1_res = {}
         c1_res['f1'] = np.random.random()
         c1_res['pre'] = np.random.random()
         c_res['F1SpanMetric'] = c1_res
-        c1_res = OrderedDict()
+        c1_res = {}
         c1_res['f1'] = np.random.random()
         c1_res['pre1'] = np.random.random()
         c_res['F2SpanMetric'] = c1_res
@@ -66,10 +66,10 @@ def generate_data(num_records=3):
 
         # # other
         if np.random.random()<0.5:
-            c_res = OrderedDict()
+            c_res = {}
             c_res['loss'] = np.random.rand()
-            c2_res = OrderedDict()
-            c3_res = OrderedDict()
+            c2_res = {}
+            c3_res = {}
             for i in range(2):
                 c3_res['c3_1'] = np.random.choice(list('abcdef'))
                 c3_res['c3_2'] = np.random.choice(list('abcdef'))
@@ -82,5 +82,5 @@ def generate_data(num_records=3):
 
 
 if __name__ == '__main__':
-    pass
+    print(generate_data(1)[0])
 

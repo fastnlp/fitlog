@@ -4,4 +4,4 @@ watched_files = *.py, ex.*,useless-*.java, data/code, logs/results.txt
 
 [log_settings]
 default_log_dir = ./logs
-save_on_first_metric = True
+save_on_first_metric_or_loss = True

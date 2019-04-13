@@ -130,7 +130,6 @@ function get_max_col_ord_depth(value){
     return depth;
 }
 
-
 var prompt = function (message, style, time)
 {
     style = (style === undefined) ? 'alert-success' : style;
@@ -147,26 +146,10 @@ var prompt = function (message, style, time)
 // 成功提示
 var success_prompt = function(message, time)
 {
+    $('.alert').remove();
     prompt(message, 'alert-success', time);
 };
 
-// 失败提示
-var fail_prompt = function(message, time)
-{
-    prompt(message, 'alert-danger', time);
-};
-
-// 提醒
-var warning_prompt = function(message, time)
-{
-    prompt(message, 'alert-warning', time);
-};
-
-// 信息提示
-var info_prompt = function(message, time)
-{
-    prompt(message, 'alert-info', time);
-};
 
 
 

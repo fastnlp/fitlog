@@ -10,6 +10,7 @@ $(function () {
     _settings['Save settings'] = true;
     _settings['Refresh from disk'] = false;
     _settings['Reorderable rows'] = false;
+    _settings['No suffix'] = true;
     window.settings = _settings;
 
     //0. 从后台获取必要的数据，然后用于创建Table
@@ -93,6 +94,7 @@ window.operateEvents = {
                             contentType: 'application/json;charset=UTF-8',
                             data: JSON.stringify({
                                  id: row['id'],
+                                 suffix: !window.settings['No suffix'],
                                  fit_id: row['meta-fit_id'],
                                  uuid: window.server_uuid
                             }),
@@ -107,20 +109,84 @@ window.operateEvents = {
                                 }
                             },
                             error: function(error){
-                                bootbox.alert(error)
+                                bootbox.alert('Error encountered. ' + error);
                             }
                     })
                   }
                 })
             }
         }
+    },
+    'click .trend': function (e, value, row, index) {
+        if(window.settings['Offline']){
+            bootbox.alert("You are on offline mode, no action will send to the server.")
+        }else{
+              var finish = false;
+              if(row['state']==='finish'){
+                  finish = true;
+              }
+              $.ajax({
+                    url: '/chart/have_trends',
+                    type: 'POST',
+                    dataType: 'json',
+                    async: false,
+                    contentType: 'application/json;charset=UTF-8',
+                    data: JSON.stringify({
+                         log_dir: row['id']
+                    }),
+                    success: function(value){
+                        var status = value['status'];
+                        if(status==='success' && value['have_trends']){
+                            openPostWindow('/chart', {'log_dir': row['id'], 'finish': finish});
+                        } else{
+                            bootbox.alert("There is no changing logs for this record.");
+                        }
+                    },
+                    error: function(error){
+                        bootbox.alert("Some error happens. ");
+                    }
+            })
+        }
     }
 };
+
+
+function openPostWindow(url, params)
+{
+        var form = document.createElement("form");
+        form.setAttribute("method", "post");
+        form.setAttribute("action", url);
+        form.setAttribute("target", '_blank');
+
+        for (var i in params) {
+            if (params.hasOwnProperty(i)) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = i;
+                input.value = params[i];
+                form.appendChild(input);
+            }
+        }
+
+        document.body.appendChild(form);
+
+        //note I am using a post.htm page since I did not want to make double request to the page
+       //it might have some Page_Load call which might screw things up.
+       //  window.open("/chart", name, "width=730,height=345,left=100,top=100,resizable=yes,scrollbars=yes");
+
+        form.submit();
+
+        document.body.removeChild(form);
+}
+
 
 function operateFormatter(value, row, index) {
     return [
       '<a class="reset" href="javascript:void(0)" title="Reset">',
-      '<i class="glyphicon glyphicon-backward"></i>',
+      '<i class="glyphicon glyphicon-share-alt" style="padding:0px 2px 0px 1px"></i>',
+      '</a>',
+      '<a class="trend" href="javascript:void(0)" title="Thread">',
+      '<i class="glyphicon glyphicon-road" style="padding:0px 1px 0px 2px"></i>',
       '</a>'
     ].join('')
 }
@@ -148,8 +214,13 @@ function initalizeTable(){
             })
         });
 
+        var data = [];
+        for(var key in window.table_data){
+            data.push(window.table_data[key]);
+        }
+
         //1.初始化Table
-        TableInit().Init(columns, window.table_data, filterControl, window.settings['Pagination'],
+        TableInit().Init(columns, data, filterControl, window.settings['Pagination'],
                 window.settings['Reorderable rows']);
         //2. 将不需要的row隐藏
         hide_row_by_ids(window.hidden_rows, $('#tb_departments'));
@@ -177,7 +248,7 @@ var TableInit = function () {
             pagination: pagination,                   //是否显示分页（*）
             maintainSelected:true,              // 当操作时，保持selected的对象不改变
             sortable: true,                     //是否启用排序
-            sortOrder: "asc",                   //排序方式
+            sortOrder: "desc",                   //排序方式
             sortName: 'id',                     //依照哪个标准排序
             queryParams: oTableInit.queryParams,//传递参数（*）
             sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
@@ -191,7 +262,7 @@ var TableInit = function () {
             hideUnusedSelectOptions: false,       //不要显示不存在的filter对象，如果为true再选择某个filter之后，这个filter其它选项都消失了
             showColumns: false,                  //是否显示所有的列
             stickyHeader: false,                 //是否固定header, 多级header时有bug，不能正常使用
-            showRefresh: false,                  //是否显示刷新按钮
+            showRefresh: true,                  //是否显示刷新按钮
             minimumCountColumns: 2,             //最少允许的列数
             clickToSelect: true,                //是否启用点击选中行
             // height: 700,                        //行高，如果没有设置height属性，表格自动根据记录条数觉得表格高度.
