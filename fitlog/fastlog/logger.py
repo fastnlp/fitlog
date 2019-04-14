@@ -147,7 +147,6 @@ class Logger:
                 _logger.setLevel(logging.INFO)
                 _logger.addHandler(_handler)
 
-            # TODO 修正
             self.__add_meta()
 
     @check_debug

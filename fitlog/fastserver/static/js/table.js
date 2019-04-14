@@ -78,75 +78,67 @@ function add_operate_checkbox(columns)
 
 window.operateEvents = {
     'click .reset': function (e, value, row, index) {
-        if(window.settings['Offline']){
-            bootbox.alert("You are on offline mode, no action will send to the server.")
+        if(row['meta-fit_id']===undefined){
+            bootbox.alert("This version of code is not managed by fitlog, cannot reset.")
         }else{
-            if(row['meta-fit_id']===undefined){
-                bootbox.alert("This version of code is not managed by fitlog, cannot reset.")
-            }else{
-                var msg="Are you going to revert to this version of code.";
-                bootbox.confirm(msg, function(result){
-                  if(result){
-                      $.ajax({
-                            url: '/table/reset',
-                            type: 'POST',
-                            dataType: 'json',
-                            contentType: 'application/json;charset=UTF-8',
-                            data: JSON.stringify({
-                                 id: row['id'],
-                                 suffix: !window.settings['No suffix'],
-                                 fit_id: row['meta-fit_id'],
-                                 uuid: window.server_uuid
-                            }),
-                            success: function(value){
-                                var status = value['status'];
-                                var msg = value['msg'];
-                                if(status==='success'){
-                                    bootbox.alert("Reset succeed! " + msg);
-                                }
-                                else{
-                                    bootbox.alert("Reset failed! " + msg);
-                                }
-                            },
-                            error: function(error){
-                                bootbox.alert('Error encountered. ' + error);
+            var msg="Are you going to revert to this version of code.";
+            bootbox.confirm(msg, function(result){
+              if(result){
+                  $.ajax({
+                        url: '/table/reset',
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                             id: row['id'],
+                             suffix: !window.settings['No suffix'],
+                             fit_id: row['meta-fit_id'],
+                             uuid: window.server_uuid
+                        }),
+                        success: function(value){
+                            var status = value['status'];
+                            var msg = value['msg'];
+                            if(status==='success'){
+                                bootbox.alert("Reset succeed! " + msg);
                             }
-                    })
-                  }
+                            else{
+                                bootbox.alert("Reset failed! " + msg);
+                            }
+                        },
+                        error: function(error){
+                            bootbox.alert('Error encountered. ' + error);
+                        }
                 })
-            }
+              }
+            })
         }
     },
     'click .trend': function (e, value, row, index) {
-        if(window.settings['Offline']){
-            bootbox.alert("You are on offline mode, no action will send to the server.")
-        }else{
-              var finish = false;
-              if(row['state']==='finish'){
-                  finish = true;
-              }
-              $.ajax({
-                    url: '/chart/have_trends',
-                    type: 'POST',
-                    dataType: 'json',
-                    async: false,
-                    contentType: 'application/json;charset=UTF-8',
-                    data: JSON.stringify({
-                         log_dir: row['id']
-                    }),
-                    success: function(value){
-                        var status = value['status'];
-                        if(status==='success' && value['have_trends']){
-                            openPostWindow('/chart', {'log_dir': row['id'], 'finish': finish});
-                        } else{
-                            bootbox.alert("There is no changing logs for this record.");
-                        }
-                    },
-                    error: function(error){
-                        bootbox.alert("Some error happens. ");
+          var finish = false;
+          if(row['state']==='finish'){
+              finish = true;
+          }
+          $.ajax({
+                url: '/chart/have_trends',
+                type: 'POST',
+                dataType: 'json',
+                async: false,
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                     log_dir: row['id']
+                }),
+                success: function(value){
+                    var status = value['status'];
+                    if(status==='success' && value['have_trends']){
+                        openPostWindow('/chart', {'log_dir': row['id'], 'finish': finish});
+                    } else{
+                        bootbox.alert("There is no changing logs for this record.");
                     }
-            })
-        }
+                },
+                error: function(error){
+                    bootbox.alert("Some error happens. ");
+                }
+        })
     }
 };
 

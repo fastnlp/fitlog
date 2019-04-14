@@ -1,7 +1,7 @@
 from flask import render_template
 
 
-from flask import request, jsonify, url_for
+from flask import request, jsonify
 import os
 from flask import Blueprint
 from fitlog.fastserver.server.data_container import all_data, all_handlers, handler_watcher
@@ -9,7 +9,6 @@ from fitlog.fastlog.log_read import is_log_dir_has_step, is_log_record_finish
 from fitlog.fastserver.server.chart_utils import ChartStepLogHandler
 
 import uuid
-
 
 chart_page = Blueprint("chart_page", __name__, template_folder='templates')
 

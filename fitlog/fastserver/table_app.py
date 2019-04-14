@@ -1,40 +1,26 @@
 from flask import Flask, render_template
 
 from flask import request, jsonify, redirect, url_for
-import uuid
 import os
+from flask import Blueprint
 
 from fitlog.fastserver.server.table_utils import prepare_data, prepare_incremental_data
 from fitlog.fastserver.server.table_utils import replace_with_extra_data
-from fitlog.fastserver.server.app_utils import cmd_parser
-from fitlog.fastserver.server.app_utils import get_usage_port
 
+from fitlog.fastserver.server.data_container import all_data
+from fitlog.fastgit import committer
 from fitlog.fastserver.server.server_config import save_config
 from fitlog.fastserver.server.server_config import save_extra_data
-from fitlog.fastserver.server.data_container import all_data
-from fitlog.fastserver.server.data_container import all_handlers, handler_watcher
-from fitlog.fastgit import committer
-from fitlog.fastlog import log_reader
 
-from fitlog.fastserver.chart_app import chart_page
+table_page = Blueprint("table_page", __name__, template_folder='templates')
 
-app = Flask(__name__)
-
-app.register_blueprint(chart_page)
-
-all_data['debug'] = False # when in debug mode, no call to other modules will be initialized.
-log_dir = ''
-log_config_path = ''
 first_time_access_table = True
 
-@app.route('/')
-def hello_world():
-    return redirect(url_for('table'))
-    # return render_template('index.html')
-
-@app.route('/table/table')
+@table_page.route('/table/table')
 def get_table():
-    global all_data, first_time_access_table, log_dir, log_config_path
+    global first_time_access_table
+    log_dir = all_data['root_log_dir']
+    log_config_path = all_data['log_config_path']
     if not first_time_access_table:
         if all_data['settings']['Refresh_from_disk']:
             save_all_data(all_data, log_dir, log_config_path)
@@ -54,7 +40,7 @@ def get_table():
                    hidden_rows=list(all_data['hidden_rows'].keys()),
                    unchanged_columns=all_data['unchanged_columns'])
 
-@app.route('/table/refresh', methods=['POST'])
+@table_page.route('/table/refresh', methods=['POST'])
 def refresh_table():
     res = check_uuid(all_data['uuid'], request.json['uuid'])
     if res != None:
@@ -72,7 +58,7 @@ def refresh_table():
     except:
         return jsonify(status='fail', msg="Unknown error from server.")
 
-@app.route('/table/delete_records', methods=['POST'])
+@table_page.route('/table/delete_records', methods=['POST'])
 def delete_records():
     res = check_uuid(all_data['uuid'], request.json['uuid'])
     if res != None:
@@ -80,11 +66,11 @@ def delete_records():
     ids = request.json['ids']
     for id in ids:
         all_data['deleted_rows'][id] = 1
-    all_data['data'] = {log['id']:log for log in all_data['data'] if log['id'] not in all_data['deleted_rows']}
+    all_data['data'] = {id:log for id, log in all_data['data'].items() if id not in all_data['deleted_rows']}
 
     return jsonify(status='success', msg='')
 
-@app.route('/table/edit', methods=['POST'])
+@table_page.route('/table/edit', methods=['POST'])
 def table_edit():
     try:
         # 包含field, id, new_field_value三个值
@@ -104,7 +90,7 @@ def table_edit():
         print(e)
         return jsonify(status='fail', msg='Unknown error fail to save edit results.')
 
-@app.route('/table/reset', methods=['POST'])
+@table_page.route('/table/reset', methods=['POST'])
 def table_reset():
     try:
         res = check_uuid(all_data['uuid'], request.json['uuid'])
@@ -123,7 +109,7 @@ def table_reset():
         print(e)
         return jsonify(status='fail', msg='Unknown error from server.')
 
-@app.route('/table/settings', methods=['POST'])
+@table_page.route('/table/settings', methods=['POST'])
 def settings():
     res = check_uuid(all_data['uuid'], request.json['uuid'])
     if res!=None:
@@ -133,7 +119,7 @@ def settings():
 
     return jsonify(status='success', msg='')
 
-@app.route('/table/hidden_rows', methods=['POST'])
+@table_page.route('/table/hidden_rows', methods=['POST'])
 def hidden_ids():
     res = check_uuid(all_data['uuid'], request.json['uuid'])
     if res!=None:
@@ -145,7 +131,7 @@ def hidden_ids():
 
     return jsonify(status='success', msg='')
 
-@app.route('/table/hidden_columns', methods=['POST'])
+@table_page.route('/table/hidden_columns', methods=['POST'])
 def hidden_columns():
     res = check_uuid(all_data['uuid'], request.json['uuid'])
     if res!=None:
@@ -154,7 +140,7 @@ def hidden_columns():
     all_data['hidden_columns'] = hidden_columns
     return jsonify(status='success', msg='')
 
-@app.route('/table/column_order', methods=['POST'])
+@table_page.route('/table/column_order', methods=['POST'])
 def column_order():
     res = check_uuid(all_data['uuid'], request.json['uuid'])
     if res != None:
@@ -163,7 +149,7 @@ def column_order():
     all_data['column_order'] = column_order
     return jsonify(status='success', msg='')
 
-@app.route('/table')
+@table_page.route('/table')
 def table():
     return render_template('table.html')
 
@@ -173,7 +159,6 @@ def check_uuid(gold_uuid, _uuid):
     else:
         return {'status': 'fail',
                 'msg': "The data are out-of-date, please refresh this page."}
-
 
 def save_all_data(all_data, log_dir, log_config_path):
     if all_data['settings']['Save_settings'] and not all_data['debug']:  # 如果需要保存
@@ -185,37 +170,3 @@ def save_all_data(all_data, log_dir, log_config_path):
             save_extra_data(extra_data_path, all_data['extra_data'])
 
         print("Settings are saved to {}.".format(log_config_path))
-
-
-if __name__ == '__main__':
-    parser = cmd_parser()
-    args = parser.parse_args()
-
-    start_port = args.port
-    log_dir = args.log_dir
-    cwd = os.path.abspath('.')
-    if not os.path.isabs(log_dir):
-        log_dir = os.path.join(cwd, log_dir)
-    if not os.path.isdir(log_dir):
-        raise IsADirectoryError("{} is not a directory.".format(log_dir))
-
-    log_dir = os.path.abspath(log_dir)
-    all_data['root_log_dir'] = log_dir # will be used by chart_app.py
-    if os.path.dirname(args.log_config_name)!='':
-        raise ValueError("log_config_name can only be a filename.")
-
-    log_config_path = os.path.join(log_dir, args.log_config_name)
-
-    log_reader.set_log_dir(log_dir)
-    all_data['log_reader'] = log_reader
-
-    # 准备数据
-    all_data.update(prepare_data(log_reader, log_dir, log_config_path, all_data['debug']))
-    print("Finish preparing data. Found {} records in {}.".format(len(all_data['data']), log_dir))
-    all_data['uuid'] = str(uuid.uuid1())
-
-    port = get_usage_port(start_port=start_port)
-    app.run(host='0.0.0.0', port=port)
-
-    save_all_data(all_data, log_dir, log_config_path)
-    handler_watcher.stop()

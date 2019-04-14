@@ -122,7 +122,6 @@ def read_server_config(config_path):
     # 保存config对象, 因为需要保留下注释
     all_data['config'] = config
 
-    # TODO 读取chart的setting
     _dict = {}
     chart_exclude_columns = read_list_from_config(config, 'chart_settings', 'chart_exclude_columns', ',')
     _dict['chart_exclude_columns'] = {column:1 for column in chart_exclude_columns}

@@ -150,6 +150,9 @@
         {
             var checked;
             checked = settings[setting];
+            if(setting==='Offline' && checked){
+                continue; // 不允许再次修改Offline为Online
+            }
             if(checked)
             {
               checked = 'checked'
@@ -341,6 +344,14 @@
                         }
                      })
                 }
+            }else{
+                $table.bootstrapTable('remove', {
+                    field: 'id',
+                    values: ids
+                  });
+                $delete.prop('disabled', true);
+                $hide.prop('disabled', true);
+                success_prompt("Deletion succeed.", 1500);
             }
         });
     });
