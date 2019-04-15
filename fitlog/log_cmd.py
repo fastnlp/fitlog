@@ -27,8 +27,11 @@ def log_cmd(argv):
         cwd = os.path.abspath('.')
         log_dir = os.path.join(cwd, log_dir)
 
+    if not os.path.exists(log_dir):
+        raise RuntimeError("{} is not exist.".format(log_dir))
+
     if not os.path.isdir(log_dir):
-        raise IsADirectoryError("{} is not a directory.".format(log_dir))
+        raise NotADirectoryError("{} is not a directory.".format(log_dir))
 
     log_dir = os.path.abspath(log_dir)
     if os.path.dirname(log_config_name)!='':

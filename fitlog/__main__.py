@@ -18,7 +18,7 @@ See "fitlog help <command>" for more information on a specific command
 
 """
 
-if __name__ == '__main__':
+def main():
     filedir = os.path.dirname(__file__)
     fit_path = os.path.join(filedir, 'fit_cmd.py')
     log_path = os.path.join(filedir, 'log_cmd.py')
@@ -30,10 +30,16 @@ if __name__ == '__main__':
     elif args['<command>']=='log':
         log_cmd(argv)
     elif args['<command>'] in ['help', None]:
-        cmd = args['<args>'][0]
-        if cmd == 'log':
-            call(['python', log_path, '-h'])
-        elif cmd in ('init', 'revert'):
-            call(['python', fit_path, '-h'])
+        if len(args['<args>'])!=0:
+            cmd = args['<args>'][0]
+            if cmd == 'log':
+                call(['python', log_path, '-h'])
+            elif cmd in ('init', 'revert'):
+                call(['python', fit_path, '-h'])
+            else:
+                raise ValueError("Unknown command `{}`, only support [log, init, revert].".format(cmd))
         else:
-            raise ValueError("Unknown command `{}` only support log, init, revert.".format(cmd))
+            raise ValueError("You have to specify a command, support [log, init, revert].")
+
+if __name__ == '__main__':
+    main()

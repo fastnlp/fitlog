@@ -6,7 +6,7 @@ Usage:
     fitlog init [<name>] [--hide] [--no-git] [-e | --example]
     fitlog revert <fit_id>  [<path>] [--id-suffix]
     fitlog -h | --help
-    fitlog -v | --version
+
 
 Arguments:
     name                    Name of the fitlog project
