@@ -50,6 +50,8 @@ max_points=400
 wait_seconds=180
 # columns are not displayed in the chart, not share with the one in the column_settings
 chart_exclude_columns=
+# the interval between update in the front page. in seconds. Don't set it too small.
+update_every=4
 """
 
 from fitlog.fastserver.server.log_config_parser import ConfigParser
@@ -127,6 +129,7 @@ def read_server_config(config_path):
     _dict['chart_exclude_columns'] = {column:1 for column in chart_exclude_columns}
     _dict['max_points'] = config.getint('chart_settings', 'max_points')
     _dict['wait_seconds'] = config.getint('chart_settings', 'wait_seconds')
+    _dict['update_every'] = config.getint('chart_settings', 'update_every')
     all_data['chart_settings'] = _dict
 
     return all_data

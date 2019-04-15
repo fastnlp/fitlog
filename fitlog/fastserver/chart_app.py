@@ -35,7 +35,7 @@ def chart():
             handler_watcher.start()
 
     return render_template('chart.html', log_dir=log_dir, data=points, chart_uuid=_uuid, max_steps=max_points,
-                           server_uuid=all_data['uuid'])
+                           server_uuid=all_data['uuid'], update_every=all_data['chart_settings']['update_every'])
 
 @chart_page.route('/chart/new_step', methods=['POST'])
 def chart_new_step():

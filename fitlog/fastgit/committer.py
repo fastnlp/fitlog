@@ -293,8 +293,9 @@ class Committer:
             lines = subprocess.Popen("cd %s && git log --oneline"%work_dir, shell=True,
                                       stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.readlines()
             if len(lines)!=0:
-                git_id = lines[0][:lines[0].index(' ')]
-                git_msg = lines[0][lines[0].index(' ')+1:].strip()
+                line = lines[0].decode('utf-8')
+                git_id = line[:line.index(' ')]
+                git_msg = line[line.index(' ')+1:].strip()
             else:
                 git_id = None
                 git_msg = None

@@ -41,7 +41,8 @@ class ChartStepLogHandler:
                         if _key in v:
                             expand_v[_key] = v[_key]
                     _expand_v = expand_dict('', real_v)
-                    for __key in list(_expand_v.keys()): # 删除不需要的图
+                    for __key in list(_expand_v.keys()):
+                        # 删除不需要的图
                         if __key in self.exclude_columns:
                             _expand_v.pop(__key)
                     for i_key, i_value in _expand_v.items():

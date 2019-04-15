@@ -57,7 +57,7 @@
         </button>
 
         <!--consisten columns-->
-        <button type="button" class="btn btn-basic" data-toggle="modal" data-target="#unchanged_columns_box"
+        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#unchanged_columns_box"
                 style="margin-left: 5px;margin-right: 5px" id="consistent_cols">
           <i class="glyphicon glyphicon-th-list"></i> Con. cols.
         </button>
@@ -337,7 +337,12 @@
                               });
                             $delete.prop('disabled', true);
                             $hide.prop('disabled', true);
-                            success_prompt("Deletion succeed.", 1500);
+                            if(value['status']==='fail'){
+                                warning_prompt("Delete in front-page, but not update to the server.", 2000);
+                            }else{
+                                success_prompt("Deletion succeed.", 1500);
+                            }
+
                         },
                         error: function(error){
                             bootbox.alert("Fail to execute deletion, please delete in server.")
@@ -388,8 +393,7 @@
       var data = $(table).bootstrapTable("getData");
       var result = [];
       data.filter(function (o, i) {
-          {#console.log(parseInt(o[key]), parseInt(value));#}
-        if (parseInt(o[key]) === parseInt(value)) {
+        if (o[key] === value) {
           result.push(i);
         }
       });
