@@ -8,7 +8,6 @@ $(function () {
     _settings['Hide hidden columns when reorder'] = false;
     _settings['Offline'] = false;
     _settings['Save settings'] = true;
-    _settings['Refresh from disk'] = false;
     _settings['Reorderable rows'] = false;
     _settings['No suffix'] = true;
     window.settings = _settings;

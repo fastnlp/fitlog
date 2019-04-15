@@ -12,8 +12,6 @@ Hide_hidden_columns_when_reorder=False
 Offline=False
 # whether save your changes
 Save_settings=True
-# whether to reload from disk when refresh
-Refresh_from_disk=False
 # Whether the rows are reorderable, when they are reorderable, they cannot be selected or copied
 Reorderable_rows=False
 # Where should fitlog revert codes to: ../<pj_name>-revert or ../<pj_name>-revert-<fit_id>

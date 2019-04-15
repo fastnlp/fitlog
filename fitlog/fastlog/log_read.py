@@ -102,28 +102,6 @@ def _read_save_log(_save_log_dir, ignore_null_loss_or_metric=True, file_stats=No
         raise e
     return _dict, file_stats
 
-def read_step_logs(_save_log_dir):
-    """
-
-    :param _save_log_dir: 给定一个log_dir,
-    :return: 返回{loss: [dict('step':x, key:value)], metric:[dict('step':x, key:value)]}
-    """
-    if not is_dirname_log_record(_save_log_dir):
-        return {}
-
-    _dict = {}
-
-    try:
-        filenames = ['metric.log', 'loss.log']
-        for filename in filenames:
-            filepath = os.path.join(_save_log_dir, filename)
-            __dict = _read_step_log_file(filepath)
-            if len(__dict)!=0:
-                _dict[filename.split('.')[0]] = __dict
-    except Exception as e:
-        print("Exception raised when read {}".format(os.path.abspath(filepath)))
-        return {}
-    return _dict
 
 def is_log_dir_has_step(_save_log_dir):
     """
@@ -139,9 +117,10 @@ def is_log_dir_has_step(_save_log_dir):
             filepath = os.path.join(_save_log_dir, filename)
             if not os.path.exists(filepath):
                 continue
-            _l = _read_step_log_file(filepath)
-            if len(_l)!=0:
-                return True
+            with open(filepath, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.startswith('Step:'):
+                        return True
     except Exception as e:
         print("Exception raised when read {}".format(os.path.abspath(filepath)))
         return False
@@ -170,21 +149,6 @@ def _read_nonstep_log_file(filepath, start_line=0):
                 a = merge(a, b, use_b=True)
     return a, index+1
 
-def _read_step_log_file(filepath):
-    """
-    给定filepath, 读取以Step: 开头的line
-
-    :param filepath: str
-    :return: List[dict]里面的内容为step每行的内容
-    """
-    l = []
-    with open(filepath, 'r', encoding='utf-8') as f:
-        for line in f:
-            if line.startswith('Step:'):
-                line = line.strip()
-                b = json.loads(line[line.index('\t')+1:])
-                l.append(b)
-    return l
 
 def merge(a, b, path=None, use_b=True):
     "merges b into a"
@@ -247,7 +211,7 @@ class StandbyStepLogReader(threading.Thread):
         self._file_handlers = {}
 
         self.uuid = uuid
-        self._last_acess_time = None  # 如果这么长时间没有读取到新的数据，就认为是不需要再读取的了
+        self._last_access_time = None  # 如果这么长时间没有读取到新的数据，就认为是不需要再读取的了
         # 如果这么长时间没有再次调用，就关掉文件
         self._wait_seconds = wait_seconds
 
@@ -280,9 +244,9 @@ class StandbyStepLogReader(threading.Thread):
         """
         if not self._quit:
             flag = False
-            if self._last_acess_time is None:
+            if self._last_access_time is None:
                 flag = True
-            self._last_acess_time = time.time()
+            self._last_access_time = time.time()
             self._create_file_handler()
             updates = defaultdict(list)
             for filename, handler in self._file_handlers.items():
@@ -296,6 +260,8 @@ class StandbyStepLogReader(threading.Thread):
                             line = line[line.index('\t')+1:].strip()
                             _dict = json.loads(line)
                             updates[filename].append(_dict)
+                if len(updates[filename])!=0:  # 对step排序，保证不要出现混乱
+                    updates[filename] = updates[filename].sort(key=lambda x:x['step'])
             if not only_once:
                 if len(updates)==0:
                     self._no_update_count += 1
@@ -332,7 +298,7 @@ class StandbyStepLogReader(threading.Thread):
             count += 1
 
     def run(self):
-        while time.time() - self._last_acess_time<self._wait_seconds and not self._stop_flag and \
+        while time.time() - self._last_access_time<self._wait_seconds and not self._stop_flag and \
                 self._no_update_count<self.max_no_update:
             time.sleep(0.5)
         self._quit = True

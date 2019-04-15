@@ -5,7 +5,6 @@ import os
 from flask import Blueprint
 
 from fitlog.fastserver.server.table_utils import prepare_data, prepare_incremental_data
-from fitlog.fastserver.server.table_utils import replace_with_extra_data
 
 from fitlog.fastserver.server.data_container import all_data
 from fitlog.fastgit import committer
@@ -19,16 +18,13 @@ first_time_access_table = True
 @table_page.route('/table/table')
 def get_table():
     global first_time_access_table
-    log_dir = all_data['root_log_dir']
-    log_config_path = all_data['log_config_path']
     if not first_time_access_table:
-        if all_data['settings']['Refresh_from_disk']:
-            save_all_data(all_data, log_dir, log_config_path)
-            log_reader = all_data['log_reader']
-            log_reader.set_log_dir(log_dir)
-            all_data.update(prepare_data(log_reader, log_dir, log_config_path, all_data['debug']))
-        else:
-            replace_with_extra_data(all_data['data'], all_data['extra_data'])
+        log_dir = all_data['root_log_dir']
+        log_config_path = all_data['log_config_path']
+        save_all_data(all_data, log_dir, log_config_path)
+        log_reader = all_data['log_reader']
+        log_reader.set_log_dir(log_dir)
+        all_data.update(prepare_data(log_reader, log_dir, log_config_path, all_data['debug']))
 
     first_time_access_table = False
     data = all_data['data']
