@@ -1,6 +1,6 @@
-from flask import Flask, render_template
+from flask import render_template
 
-from flask import request, jsonify, redirect, url_for
+from flask import request, jsonify
 import os
 from flask import Blueprint
 
@@ -151,6 +151,7 @@ def column_order():
 
 @table_page.route('/table')
 def table():
+    print(os.path.abspath(os.getcwd()), '\n'*5, flush=True)
     return render_template('table.html')
 
 def check_uuid(gold_uuid, _uuid):

@@ -40,6 +40,8 @@ def main():
                 raise ValueError("Unknown command `{}`, only support [log, init, revert].".format(cmd))
         else:
             raise ValueError("You have to specify a command, support [log, init, revert].")
+    else:
+        raise RuntimeError("Unknown command: {}.".format(args['<command>']))
 
 if __name__ == '__main__':
     main()

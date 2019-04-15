@@ -50,6 +50,7 @@ def seriouslykill():
 
 
 def start_app(log_dir, log_config_name, start_port, standby_hours):
+    os.chdir(os.path.dirname(os.path.abspath(__file__))) # 可能需要把运行路径移动到这里
     all_data['root_log_dir'] = log_dir # will be used by chart_app
     server_wait_seconds = int(standby_hours*3600)
     log_config_path = os.path.join(log_dir, log_config_name)

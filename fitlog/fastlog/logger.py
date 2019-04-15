@@ -63,7 +63,7 @@ class Logger:
             self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')
             self._default_log_dir = os.path.join(committer.work_dir, config.get('log_settings', 'default_log_dir'))
         else:
-            raise RuntimeError(msg['msg'])
+            raise RuntimeError("It seems like you are not running under a folder governed by fitlog.\n" + msg['msg'])
 
     @check_debug
     def set_save_on_first_metric_or_loss(self, flag=True):
@@ -92,7 +92,7 @@ class Logger:
                 return
 
         if not os.path.exists(log_dir):
-            raise FileNotFoundError("`{}` is not exist.".format(log_dir))
+            raise NotADirectoryError("`{}` is not exist.".format(log_dir))
         if not os.path.isdir(log_dir):
             raise FileExistsError("`{}` is not a directory.".format(log_dir))
 
