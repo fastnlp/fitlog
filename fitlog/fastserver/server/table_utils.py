@@ -93,7 +93,8 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
         must_include_columns = ['meta-fit_id', 'meta-git_id']
         for key, value in field_values.items():
             value_set = set(value)
-            if len(value_set) == 1 and key not in editable_columns: # 每次都是一样的结果, 但排除可修改的column
+            # 每次都是一样的结果, 但排除只有一个元素的value以及可修改的column
+            if len(value_set) == 1 and len(value)!=1 and key not in editable_columns:
                 unchange_columns[key] = value[0]  # 防止加入column中
         exclude_columns.update(unchange_columns) # 所有不变的column都不选择了
         for column in must_include_columns:

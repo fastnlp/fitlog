@@ -23,9 +23,11 @@ def chart():
     chart_exclude_columns = all_data['chart_settings']['chart_exclude_columns']
     _uuid = str(uuid.uuid1())
     max_points = all_data['chart_settings']['max_points']
+    update_every_second = all_data['chart_settings']['update_every']
+    wait_seconds = update_every_second*3 # 如果本来应该收到三次更新，但是却没有收到，则自动关闭
     handler = ChartStepLogHandler(save_log_dir, _uuid, round_to=all_data['basic_settings']['round_to'],
                             max_steps=max_points,
-                            wait_seconds=all_data['chart_settings']['wait_seconds'],
+                            wait_seconds=wait_seconds,
                             exclude_columns=chart_exclude_columns,
                             max_no_updates=all_data['chart_settings']['max_no_updates'])
     only_once = is_log_record_finish(save_log_dir) or finish=='true'
@@ -35,9 +37,10 @@ def chart():
         if not handler_watcher._start:
             handler_watcher.start()
 
-    return render_template('chart.html', log_dir=log_dir, data=points, chart_uuid=_uuid, max_steps=max_points,
+    return render_template('chart.html', log_dir=log_dir, data=points, chart_uuid=_uuid,
+                           max_steps=max_points,
                            server_uuid=all_data['uuid'],
-                           update_every=all_data['chart_settings']['update_every']*1000,
+                           update_every=update_every_second*1000,
                            max_no_updates=all_data['chart_settings']['max_no_updates'])
 
 @chart_page.route('/chart/new_step', methods=['POST'])

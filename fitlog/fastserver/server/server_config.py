@@ -44,8 +44,6 @@ column_order=
 [chart_settings]
 # The maximum points one line can hold.
 max_points=400
-# If in `wait_seconds`, no update detected, the auto refresh will close.
-wait_seconds=180
 # columns are not displayed in the chart, not share with the one in the column_settings
 chart_exclude_columns=
 # the interval between update in the front page. in seconds. Don't set it too small.
@@ -128,7 +126,6 @@ def read_server_config(config_path):
     chart_exclude_columns = read_list_from_config(config, 'chart_settings', 'chart_exclude_columns', ',')
     _dict['chart_exclude_columns'] = {column:1 for column in chart_exclude_columns}
     _dict['max_points'] = config.getint('chart_settings', 'max_points')
-    _dict['wait_seconds'] = config.getint('chart_settings', 'wait_seconds')
     _dict['update_every'] = config.getint('chart_settings', 'update_every')
     _dict['max_no_updates'] = config.getint('chart_settings', 'max_no_updates')
     all_data['chart_settings'] = _dict

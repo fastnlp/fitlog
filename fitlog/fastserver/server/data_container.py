@@ -21,6 +21,7 @@ class HandlerWatcher(threading.Thread):
                     handler = self.all_handlers[_uuid]
                     if handler.reader._quit:
                         handler.reader.stop()
+                        self.all_handlers.pop(_uuid)
                         del handler
             time.sleep(0.5)
         # 删除所有的handler
