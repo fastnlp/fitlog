@@ -64,6 +64,8 @@
 
 <script>
   var update_every=parseInt('{{update_every}}');
+  var max_no_updates=parseInt('{{max_no_updates}}');
+  var no_update_count = 0;
   var data=JSON.parse('{{data|tojson}}');
   var max_steps = '{{max_steps}}';
   window.chart_uuid = '{{chart_uuid}}';
@@ -203,6 +205,14 @@ function get_new_steps(){
                     stop_interval(tmp);
                     bootbox.alert("Finish accessing data.");
                     // 弹出提示，结束了。
+                }
+                if(jQuery.isEmptyObject(value)){
+                    no_update_count += 1;
+                }else{
+                    no_update_count = 0;
+                }
+                if(no_update_count>max_no_updates){
+                    stop_interval(tmp);
                 }
             },
             error: function(error){

@@ -26,7 +26,8 @@ def chart():
     handler = ChartStepLogHandler(save_log_dir, _uuid, round_to=all_data['basic_settings']['round_to'],
                             max_steps=max_points,
                             wait_seconds=all_data['chart_settings']['wait_seconds'],
-                            exclude_columns=chart_exclude_columns)
+                            exclude_columns=chart_exclude_columns,
+                            max_no_updates=all_data['chart_settings']['max_no_updates'])
     only_once = is_log_record_finish(save_log_dir) or finish=='true'
     points = handler.update_logs(only_once) # {'loss': [{}, {}], 'metric':[{}, {}]}
     if not only_once:
@@ -36,7 +37,8 @@ def chart():
 
     return render_template('chart.html', log_dir=log_dir, data=points, chart_uuid=_uuid, max_steps=max_points,
                            server_uuid=all_data['uuid'],
-                           update_every=all_data['chart_settings']['update_every']*1000)
+                           update_every=all_data['chart_settings']['update_every']*1000,
+                           max_no_updates=all_data['chart_settings']['max_no_updates'])
 
 @chart_page.route('/chart/new_step', methods=['POST'])
 def chart_new_step():

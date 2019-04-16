@@ -198,12 +198,13 @@ def is_log_record_finish(save_log_dir):
     return False
 
 class StandbyStepLogReader(threading.Thread):
-    def __init__(self, save_log_dir, uuid, wait_seconds=60):
+    def __init__(self, save_log_dir, uuid, wait_seconds=60, max_no_updates=30):
         """
 
         :param save_log_dir: path, where to read updating logs
         :param uuid: str, used to recognize reader
         :param wait_seconds: int, how many seconds to wait until all files are closed.
+        :param max_no_updates:int, if that much no updates is detected, this reader will close automatically
         """
         super().__init__()
 
@@ -219,8 +220,7 @@ class StandbyStepLogReader(threading.Thread):
         self._stop_flag = False
         self._quit = False
         self._no_update_count = 0
-        #TODO 修改更大一些
-        self.max_no_update = 30
+        self.max_no_update = max_no_updates
 
     def _create_file_handler(self):
         """
@@ -260,7 +260,7 @@ class StandbyStepLogReader(threading.Thread):
                             line = line[line.index('\t')+1:].strip()
                             _dict = json.loads(line)
                             updates[filename].append(_dict)
-                if len(updates[filename])!=0:  # 对step排序，保证不要出现混乱
+                if filename in updates and len(updates[filename])!=0:  # 对step排序，保证不要出现混乱
                     updates[filename].sort(key=lambda x:x['step'])
             if not only_once:
                 if len(updates)==0:
@@ -303,4 +303,3 @@ class StandbyStepLogReader(threading.Thread):
             time.sleep(0.5)
         self._quit = True
         self._close_file_handler()
-        print("The updating for {}:{} finished.".format(os.path.basename(self.save_log_dir), self.uuid))

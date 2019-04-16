@@ -49,7 +49,9 @@ wait_seconds=180
 # columns are not displayed in the chart, not share with the one in the column_settings
 chart_exclude_columns=
 # the interval between update in the front page. in seconds. Don't set it too small.
-update_every=4
+update_every=3
+# if that much no updates is detected, fitlog chart will regard this is a finished trend
+max_no_updates=40
 """
 
 from fitlog.fastserver.server.log_config_parser import ConfigParser
@@ -128,6 +130,7 @@ def read_server_config(config_path):
     _dict['max_points'] = config.getint('chart_settings', 'max_points')
     _dict['wait_seconds'] = config.getint('chart_settings', 'wait_seconds')
     _dict['update_every'] = config.getint('chart_settings', 'update_every')
+    _dict['max_no_updates'] = config.getint('chart_settings', 'max_no_updates')
     all_data['chart_settings'] = _dict
 
     return all_data

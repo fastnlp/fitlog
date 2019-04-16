@@ -21,9 +21,7 @@ class HandlerWatcher(threading.Thread):
                     handler = self.all_handlers[_uuid]
                     if handler.reader._quit:
                         handler.reader.stop()
-                        log_dir = self.all_handlers.pop(_uuid)._save_log_dir
                         del handler
-                        print("Delete reader for {}:{}.".format(os.path.basename(log_dir), _uuid))
             time.sleep(0.5)
         # 删除所有的handler
         for _uuid in list(self.all_handlers.keys()):

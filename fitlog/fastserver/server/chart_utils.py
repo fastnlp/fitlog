@@ -7,8 +7,8 @@ import re
 
 class ChartStepLogHandler:
     def __init__(self, save_log_dir, uuid, round_to=6, max_steps=400, wait_seconds=60,
-                 exclude_columns=None):
-        self.reader = StandbyStepLogReader(save_log_dir, uuid, wait_seconds)
+                 exclude_columns=None, max_no_updates=30):
+        self.reader = StandbyStepLogReader(save_log_dir, uuid, wait_seconds, max_no_updates)
 
         self._save_log_dir = save_log_dir
         self.uuid = uuid
