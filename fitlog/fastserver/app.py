@@ -13,6 +13,7 @@ from fitlog.fastserver.server.table_utils import prepare_data
 from flask import request
 import time
 from fitlog.fastserver.server.app_utils import ServerWatcher
+from flask import send_from_directory
 
 from collections import deque
 
@@ -45,6 +46,13 @@ def seriouslykill():
     func()
     return "stopping"
 
+@app.route('/table.ico')
+def get_table_ico():
+    return send_from_directory(os.path.join('.', 'static', 'img'), 'table.ico')
+
+@app.route('/chart.ico')
+def get_chart_ico():
+    return send_from_directory(os.path.join('.', 'static', 'img'), 'chart.ico')
 
 def start_app(log_dir, log_config_name, start_port, standby_hours):
     os.chdir(os.path.dirname(os.path.abspath(__file__))) # 可能需要把运行路径移动到这里

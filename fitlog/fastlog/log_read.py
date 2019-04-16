@@ -261,7 +261,7 @@ class StandbyStepLogReader(threading.Thread):
                             _dict = json.loads(line)
                             updates[filename].append(_dict)
                 if len(updates[filename])!=0:  # 对step排序，保证不要出现混乱
-                    updates[filename] = updates[filename].sort(key=lambda x:x['step'])
+                    updates[filename].sort(key=lambda x:x['step'])
             if not only_once:
                 if len(updates)==0:
                     self._no_update_count += 1

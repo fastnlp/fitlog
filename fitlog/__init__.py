@@ -1,1 +1,1 @@
-from .fastgit import committer, commit
+from .fastlog.logger import logger

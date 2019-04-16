@@ -3,6 +3,7 @@ from fitlog.fastlog.log_read import StandbyStepLogReader
 from fitlog.fastserver.server.utils import expand_dict
 
 from collections import defaultdict
+import re
 
 class ChartStepLogHandler:
     def __init__(self, save_log_dir, uuid, round_to=6, max_steps=400, wait_seconds=60,
@@ -13,6 +14,7 @@ class ChartStepLogHandler:
         self.uuid = uuid
         self.max_steps = max_steps
         self.round_to = round_to
+        self.path2path = {}  #{'metric':dict, 'loss':dict}
 
         if exclude_columns is None:
             exclude_columns = {}
@@ -20,12 +22,21 @@ class ChartStepLogHandler:
             assert isinstance(exclude_columns, dict)
         self.exclude_columns = exclude_columns
 
+    def _add_path2path(self, key, value):
+        path2spath = self.path2rpath(value)
+        self.path2path[key] = path2spath
+        return path2spath
+
     def update_logs(self, only_once=False):
         steps = self.reader.read_update(only_once)
         data = {}
         for key, values in steps.items():# key为loss, metric, value为[{'step':, epoch:, loss:{}}]
             # [{'step':, epoch:, metric:{}}]
             if key!='finish':
+                if key in self.path2path:
+                    path2path = self.path2path[key]
+                else:
+                    path2path = self._add_path2path(key, values[0])
                 expanded_values = defaultdict(list)
                 for v in values:
                     expand_v = {}
@@ -33,15 +44,19 @@ class ChartStepLogHandler:
                     for _key in ['step', 'epoch']:
                         if _key in v:
                             expand_v[_key] = v[_key]
+                    real_v.pop('step', None)
+                    real_v.pop('epoch', None)
                     _expand_v = expand_dict('', real_v)
                     for __key in list(_expand_v.keys()):
-                        # 删除不需要的图
+                        # 删除不需要的
                         if __key in self.exclude_columns:
                             _expand_v.pop(__key)
                     for i_key, i_value in _expand_v.items():
                         if isinstance(i_value, (float, int)):
                             # TODO 可能需要精简一下路径长度， 比如BMESMetric之类的东西
-                            short_i_key = i_key
+                            if i_key not in path2path:
+                                path2path = self._add_path2path(key, real_v)
+                            short_i_key = path2path[i_key]
                             i_value = round(i_value, self.round_to)
                             i_expand_v = expand_v.copy()
                             i_expand_v['name'] = short_i_key
@@ -60,23 +75,22 @@ class ChartStepLogHandler:
                 data[key] = values
         return data
 
-    def path2shortpath(self, _dict):
+    def path2rpath(self, _dict):
         """
         比如两个value的path
             dev-BMESMetric-f1
             dev-BMESMEtric-pre
             test-BMESMetric-f1
-        缩写为, 从最小删除到最大
-            dev-f1
-            dev-pre
-            test-f1
+        反着写(删除Metric):
+            f1-BMES-dev
+            pre-BMES-dev
 
         :param _dict: {'expanded_path': 'short_path'}
         :return:
         """
         paths = _get_dict_path(_dict)
-        path2spath = _refine_path(paths)
-        return path2spath
+        path2path = _reverse_path(paths)
+        return path2path
 
 def _get_dict_path(_dict, paths=None):
     # 给定一个dict, 返回所有的path，path以[[path], []]展示. 内容存到container中
@@ -92,6 +106,25 @@ def _get_dict_path(_dict, paths=None):
         else:
             new_paths.append(paths + [key])
     return new_paths
+
+def _reverse_path(paths):
+    """
+
+    给定list的path,
+        [['BMESF1Metric', 'f1'], ['BMESF1Metric'], ...]
+    :param paths: {'BMESF1Metric':'f1-BMESF1Metric'}即把内容放到前面
+    :return:
+    """
+    path2path = {}
+    for path in paths:
+        new_path = []
+        for key in path:
+            for span in re.finditer('[Mm]etric$', key):
+                key = key[:span.start()]
+            new_path.append(key)
+        path2path['-'.join(path)] = '-'.join(reversed(new_path))
+    return path2path
+
 
 def _refine_path(paths):
     """
@@ -123,6 +156,6 @@ if __name__ == '__main__':
 
     paths = _get_dict_path(a)
     print(paths)
-    print(_refine_path(paths))
+    print(_reverse_path(paths))
 
     print(expand_dict('', a))
