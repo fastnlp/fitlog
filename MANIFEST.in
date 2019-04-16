@@ -5,4 +5,3 @@ recursive-include fitlog/fastserver/static *
 recursive-include fitlog/fastserver/templates *.html
 include fitlog/fastserver/favicon.ico
 prune test/
-prune mode_test/

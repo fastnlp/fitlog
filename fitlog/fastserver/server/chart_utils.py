@@ -11,7 +11,6 @@ class ChartStepLogHandler:
 
         self._save_log_dir = save_log_dir
         self.uuid = uuid
-        self.path2spath = {}
         self.max_steps = max_steps
         self.round_to = round_to
 
@@ -27,12 +26,6 @@ class ChartStepLogHandler:
         for key, values in steps.items():# key为loss, metric, value为[{'step':, epoch:, loss:{}}]
             # [{'step':, epoch:, metric:{}}]
             if key!='finish':
-                if key in self.path2spath:
-                    path2spath = self.path2spath[key]
-                else:
-                    first_record = values[0][key]  # 记录的内容
-                    path2spath = self.path2shortpath(first_record)
-                    self.path2spath[key] = path2spath
                 expanded_values = defaultdict(list)
                 for v in values:
                     expand_v = {}
@@ -47,7 +40,8 @@ class ChartStepLogHandler:
                             _expand_v.pop(__key)
                     for i_key, i_value in _expand_v.items():
                         if isinstance(i_value, (float, int)):
-                            short_i_key = path2spath[i_key]
+                            # TODO 可能需要精简一下路径长度， 比如BMESMetric之类的东西
+                            short_i_key = i_key
                             i_value = round(i_value, self.round_to)
                             i_expand_v = expand_v.copy()
                             i_expand_v['name'] = short_i_key
@@ -106,8 +100,10 @@ def _refine_path(paths):
     :param paths:
     :return:
     """
-    if len(set(map(len, paths)))!=1 or len(paths)==1:# 如果深度不同直接回去
+    if len(set(map(len, paths)))!=1:# 如果深度不同直接回去
         path2shortpath = {'-'.join(path):'-'.join(path) for path in paths}
+    elif len(paths)==0:
+        path2shortpath = {'-'.join(paths[0]): paths[0][-1]}
     else:
         delete_depths = []
         for depth in range(len(paths[0])):

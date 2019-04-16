@@ -11,7 +11,7 @@ from fitlog.fastgit import committer
 from fitlog.fastserver.server.server_config import save_config
 from fitlog.fastserver.server.server_config import save_extra_data
 
-table_page = Blueprint("table_page", __name__, template_folder='templates')
+table_page = Blueprint("table_page", __name__, template_folder='fastserver/templates')
 
 first_time_access_table = True
 
@@ -147,7 +147,6 @@ def column_order():
 
 @table_page.route('/table')
 def table():
-    print(os.path.abspath(os.getcwd()), '\n'*5, flush=True)
     return render_template('table.html')
 
 def check_uuid(gold_uuid, _uuid):

@@ -19,6 +19,7 @@ setup(
     license=license,
     author='FudanNLP',
     python_requires='>=3.6',
+    include_package_data=True,
     packages=find_packages(),
     install_requires=reqs.strip().split('\n'),
     entry_points={

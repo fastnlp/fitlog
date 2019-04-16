@@ -24,7 +24,7 @@ def log_cmd(argv):
     log_config_name = args['--log-config-name']
     standby_hours = int(args['--standby-hours'])
     if not os.path.isabs(log_dir):
-        cwd = os.path.abspath('.')
+        cwd = os.getcwd()
         log_dir = os.path.join(cwd, log_dir)
 
     if not os.path.exists(log_dir):

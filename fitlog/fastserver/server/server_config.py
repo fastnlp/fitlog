@@ -15,7 +15,7 @@ Save_settings=True
 # Whether the rows are reorderable, when they are reorderable, they cannot be selected or copied
 Reorderable_rows=False
 # Where should fitlog revert codes to: ../<pj_name>-revert or ../<pj_name>-revert-<fit_id>
-No_suffix=True
+No_suffix_when_reset=True
 
 [basic_settings]
 # any data longer than this value will be partly replaced by '...'

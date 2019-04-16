@@ -9,7 +9,7 @@ $(function () {
     _settings['Offline'] = false;
     _settings['Save settings'] = true;
     _settings['Reorderable rows'] = false;
-    _settings['No suffix'] = true;
+    _settings['No suffix when reset'] = true;
     window.settings = _settings;
 
     //0. 从后台获取必要的数据，然后用于创建Table
@@ -90,7 +90,7 @@ window.operateEvents = {
                         contentType: 'application/json;charset=UTF-8',
                         data: JSON.stringify({
                              id: row['id'],
-                             suffix: !window.settings['No suffix'],
+                             suffix: !window.settings['No suffix when reset'],
                              fit_id: row['meta-fit_id'],
                              uuid: window.server_uuid
                         }),

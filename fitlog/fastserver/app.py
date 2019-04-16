@@ -5,10 +5,9 @@ import uuid
 from flask import Flask, url_for, redirect
 from fitlog.fastserver.chart_app import chart_page
 from fitlog.fastserver.table_app import table_page, save_all_data
-from fitlog.fastserver.server.app_utils import cmd_parser
 from fitlog.fastserver.server.app_utils import get_usage_port
 from fitlog.fastserver.server.data_container import all_data
-from fitlog.fastserver.server.data_container import all_handlers, handler_watcher
+from fitlog.fastserver.server.data_container import handler_watcher
 from fitlog.fastlog import log_reader
 from fitlog.fastserver.server.table_utils import prepare_data
 from flask import request
@@ -26,8 +25,6 @@ app.register_blueprint(table_page)
 
 LEAST_REQUEST_TIMESTAMP = deque(maxlen=1)
 LEAST_REQUEST_TIMESTAMP.append(time.time())
-# TODO 修改为配置项
-server_wait_seconds = 60
 
 server_watcher = ServerWatcher(LEAST_REQUEST_TIMESTAMP)
 
@@ -66,10 +63,10 @@ def start_app(log_dir, log_config_name, start_port, standby_hours):
     port = get_usage_port(start_port=start_port)
     server_watcher.set_server_wait_seconds(server_wait_seconds)
     server_watcher.start()
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=False)
 
     # TODO 输出访问的ip地址
-
+    print("Shutting down server...")
     save_all_data(all_data, log_dir, log_config_path)
     handler_watcher.stop()
     server_watcher.stop()
