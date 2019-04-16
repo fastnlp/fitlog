@@ -136,7 +136,7 @@ def save_config(all_data, config_path):
     config = all_data['config']
     if not os.path.exists(config_path):
         config_dir = os.path.dirname(config_path)
-        if os.path.isdir(config_dir):
+        if not os.path.isdir(config_dir):
             os.makedirs(config_dir)
         os.mknod(config_path)  # 不存在就创建空文件
 
