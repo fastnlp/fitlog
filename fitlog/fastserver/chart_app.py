@@ -95,6 +95,7 @@ def ranges():
                                       exclude_columns=all_data['chart_settings']['chart_exclude_columns'],
                                       max_no_updates=all_data['chart_settings']['max_no_updates'])
         updates = handler.update_logs(only_once=True, cut_long_logs=False)
+        del handler
         updates.pop('finish')
         refined_updates = {}
         for key in keys:
