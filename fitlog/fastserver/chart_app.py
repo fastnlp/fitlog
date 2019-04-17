@@ -7,6 +7,7 @@ from flask import Blueprint
 from fitlog.fastserver.server.data_container import all_data, all_handlers, handler_watcher
 from fitlog.fastlog.log_read import is_log_dir_has_step, is_log_record_finish
 from fitlog.fastserver.server.chart_utils import ChartStepLogHandler
+from fitlog.fastserver.server.utils import replace_nan_inf
 
 import uuid
 
@@ -37,6 +38,8 @@ def chart():
         if not handler_watcher._start:
             handler_watcher.start()
 
+    replace_nan_inf(points)
+
     return render_template('chart.html', log_dir=log_dir, data=points, chart_uuid=_uuid,
                            max_steps=max_points,
                            server_uuid=all_data['uuid'],
@@ -54,6 +57,8 @@ def chart_new_step():
         points = handler.update_logs()
     else:
         points['finish'] = True
+
+    replace_nan_inf(points)
 
     return jsonify(steps=points)
 

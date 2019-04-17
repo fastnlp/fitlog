@@ -66,7 +66,9 @@
   var update_every=parseInt('{{update_every}}');
   var max_no_updates=parseInt('{{max_no_updates}}');
   var no_update_count = 0;
-  var data=JSON.parse('{{data|tojson}}');
+  var data_str ='{{data|tojson}}';
+  var nan_detect = false;
+  var data = JSON.parse(data_str);
   var max_steps = '{{max_steps}}';
   window.chart_uuid = '{{chart_uuid}}';
   window.server_uuid = '{{server_uuid}}';
@@ -152,21 +154,29 @@
 
   if('loss' in data){
       loss_data = data['loss'];
-    charts['loss'] = create_chart('loss', loss_data);
+      if(is_nan_inf(loss_data)){
+          nan_detect = true;
+      }else{
+        charts['loss'] = create_chart('loss', loss_data);
+      }
   }
 
   if('metric' in data){
       metric_data = data['metric'];
-    charts['metric'] = create_chart('metric', metric_data);
+      if(is_nan_inf(metric_data)){
+          nan_detect = true;
+      }else{
+        charts['metric'] = create_chart('metric', metric_data);
+      }
   }
 
-  if(!finish){
-      get_new_steps();
+  if(!finish && !nan_detect){
+      update_tmp = get_new_steps();
   }else{
       success_prompt("All data have been loaded.", 2000);
   }
 
-function get_new_steps(){
+  function get_new_steps(){
     var tmp = setInterval(function(){
         $.ajax({
             url: '/chart/new_step',
@@ -180,31 +190,39 @@ function get_new_steps(){
                 value = value['steps'];
                 for(var key in value){
                     if(key==='finish'){
+                        finish = true;
                         continue;
                     }
-                    var _steps = value[key];
                     if(!(key in data)){
                         data[key] = [];
                     }
+                    var _steps = value[key];
+
                     if(_steps.length>0){
-                        for(var index=0;index<_steps.length;index++){
-                            data[key].push(_steps[index]);
-                            if(data[key].length>max_steps){
-                                data[key].shift();
-                            }
-                            if(!(key in charts)){
-                                charts[key] = create_chart(key, data[key]);
-                            }else{
-                                var _chart = charts[key];
-                                _chart.changeData(data[key]);
+                        if(is_nan_inf(_steps)){
+                            stop_interval(tmp);
+                            nan_detect = true;
+                        }else{
+                            for(var index=0;index<_steps.length;index++){
+                                data[key].push(_steps[index]);
+                                if(data[key].length>max_steps){
+                                    data[key].shift();
+                                }
+                                if(!(key in charts)){
+                                    charts[key] = create_chart(key, data[key]);
+                                }else{
+                                    var _chart = charts[key];
+                                    _chart.changeData(data[key]);
+                                }
                             }
                         }
                     }
                 }
-                if('finish' in value){
+                if(finish || nan_detect) {
                     stop_interval(tmp);
+                }
+                if(finish){
                     bootbox.alert("Finish accessing data.");
-                    // 弹出提示，结束了。
                 }
                 if(jQuery.isEmptyObject(value)){
                     no_update_count += 1;
@@ -220,13 +238,33 @@ function get_new_steps(){
                 stop_interval(tmp);
             }
         });
-  }, update_every);
+    }, update_every);
+    return tmp;
 }
 
 function stop_interval(tmp) {
     clearInterval(tmp)
 }
 
+function is_nan_inf(data) {
+    // [{}, {}]
+    var nan = false;
+    for(var index=0;index<data.length;index++){
+        var value = data[index];
+        if(value['value']==='Infinity' || value['value']==='NaN' || value['value']==='-Infinity'){
+            var msg = "";
+            msg += value['value'] + " encountered in `" + value['name'] + "` at step:" + value['step'];
+            if('epoch' in value){
+                msg += " at epoch:" + value['epoch'];
+            }
+            msg += '.';
+            bootbox.alert(msg);
+            nan = true;
+            break;
+        }
+    }
+    return nan;
+}
 </script>
 </body>
 </html>

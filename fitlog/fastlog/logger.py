@@ -422,7 +422,7 @@ def _check_dict_value(_dict, prefix=''):
             continue
         elif isinstance(value, dict):
             _check_dict_value(value, prefix=prefix+':'+key)
-        elif 'Torch.Tensor' in str(type(value)):
+        elif 'torch.Tensor' in str(type(value)):
             try:
                 value = value.item()
                 _dict[key] = value
@@ -436,7 +436,7 @@ def _check_dict_value(_dict, prefix=''):
                 raise RuntimeError("For {}. It should only have one element.".format(prefix+':'+key))
             _dict[key] = value.reshape(1)[0]
         else:
-            raise TypeError("Only str, int, float, one element pytorch Tensor or one element numpy.ndarray"
+            raise TypeError("Only str, int, float, one element torch Tensor or numpy.ndarray"
                             " are allowed.")
 
 

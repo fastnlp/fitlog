@@ -11,6 +11,8 @@ from fitlog.fastgit import committer
 from fitlog.fastserver.server.server_config import save_config
 from fitlog.fastserver.server.server_config import save_extra_data
 
+from fitlog.fastserver.server.utils import replace_nan_inf
+
 table_page = Blueprint("table_page", __name__, template_folder='fastserver/templates')
 
 first_time_access_table = True
@@ -28,6 +30,8 @@ def get_table():
 
     first_time_access_table = False
     data = all_data['data']
+
+    replace_nan_inf(data)
 
     return jsonify(column_order=all_data['column_order'], column_dict=all_data['column_dict'],
                    hidden_columns=all_data['hidden_columns'], data=data,
@@ -48,6 +52,8 @@ def refresh_table():
             return jsonify(status='success', msg='Update successfully, no update found.', new_logs=[], updated_logs=[])
         else:
             new_logs, updated_logs = prepare_incremental_data(all_data['data'], new_logs, all_data['field_columns'])
+            replace_nan_inf(new_logs)
+            replace_nan_inf(updated_logs)
             return jsonify(status='success', msg='Update successfully, {} log have updates, {} newly added.'\
                            .format(len(updated_logs), len(new_logs)),
                            new_logs=new_logs, updated_logs=updated_logs)
