@@ -32,7 +32,7 @@ class ChartStepLogHandler:
         data = {}
         for key, values in steps.items():# key为loss, metric, value为[{'step':, epoch:, loss:{}}]
             # [{'step':, epoch:, metric:{}}]
-            if key!='finish':
+            if key!='finish' and key!='total_steps':
                 if key in self.path2path:
                     path2path = self.path2path[key]
                 else:

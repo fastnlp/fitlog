@@ -10,6 +10,7 @@
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.js"></script>
     <script src="/static/js/bootbox.js"></script>
+    <script src="/static/js/g2.min.js"></script>
     <script>
         var prompt = function (message, time) {
             $("#alertDiv").delay(time || 5000).fadeOut();
@@ -30,7 +31,6 @@
         {
             prompt(message, time);
         };
-
     </script>
 <style>
     .g2-legend {
@@ -53,19 +53,33 @@
 </style>
 </head>
 <body>
-
-<h3 style="text-align:center;visibility: hidden;padding: 3px 0px 3px 0px" id="loss_title">loss trend in {{log_dir}}</h3>
-<div id="loss"></div>
-<div id="prompt"></div>
-<h3 style="text-align:center;visibility: hidden;padding: 3px 0px 3px 0px" id="metric_title">metric trend in {{log_dir}}</h3>
-<div id="metric"></div>
-<script>/*Fixing iframe window.innerHeight 0 issue in Safari*/document.body.clientHeight;</script>
-<script src="/static/js/g2.min.js"></script>
-
+    <div style="overflow:hidden;padding:5px 200px 0px 10px;visibility: hidden"
+         id="progress-bar-div">
+        <div style="float:left;margin-right:5px">
+            <span>Progress: </span>
+        </div>
+        <div class="progress progress-striped active" style="margin-bottom: 0px" id="progress">
+            <div class="progress-bar progress-bar-success" role="progressbar"
+                 aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                 style="width: 0;" id="progress-bar">
+                <span id="progress-bar-text" style="color: black"></span>
+            </div>
+        </div>
+    </div>
+    <h3 style="text-align:center;visibility: hidden;padding: 3px 0px 3px 0px" id="loss_title">loss trend in {{log_dir}}</h3>
+    <div id="loss"></div>
+    <h3 style="text-align:center;visibility: hidden;padding: 3px 0px 3px 0px" id="metric_title">metric trend in {{log_dir}}</h3>
+    <div id="metric"></div>
+    <script>/*Fixing iframe window.innerHeight 0 issue in Safari*/document.body.clientHeight;</script>
 <script>
   var update_every=parseInt('{{update_every}}');
   var max_no_updates=parseInt('{{max_no_updates}}');
   var no_update_count = 0;
+  var total_steps = '{{total_steps}}';
+  if(total_steps!=='None'){
+      total_steps = parseInt(total_steps);
+  }
+  var current_step = 0;
   var data_str ='{{data|tojson}}';
   var nan_detect = false;
   var data = JSON.parse(data_str);
@@ -159,6 +173,7 @@
       }else{
         charts['loss'] = create_chart('loss', loss_data);
       }
+      current_step = Math.max(current_step, loss_data[loss_data.length-1]['step']);
   }
 
   if('metric' in data){
@@ -168,7 +183,10 @@
       }else{
         charts['metric'] = create_chart('metric', metric_data);
       }
+      current_step = Math.max(current_step, loss_data[loss_data.length-1]['step']);
   }
+
+  update_progress_bar(finish, current_step, total_steps)
 
   if(!finish && !nan_detect){
       update_tmp = get_new_steps();
@@ -216,11 +234,13 @@
                                 }
                             }
                         }
+                        current_step = Math.max(current_step, _steps[_steps.length-1]['step']);
                     }
                 }
                 if(finish || nan_detect) {
                     stop_interval(tmp);
                 }
+                update_progress_bar(finish, current_step, total_steps);
                 if(finish){
                     bootbox.alert("Finish accessing data.");
                 }
@@ -242,29 +262,53 @@
     return tmp;
 }
 
-function stop_interval(tmp) {
-    clearInterval(tmp)
-}
-
-function is_nan_inf(data) {
-    // [{}, {}]
-    var nan = false;
-    for(var index=0;index<data.length;index++){
-        var value = data[index];
-        if(value['value']==='Infinity' || value['value']==='NaN' || value['value']==='-Infinity'){
-            var msg = "";
-            msg += value['value'] + " encountered in `" + value['name'] + "` at step:" + value['step'];
-            if('epoch' in value){
-                msg += " at epoch:" + value['epoch'];
-            }
-            msg += '.';
-            bootbox.alert(msg);
-            nan = true;
-            break;
-        }
+    function stop_interval(tmp) {
+        clearInterval(tmp)
     }
-    return nan;
-}
+
+    function is_nan_inf(data) {
+        // [{}, {}]
+        var nan = false;
+        for(var index=0;index<data.length;index++){
+            var value = data[index];
+            if(value['value']==='Infinity' || value['value']==='NaN' || value['value']==='-Infinity'){
+                var msg = "";
+                msg += value['value'] + " encountered in `" + value['name'] + "` at step:" + value['step'];
+                if('epoch' in value){
+                    msg += " at epoch:" + value['epoch'];
+                }
+                msg += '.';
+                bootbox.alert(msg);
+                nan = true;
+                break;
+            }
+        }
+        return nan;
+    }
+
+  function update_progress_bar(finish, current_step, total_steps){
+      if($("#progress-bar-div").length>0){
+            if(total_steps==='None' || current_step>total_steps){
+                if(current_step>total_steps)
+                    bootbox.alert("Step:"+ current_step +" larger than total steps:"+total_steps + ".");
+                var bar_div = document.getElementById('progress-bar-div');
+                bar_div.parentNode.removeChild(bar_div);
+            }else{
+                if(finish && (current_step===total_steps || current_step+1===total_steps)){
+                    document.getElementById('progress-bar').className = 'progress-bar progress-bar-info';
+                    document.getElementById('progress').className = 'progress';
+                }else if(finish){
+                    document.getElementById('progress-bar').className = 'progress-bar progress-bar-danger';
+                    document.getElementById('progress').className = 'progress';
+                }
+                var percent = parseInt(current_step/total_steps*100);
+                document.getElementById('progress-bar').style.width = percent + '%';
+                document.getElementById('progress-bar-text').innerText = percent + '%';
+                document.getElementById('progress-bar-div').style.visibility = 'visible';
+            }
+      }
+  }
+
 </script>
 </body>
 </html>

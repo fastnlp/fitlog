@@ -33,6 +33,7 @@ def chart():
                             max_no_updates=all_data['chart_settings']['max_no_updates'])
     only_once = is_log_record_finish(save_log_dir) or finish=='true'
     points = handler.update_logs(only_once) # {'loss': [{}, {}], 'metric':[{}, {}]}
+    total_steps = points.pop('total_steps', None)
     if not only_once:
         all_handlers[_uuid] = handler
         if not handler_watcher._start:
@@ -44,7 +45,8 @@ def chart():
                            max_steps=max_points,
                            server_uuid=all_data['uuid'],
                            update_every=update_every_second*1000,
-                           max_no_updates=all_data['chart_settings']['max_no_updates'])
+                           max_no_updates=all_data['chart_settings']['max_no_updates'],
+                           total_steps=total_steps)
 
 @chart_page.route('/chart/new_step', methods=['POST'])
 def chart_new_step():

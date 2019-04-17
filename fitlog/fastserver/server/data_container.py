@@ -37,7 +37,7 @@ class HandlerWatcher(threading.Thread):
         count = 0
         while not self._quit:
             time.sleep(0.6)
-            if count>2:
+            if count>3:
                 raise RuntimeError("Some bug happens.")
             count += 1
 # singleton

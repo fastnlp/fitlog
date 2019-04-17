@@ -129,6 +129,7 @@ class Logger:
             self.metric_logger = logging.getLogger('metric')
             self.other_logger = logging.getLogger('other')
             self.loss_logger = logging.getLogger('loss')
+            self.progress_logger = logging.getLogger('progress')
 
             formatter = logging.Formatter('%(message)s') # 只保存记录的时间与记录的内容
             meta_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'meta.log'), encoding='utf-8')
@@ -136,13 +137,15 @@ class Logger:
             metric_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'metric.log'), encoding='utf-8')
             loss_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'loss.log'), encoding='utf-8')
             other_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'other.log'), encoding='utf-8')
+            progress_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'progress.log'), encoding='utf-8')
 
-            for handler in [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler]:
+            for handler in [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler, progress_handler]:
                 handler.setFormatter(formatter)
 
             for _logger, _handler in zip([self.meta_logger, self.hyper_logger, self.metric_logger, self.other_logger,
-                                                                                        self.loss_logger],
-                               [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler]):
+                                           self.loss_logger, self.progress_logger],
+                               [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler,
+                                progress_handler]):
                 _handler.setLevel(logging.INFO)
                 _logger.setLevel(logging.INFO)
                 _logger.addHandler(_handler)
@@ -350,6 +353,20 @@ class Logger:
 
     @check_debug
     @check_log_dir
+    def add_progress(self, total_steps=None):
+        """
+        用于前端显示当前进度条。传入总的step数量
+        :param total_steps: int, 总共有多少个step
+        :return:
+        """
+        assert isinstance(total_steps, int) and total_steps>0
+        if hasattr(self, '_total_steps'):
+            raise RuntimeError("Cannot set total_steps twice.")
+        self.total_steps = total_steps
+        self._write_to_logger(json.dumps({"total_steps":total_steps}), 'progress_logger')
+
+    @check_debug
+    @check_log_dir
     def save(self):
         if len(self._cache)!=0:
             self._create_log_files()
@@ -359,14 +376,14 @@ class Logger:
             self._cache = []
 
     def _write_to_logger(self, _str, logger_name):
-        assert isinstance(logger_name, str)
+        assert isinstance(logger_name, str) and isinstance(_str, str)
         if self.save_on_first_metric_or_loss:
             if logger_name=='metric_logger' or logger_name=='loss_logger':
                 self._create_log_files()
                 self.save() # 将之前的内容存下来
         if hasattr(self, logger_name):
             logger = getattr(self, logger_name)
-            logger.info(_str.replace('\n', ''))
+            logger.info(_str.replace('\n', ' '))
         else: # 如果还没有初始化就先cache下来
             self._cache.append([_str, logger_name])
 

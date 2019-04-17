@@ -222,6 +222,8 @@ class StandbyStepLogReader(threading.Thread):
         self._no_update_count = 0
         self.max_no_update = max_no_updates
 
+        self._last_meta_md_time = None
+        self._meta_path = os.path.join(self.save_log_dir, 'meta.log')
     def _create_file_handler(self):
         """
         检查是否有未加入的handler，加入进来
@@ -235,20 +237,57 @@ class StandbyStepLogReader(threading.Thread):
             handler = open(filepath, 'r', encoding='utf-8')
             self._file_handlers[handler_name] = handler
 
+    def _is_finish_in_meta(self):
+        """
+        检查是否已经在meta中写明了finish的状态了
+        :return: bool
+        """
+
+        last_meta_md_time = os.path.getmtime(self._meta_path)
+        if self._last_meta_md_time is None or self._last_meta_md_time!=last_meta_md_time:
+            with open(self._meta_path, 'r', encoding='utf-8') as f:
+                line = ''
+                for line in f:
+                    pass
+                line = line.strip()
+                if len(line)!=0:
+                    try:
+                        _dict = json.loads(line)['meta']
+                        if 'state' in _dict and _dict['state'] == 'finish':
+                            return True
+                    except:
+                        pass
+        self._last_meta_md_time = last_meta_md_time
+        return False
+
     def read_update(self, only_once=False):
         """
         调用这个函数，获取新的更新
         :param only_once: 不会再次读取内容的
         :return: 返回{loss: [dict('step':x, key:value, 'loss':{})],
-                metric:[dict('step':x, key:value, 'metric':)]}
+                metric:[dict('step':x, key:value, 'metric':)],
+                finish:bool(not every time),
+                total_steps:int(only the first access)}
         """
+        updates = {}
         if not self._quit:
             flag = False
-            if self._last_access_time is None:
-                flag = True
-            self._last_access_time = time.time()
             self._create_file_handler()
             updates = defaultdict(list)
+            if self._last_access_time is None:
+                filepath = os.path.join(self.save_log_dir, 'progress.log')
+                if os.path.exists(filepath):
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        line = f.readline()
+                        try:
+                            _dict = json.loads(line.strip())
+                            if 'total_steps' in _dict:
+                                self._total_steps = _dict['total_steps']
+                                updates['total_steps'] = _dict['total_steps']
+                        except:
+                            pass
+                flag = True
+            self._last_access_time = time.time()
             for filename, handler in self._file_handlers.items():
                 for line in handler.readlines():
                     if filename in self.unfinish_lines:
@@ -274,8 +313,12 @@ class StandbyStepLogReader(threading.Thread):
                 updates['finish'] = True
         if self._quit or self._no_update_count>self.max_no_update:
             updates = {'finish': True}
+        if self._is_finish_in_meta():
+            updates['finish'] = True
+        if 'finish' in updates:
             self._quit = True
             self.stop()
+
         return updates
 
     def _close_file_handler(self):
