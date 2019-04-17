@@ -177,7 +177,7 @@ function operateFormatter(value, row, index) {
       '<i class="glyphicon glyphicon-share-alt" style="padding:0px 2px 0px 1px"></i>',
       '</a>',
       '<a class="trend" href="javascript:void(0)" title="Thread">',
-      '<i class="glyphicon glyphicon-road" style="padding:0px 1px 0px 2px"></i>',
+      '<i class="glyphicon glyphicon-stats" style="padding:0px 1px 0px 2px"></i>',
       '</a>'
     ].join('')
 }

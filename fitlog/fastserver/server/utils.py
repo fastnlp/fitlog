@@ -40,3 +40,10 @@ def _replace_nan_inf(d):
             d[k] = "-Infinity"
         elif str(value)=='nan':
             d[k] = "NaN"
+
+def check_uuid(gold_uuid, _uuid):
+    if gold_uuid==_uuid:
+        return None
+    else:
+        return {'status': 'fail',
+                'msg': "The data are out-of-date, please refresh this page."}

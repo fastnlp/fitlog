@@ -150,14 +150,13 @@ def _read_nonstep_log_file(filepath, start_line=0):
     return a, index+1
 
 
-def merge(a, b, path=None, use_b=True):
+def merge(a, b, use_b=True):
     "merges b into a"
     # 将两个dict recursive合并到a中，有相同key的，根据use_b判断使用哪个值
-    if path is None: path = []
     for key in b:
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
-                merge(a[key], b[key], path + [str(key)])
+                merge(a[key], b[key], use_b)
             elif use_b:
                 a[key] = b[key]
         else:
@@ -297,8 +296,11 @@ class StandbyStepLogReader(threading.Thread):
                     else:
                         if line.startswith('Step:'):
                             line = line[line.index('\t')+1:].strip()
-                            _dict = json.loads(line)
-                            updates[filename].append(_dict)
+                            try:
+                                _dict = json.loads(line)
+                                updates[filename].append(_dict)
+                            except:
+                                pass
                 if filename in updates and len(updates[filename])!=0:  # 对step排序，保证不要出现混乱
                     updates[filename].sort(key=lambda x:x['step'])
             if not only_once:

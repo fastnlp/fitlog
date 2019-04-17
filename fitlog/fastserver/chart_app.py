@@ -8,6 +8,8 @@ from fitlog.fastserver.server.data_container import all_data, all_handlers, hand
 from fitlog.fastlog.log_read import is_log_dir_has_step, is_log_record_finish
 from fitlog.fastserver.server.chart_utils import ChartStepLogHandler
 from fitlog.fastserver.server.utils import replace_nan_inf
+from fitlog.fastserver.server.utils import check_uuid
+from fitlog.fastserver.server.chart_utils import _refine_logs
 
 import uuid
 
@@ -76,3 +78,38 @@ def have_trends():
     except Exception:
         print("Exception detected in have_trends(")
         return jsonify(status='fail', have_trends=False)
+
+@chart_page.route('/chart/range', methods=['POST'])
+def ranges():
+    try:
+        res = check_uuid(all_data['uuid'], request.json['uuid'])
+        if res != None:
+            return jsonify(res)
+        keys = request.json['keys']
+        log_dir = request.json['log_dir']
+        ranges = request.json['ranges']
+        handler = ChartStepLogHandler(save_log_dir=os.path.join(all_data['root_log_dir'], log_dir),
+                                      uuid=all_data['uuid'], round_to=all_data['basic_settings']['round_to'],
+                                      max_steps=100000,
+                                      wait_seconds=10,
+                                      exclude_columns=all_data['chart_settings']['chart_exclude_columns'],
+                                      max_no_updates=all_data['chart_settings']['max_no_updates'])
+        updates = handler.update_logs(only_once=True, cut_long_logs=False)
+        updates.pop('finish')
+        refined_updates = {}
+        for key in keys:
+            logs = updates[key]
+            s = int(ranges[key][0])
+            l = int(ranges[key][1])
+            logs = [log for log in logs if s<=log['step']<=l]
+            refined_updates[key] = _refine_logs(logs, all_data['chart_settings']['max_points'],
+                                                all_data['basic_settings']['round_to'])
+        return jsonify(status='success', steps=refined_updates)
+
+    except Exception as e:
+        print(e)
+        return jsonify(status='fail', msg='Some bug happens, contact developer.')
+
+
+
+

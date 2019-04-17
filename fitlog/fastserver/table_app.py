@@ -10,8 +10,8 @@ from fitlog.fastserver.server.data_container import all_data
 from fitlog.fastgit import committer
 from fitlog.fastserver.server.server_config import save_config
 from fitlog.fastserver.server.server_config import save_extra_data
-
 from fitlog.fastserver.server.utils import replace_nan_inf
+from fitlog.fastserver.server.utils import check_uuid
 
 table_page = Blueprint("table_page", __name__, template_folder='fastserver/templates')
 
@@ -155,12 +155,7 @@ def column_order():
 def table():
     return render_template('table.html')
 
-def check_uuid(gold_uuid, _uuid):
-    if gold_uuid==_uuid:
-        return None
-    else:
-        return {'status': 'fail',
-                'msg': "The data are out-of-date, please refresh this page."}
+
 
 def save_all_data(all_data, log_dir, log_config_path):
     if all_data['settings']['Save_settings'] and not all_data['debug']:  # 如果需要保存

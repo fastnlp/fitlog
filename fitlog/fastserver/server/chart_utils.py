@@ -27,7 +27,8 @@ class ChartStepLogHandler:
         self.path2path[key] = path2spath
         return path2spath
 
-    def update_logs(self, only_once=False):
+    def update_logs(self, only_once=False, cut_long_logs=True):
+        # data: {'finish':(如果结束了有), 'metric': [{}, {}], 'loss':[{}, {}]}
         steps = self.reader.read_update(only_once)
         data = {}
         for key, values in steps.items():# key为loss, metric, value为[{'step':, epoch:, loss:{}}]
@@ -66,7 +67,7 @@ class ChartStepLogHandler:
                 l_expanded_values = []
                 for i_key in list(expanded_values.keys()):
                     i_value = expanded_values[i_key]
-                    if len(i_value)>self.max_steps: # 不能超过一定的step
+                    if cut_long_logs and len(i_value)>self.max_steps: # 不能超过一定的step
                         l_expanded_values.extend(i_value[-self.max_steps:])
                     else:
                         l_expanded_values.extend(i_value)
@@ -150,6 +151,30 @@ def _refine_path(paths):
                 paths[i].pop(d)
         path2shortpath = {'-'.join(path): '-'.join(path) for path in paths}
     return path2shortpath
+
+def _refine_logs(logs, max_points, round_to=6):
+    if len(logs)<max_points:
+        return logs
+    log_per_bin = len(logs)//max_points
+    left_log_num = len(logs) - len(logs)//max_points*max_points
+    new_logs = []
+    for i in range(min(max_points, len(logs))):
+        _dict = defaultdict(list)
+        start_idx = max(i*log_per_bin, i)
+        for j in range(log_per_bin):
+            k = start_idx + j
+            log = logs[k]
+            _dict['value'].append(log['value'])
+        if left_log_num>-1:
+            log = logs[start_idx + log_per_bin]
+            _dict['value'].append(log['value'])
+            left_log_num -= 1
+        _dict['value'] = round(sum(_dict['value'])/len(_dict['value']), round_to)
+        _dict['step'] = int(log_per_bin/2 + start_idx)
+        _dict['name'] = log['name']
+        new_logs.append(_dict)
+    return new_logs
+
 
 if __name__ == '__main__':
     a = {'test':{'F1SpanMetric': {'f1': 0.3606739335382445, 'pre': 0.6220669896180324}}, 'dev':{'F1SpanMetric': {'f1': 0.45963128728272284, 'pre1': 0.25299515839718356}}}

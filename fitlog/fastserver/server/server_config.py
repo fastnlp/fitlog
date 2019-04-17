@@ -43,7 +43,7 @@ column_order=
 
 [chart_settings]
 # The maximum points one line can hold.
-max_points=400
+max_points=500
 # columns are not displayed in the chart, not share with the one in the column_settings
 chart_exclude_columns=
 # the interval between update in the front page. in seconds. Don't set it too small.

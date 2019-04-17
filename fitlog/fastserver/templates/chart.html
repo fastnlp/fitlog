@@ -6,17 +6,28 @@
     <link rel="shortcut icon" href="/chart.ico" >
     <title>chart-{{log_dir}}</title>
     <style>::-webkit-scrollbar{display:none;}html,body{overflow:auto;height:100%;margin:0;}</style>
-    <link href="/static/css/bootstrap.css" rel="stylesheet" />
+    <link href="/static/css/bootstrap.css" rel="stylesheet"/>
+    <link href="/static/css/table.css" rel="stylesheet"/>
+    <link href="/static/css/bootstrap-slider.css" rel="stylesheet"/>
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.js"></script>
     <script src="/static/js/bootbox.js"></script>
     <script src="/static/js/g2.min.js"></script>
+    <script src="/static/js/bootstrap-slider.js"></script>
+    <script src="/static/js/chart.js"></script>
+    <style>
+        .slider-selection {
+	        background: #B8B8B8;
+        }
+
+    </style>
     <script>
         var prompt = function (message, time) {
             $("#alertDiv").delay(time || 5000).fadeOut();
             const id  = "alertDiv_" + new Date().getTime() + "_" + (Math.random() * 10000).toFixed();
             $("body").append(`
-            <div id="${id}" class="alert alert-success" role="alert" style="position: fixed; top: 12px; left: 12px;z-index:999999">
+            <div id="${id}" class="alert alert-success" role="alert" style="position: fixed; top: 12px; left: 12px;
+            z-index:999999">
                   ${message}
                 </div>
             `);
@@ -53,16 +64,22 @@
 </style>
 </head>
 <body>
-    <div style="overflow:hidden;padding:5px 200px 0px 10px;visibility: hidden"
+    <div style="overflow:hidden;padding:5px 200px 0px 10px;">
+        <button id="range" class="btn btn-info" style="margin-right: 5px;float:left;height:20px;padding: 0px 5px 0px 3px"
+                data-toggle="modal" data-target="#range_box">
+            <i class="glyphicon glyphicon-cog"></i> Range
+        </button>
+        <div style="visibility: hidden"
          id="progress-bar-div">
-        <div style="float:left;margin-right:5px">
-            <span>Progress: </span>
-        </div>
-        <div class="progress progress-striped active" style="margin-bottom: 0px" id="progress">
-            <div class="progress-bar progress-bar-success" role="progressbar"
-                 aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
-                 style="width: 0;" id="progress-bar">
-                <span id="progress-bar-text" style="color: black"></span>
+            <div style="float:left;margin-right:5px;margin-left: 5px">
+                <span>Progress: </span>
+            </div>
+            <div class="progress progress-striped active" style="margin-bottom: 0px" id="progress">
+                <div class="progress-bar progress-bar-success" role="progressbar"
+                     aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                     style="width: 0;" id="progress-bar">
+                    <span id="progress-bar-text" style="color: black"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -71,6 +88,28 @@
     <h3 style="text-align:center;visibility: hidden;padding: 3px 0px 3px 0px" id="metric_title">metric trend in {{log_dir}}</h3>
     <div id="metric"></div>
     <script>/*Fixing iframe window.innerHeight 0 issue in Safari*/document.body.clientHeight;</script>
+
+    <!--range-->
+    <div class="modal fade" id="range_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 18px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Enable to choose range</h4>
+          </div>
+          <div class="modal-body" id="range_modal" style="height: 90px">
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel_range">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_range">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
 <script>
   var update_every=parseInt('{{update_every}}');
   var max_no_updates=parseInt('{{max_no_updates}}');
@@ -88,6 +127,7 @@
   window.server_uuid = '{{server_uuid}}';
   window.log_dir = '{{log_dir}}';
   var finish = 'finish' in data;
+  var range_charts = {}; // 当某个chart因为被选择到固定range时，就不要更新
 
   function create_chart(container, data){
       document.getElementById(container + '_title').style.visibility = 'visible';
@@ -183,10 +223,10 @@
       }else{
         charts['metric'] = create_chart('metric', metric_data);
       }
-      current_step = Math.max(current_step, loss_data[loss_data.length-1]['step']);
+      current_step = Math.max(current_step, metric_data[metric_data.length-1]['step']);
   }
 
-  update_progress_bar(finish, current_step, total_steps)
+  update_progress_bar(finish, current_step, total_steps);
 
   if(!finish && !nan_detect){
       update_tmp = get_new_steps();
@@ -226,11 +266,13 @@
                                 if(data[key].length>max_steps){
                                     data[key].shift();
                                 }
-                                if(!(key in charts)){
-                                    charts[key] = create_chart(key, data[key]);
-                                }else{
-                                    var _chart = charts[key];
-                                    _chart.changeData(data[key]);
+                                if(!(key in range_charts)){
+                                    if(!(key in charts)){
+                                        charts[key] = create_chart(key, data[key]);
+                                    }else{
+                                        var _chart = charts[key];
+                                        _chart.changeData(data[key]);
+                                    }
                                 }
                             }
                         }
@@ -308,6 +350,147 @@
             }
       }
   }
+
+  var sliders = {};
+  var $range = $("#range");
+  var range_checked = {};
+  var ranges = {};
+  $range.click(function () {
+
+      var tmp = {'loss':1, 'metric':1};
+      for(var key in tmp){
+          if(!(key in charts) && !(key in range_charts)){
+              delete tmp[key];
+          }
+      }
+
+      sliders = generate_range_modal(current_step, tmp, $("#range_modal"), range_checked, ranges);
+
+      // 触发checkbox的点击
+       $('input').change(function () {
+          var $cb = $(this);
+          if($cb[0].getAttribute('id')==='choose_range_checkbox') {
+              var name = $cb[0].getAttribute('name');
+              var state = $cb.prop('checked');
+              if(state){
+                  sliders[name].enable();
+              }else{
+                  sliders[name].disable();
+              }
+          }
+       });
+  });
+  $('#range_box').on('hide.bs.modal', function (e) {
+        $("#range_modal").empty();
+  });
+
+  // 确认选择了某个range
+  $('#confirm_range').click(function () {
+      var checkboxes = document.getElementsByClassName('toggle__input');
+      var check_status = {};
+      var checked_keys = [];
+      var unchecked_keys = [];
+      for(var index=0;index<checkboxes.length;index++){
+          var checked = checkboxes[index].checked;
+          var key = checkboxes[index].getAttribute('name');
+          ranges[key] = sliders[key].getValue();
+          check_status[key] = checked;
+          if(checked){
+              checked_keys.push(key);
+          }else {
+              unchecked_keys.push(key);
+          }
+      }
+      //1.如果是checked
+      if(checked_keys.length>0){
+          $.ajax({
+                url: '/chart/range',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                    keys: checked_keys,
+                    ranges: ranges,
+                    log_dir: log_dir,
+                    uuid: window.server_uuid
+                }),
+                success: function(value){
+                    if(value['status']==='success'){
+                        var steps = value['steps'];
+                        for(var key in steps){
+                            var _steps = steps[key];
+                            //1. 从后端获取数据
+                            if(_steps.length===0){
+                                bootbox.alert("There is no data between step:" + ranges[key][0] +
+                                    "-" + ranges[key][1] + " for `" + key +"`.");
+                            }else{
+                                //2. 如果返回的结果不为空; 没有nan值
+                                if(!is_nan_inf(_steps)){
+                                    //3. 删除已有的g2图
+                                    //4. 替换为新的数据
+                                    if(key in charts){
+                                        charts[key].destroy();
+                                        delete charts[key];
+                                        document.getElementById(key + '_title').style.visibility = 'hidden';
+                                    }
+                                    if(key in range_charts){
+                                        range_charts[key].changeData(_steps);
+                                    }else{
+                                        range_charts[key] = create_chart(key, _steps);
+                                    }
+                                }
+                            }
+                        }
+                    }else{
+                        bootbox.alert("Fail to get steps between step:" + ranges[key][0]  + "-" + ranges[key][1])
+                    }
+                },
+                error: function(error){
+                    bootbox.alert("Fail to get range data.")
+                }
+             })
+      }
+      //2.如果是unchecked
+         //1. 根据range_checked判断是否之前是checked的
+         //    1.1 是的话，恢复已有的g2图; 并从range_charts中删除
+        //2. 之前也是uncheked的就不用管了
+      if(unchecked_keys.length>0){
+          for(var index=0;index<unchecked_keys.length;index++){
+              var key = unchecked_keys[index];
+              if(range_checked[key] === 'checked'){
+                  range_charts[key].destroy();
+                  document.getElementById(key + '_title').style.visibility = 'hidden';
+                  if(key in data){
+                      key_data = data[key];
+                      if(is_nan_inf(key_data)){
+                          nan_detect = true;
+                      }else{
+                        charts[key] = create_chart(key, key_data);
+                      }
+                      current_step = Math.max(current_step, key_data[key_data.length-1]['step']);
+                  }
+                  delete range_charts[key];
+              }
+          }
+      }
+      //3.修改range_checked为合适的值。
+      if(checked_keys.indexOf('loss')!==-1){
+          range_checked['loss'] = 'checked';
+      }else{
+          range_checked['loss'] = '';
+      }
+      if(checked_keys.indexOf('metric')!==-1){
+          range_checked['metric'] = 'checked';
+      }else{
+          range_checked['metric'] = '';
+      }
+
+      $("#range_box").modal('hide');
+      for(var key in sliders){
+          sliders[key].destroy();
+          delete sliders[key];
+      }
+  })
 
 </script>
 </body>
