@@ -135,7 +135,7 @@ window.operateEvents = {
                     }
                 },
                 error: function(error){
-                    bootbox.alert("Some error happens. ");
+                    bootbox.alert("Some error happens. You may disconnect from the server.");
                 }
         })
     }
