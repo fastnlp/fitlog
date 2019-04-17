@@ -332,7 +332,8 @@ function update_settings(settings){
                     }
                 },
                 error: function (msg, status) {
-                    bootbox.alert("Error. " + msg);
+                    bootbox.alert("Error. If the server shuts down or you can not connect to the server, check Offline " +
+                        "in settings")
                 }
         })
     }
@@ -358,7 +359,8 @@ function update_hide_row_ids(ids){
                 }
             },
             error: function (msg, status) {
-                bootbox.alert("Error. "+msg);
+                bootbox.alert("Error. If the server shuts down or you can not connect to the server, check Offline " +
+                    "in settings")
             }
         })
     }
@@ -385,7 +387,8 @@ function update_hidden_columns(hidden_columns) {
                 }
             },
             error: function (value) {
-                bootbox.alert("Error. "+value);
+                bootbox.alert("Error. If the server shuts down or you can not connect to the server, check Offline " +
+                    "in settings")
             }
         })
     }
@@ -412,7 +415,8 @@ function update_column_order(column_order) {
                 }
             },
             error: function (value) {
-                bootbox.alert("Error. "+value);
+                bootbox.alert("Error. If the server shut down or you can not connect to the server, check Offline " +
+                    "in settings");
             }
         })
     }
