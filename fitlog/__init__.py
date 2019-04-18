@@ -1,1 +1,1 @@
-from .fastlog.logger import logger
+from .fastlog.logger import logger as fitlog

@@ -8,7 +8,6 @@ from collections import defaultdict
 from functools import reduce
 from fitlog.fastserver.server.server_config import read_extra_data
 from fitlog.fastserver.server.server_config import read_server_config
-from fitlog.fastserver.server.test import generate_data
 from fitlog.fastserver.server.utils import expand_dict
 
 def generate_columns(logs, hidden_columns=None, column_order=None, editable_columns=None,
