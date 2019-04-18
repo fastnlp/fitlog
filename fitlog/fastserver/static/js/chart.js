@@ -29,7 +29,7 @@ function generate_range_modal(current_step, charts, ele, range_checked, ranges) 
             "                        </span>\n" +
             "                      </label>\n" +
             "                    </div>";
-            html += '<input id="' + id + '" type="text" class="span2" style="float:left;margin-left:10px;width:400px"/>';
+            html += '<input id="' + id + '" type="text" class="span2" style="float:left;margin-left:10px;width:75%"/>';
             html += '<div class="clear"></div></div>';
             ele.append(html);
             var enabled = checked !== '';
