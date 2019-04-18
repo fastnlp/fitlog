@@ -17,8 +17,6 @@ from flask import send_from_directory
 
 from collections import deque
 
-all_data['debug'] = False  # when in debug mode, no call to other modules will be initialized.
-
 app = Flask(__name__)
 
 app.register_blueprint(chart_page)
@@ -64,7 +62,7 @@ def start_app(log_dir, log_config_name, start_port, standby_hours):
     all_data['log_reader'] = log_reader
 
     # 准备数据
-    all_data.update(prepare_data(log_reader, log_dir, log_config_path, all_data['debug']))
+    all_data.update(prepare_data(log_reader, log_dir, log_config_path))
     print("Finish preparing data. Found {} records in {}.".format(len(all_data['data']), log_dir))
     all_data['uuid'] = str(uuid.uuid1())
 

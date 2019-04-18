@@ -283,7 +283,7 @@ def prepare_incremental_data(logs, new_logs, field_columns):
     return new_logs, updated_logs
 
 
-def prepare_data(log_reader, log_dir, log_config_path, debug=False): # 准备好需要的数据， 应该包含从log dir中读取数据
+def prepare_data(log_reader, log_dir, log_config_path): # 准备好需要的数据， 应该包含从log dir中读取数据
     """
 
     :param log_dir: str, 哪里是存放所有log的大目录
@@ -302,16 +302,7 @@ def prepare_data(log_reader, log_dir, log_config_path, debug=False): # 准备好
     all_data = read_server_config(log_config_path)
     deleted_rows = all_data['deleted_rows']
 
-    if debug:
-        logs = generate_data(num_records=100)
-        # 1. 删除不要的
-        new_logs = []
-        for log in logs:
-            if log['id'] not in deleted_rows:
-                new_logs.append(log)
-        logs = new_logs
-    else:
-        logs = log_reader.read_logs(deleted_rows)
+    logs = log_reader.read_logs(deleted_rows)
 
     if len(logs)==0:
         raise ValueError("No valid log found in {}.".format(log_dir))

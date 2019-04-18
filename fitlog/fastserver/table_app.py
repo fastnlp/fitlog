@@ -15,20 +15,15 @@ from fitlog.fastserver.server.utils import check_uuid
 
 table_page = Blueprint("table_page", __name__, template_folder='fastserver/templates')
 
-first_time_access_table = True
-
 @table_page.route('/table/table')
 def get_table():
-    global first_time_access_table
-    if not first_time_access_table:
-        log_dir = all_data['root_log_dir']
-        log_config_path = all_data['log_config_path']
-        save_all_data(all_data, log_dir, log_config_path)
-        log_reader = all_data['log_reader']
-        log_reader.set_log_dir(log_dir)
-        all_data.update(prepare_data(log_reader, log_dir, log_config_path, all_data['debug']))
+    log_dir = all_data['root_log_dir']
+    log_config_path = all_data['log_config_path']
+    save_all_data(all_data, log_dir, log_config_path)
+    log_reader = all_data['log_reader']
+    log_reader.set_log_dir(log_dir)
+    all_data.update(prepare_data(log_reader, log_dir, log_config_path))
 
-    first_time_access_table = False
     data = all_data['data']
 
     replace_nan_inf(data)
