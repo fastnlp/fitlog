@@ -94,15 +94,15 @@ def ranges():
                                       wait_seconds=10,
                                       exclude_columns=all_data['chart_settings']['chart_exclude_columns'],
                                       max_no_updates=all_data['chart_settings']['max_no_updates'])
-        updates = handler.update_logs(only_once=True, cut_long_logs=False)
+        filepaths = []
+        for key in keys:
+            filepaths.append(os.path.join(all_data['root_log_dir'], log_dir, key+'.log'))
+        updates = handler.read_single_update(filepaths, ranges)
         del handler
-        updates.pop('finish')
+
         refined_updates = {}
         for key in keys:
             logs = updates[key]
-            s = int(ranges[key][0])
-            l = int(ranges[key][1])
-            logs = [log for log in logs if s<=log['step']<=l]
             refined_updates[key] = _refine_logs(logs, all_data['chart_settings']['max_points'],
                                                 all_data['basic_settings']['round_to'])
         return jsonify(status='success', steps=refined_updates)

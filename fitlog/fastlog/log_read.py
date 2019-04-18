@@ -1,5 +1,5 @@
-
-
+# encoding=utf-8
+import sys
 import os
 import re
 import json
@@ -258,6 +258,40 @@ class StandbyStepLogReader(threading.Thread):
                         pass
         self._last_meta_md_time = last_meta_md_time
         return False
+
+    def read_update_single_log(self, filepaths, ranges):
+        """
+        调用这个函数，获取filepaths中满足range_min, range_max的log
+        :param filepaths: # 完整的path路径
+        :param ranges: {'metric':[min, max]}
+        :return: 返回{loss: [dict('step':x, key:value, 'loss':{})],
+                metric:[dict('step':x, key:value, 'metric':)]
+                }
+        """
+        updates = defaultdict(list)
+
+        for filepath in filepaths:
+            filename = os.path.basename(filepath).split('.')[0]
+            range_min = int(ranges[filename][0])
+            range_max = int(ranges[filename][1])
+
+            with open(filepath, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if not line.endswith('\n'):# 结尾不是回车，说明没有读完
+                        pass
+                    else:
+                        if line.startswith('Step:'):
+                            step = int(line[line.index(':')+1:line.index('\t')])
+                            if range_min<=step<=range_max:
+                                line = line[line.index('\t')+1:].strip()
+                            try:
+                                _dict = json.loads(line)
+                                updates[filename].append(_dict)
+                            except:
+                                pass
+                if filename in updates and len(updates[filename])!=0:  # 对step排序，保证不要出现混乱
+                    updates[filename].sort(key=lambda x:x['step'])
+        return updates
 
     def read_update(self, only_once=False):
         """

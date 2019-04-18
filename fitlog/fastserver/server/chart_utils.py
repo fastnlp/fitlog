@@ -27,7 +27,48 @@ class ChartStepLogHandler:
         self.path2path[key] = path2spath
         return path2spath
 
-    def update_logs(self, only_once=False, cut_long_logs=True):
+    def read_single_update(self, filepaths, ranges):
+        steps = self.reader.read_update_single_log(filepaths, ranges)
+        data = {}
+        for key, values in steps.items():# key为loss, metric; value为[{'step':, epoch:, loss:{}}],
+            # [{'step':, epoch:, metric:{}}]
+            if key in self.path2path:
+                path2path = self.path2path[key]
+            else:
+                path2path = self._add_path2path(key, values[0])
+            expanded_values = defaultdict(list)
+            for v in values:
+                expand_v = {}
+                real_v = v[key]
+                for _key in ['step', 'epoch']:
+                    if _key in v:
+                        expand_v[_key] = v[_key]
+                real_v.pop('step', None)
+                real_v.pop('epoch', None)
+                _expand_v = expand_dict('', real_v)
+                for __key in list(_expand_v.keys()):
+                    # 删除不需要的
+                    if __key in self.exclude_columns:
+                        _expand_v.pop(__key)
+                for i_key, i_value in _expand_v.items():
+                    if isinstance(i_value, (float, int)):
+                        if i_key not in path2path:
+                            path2path = self._add_path2path(key, real_v)
+                        short_i_key = path2path[i_key]
+                        i_value = round(i_value, self.round_to)
+                        i_expand_v = expand_v.copy()
+                        i_expand_v['name'] = short_i_key
+                        i_expand_v['value'] = i_value
+                        expanded_values[short_i_key].append(i_expand_v)
+
+            l_expanded_values = []
+            for i_key in list(expanded_values.keys()):
+                i_value = expanded_values[i_key]
+                l_expanded_values.extend(i_value)
+            data[key] = l_expanded_values
+        return data
+
+    def update_logs(self, only_once=False):
         # data: {'finish':(如果结束了有), 'metric': [{}, {}], 'loss':[{}, {}]}
         steps = self.reader.read_update(only_once)
         data = {}
@@ -67,7 +108,7 @@ class ChartStepLogHandler:
                 l_expanded_values = []
                 for i_key in list(expanded_values.keys()):
                     i_value = expanded_values[i_key]
-                    if cut_long_logs and len(i_value)>self.max_steps: # 不能超过一定的step
+                    if len(i_value)>self.max_steps: # 不能超过一定的step
                         l_expanded_values.extend(i_value[-self.max_steps:])
                     else:
                         l_expanded_values.extend(i_value)
