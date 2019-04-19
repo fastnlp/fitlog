@@ -297,9 +297,9 @@ class Logger:
 
     @check_debug
     @check_log_dir
-    def add_py_file(self, filepath):
+    def add_hyper_in_file(self, filepath):
         """
-        Read parameters from a file. Like the follow example, it will extract equations between two "#######"(at least 7,
+        Read parameters from a file. Like the follow example, it will extract equations between two "#######hyper"(at least 7,
             can have more) and transform into dict. Every parameter can have at most one line, if a value spans multiple
             line, it will only record the first line.
         demo.py:
@@ -307,13 +307,13 @@ class Logger:
         from numpy as np
         # do something
 
-        ############
+        ############hyper
         lr = 0.01 # some comments
         char_embed = word_embed = 300
 
         hidden_size = 100
         ....
-        ############
+        ############hyper
 
         # do something
         model = Model(xxx)
@@ -339,7 +339,7 @@ class Logger:
             lines = f.readlines()
             for line in lines:
                 line = line.strip()
-                if len(re.findall('#######+', line)) != 0:
+                if len(re.findall('^#######+hyper$', line)) != 0:
                     between = not between
                 elif between:
                     if len(line) != 0 and not line.startswith('#'):
@@ -347,9 +347,12 @@ class Logger:
                         # replace space before an after =
                         line = re.sub('\s*=\s*', '=', line)
                         values = line.split('=')
+                        last_value = values[-1].rstrip("'").rstrip('"').lstrip("'").lstrip('"')
                         for value in values[:-1]:
-                            _dict[value] = values[-1]
-        self.add_hyper(_dict)
+                            # 删除str开头的'"
+                            _dict[value] = last_value
+        if len(_dict)!=0:
+            self.add_hyper(_dict)
 
     @check_debug
     @check_log_dir

@@ -93,15 +93,13 @@ def table_reset():
         res = check_uuid(all_data['uuid'], request.json['uuid'])
         if res != None:
             return jsonify(res)
-        if not all_data['debug']:
-            fit_id = request.json['fit_id']
-            _suffix = request.json['suffix']
-            response = committer.fitlog_revert(fit_id, all_data['root_log_dir'], _suffix)
-            if response['status'] == 0:
-                return jsonify(status='success', msg=response['msg'])
-            else:
-                return jsonify(status='fail', msg=response['msg'])
-        return jsonify(status='success', msg="")
+        fit_id = request.json['fit_id']
+        _suffix = request.json['suffix']
+        response = committer.fitlog_revert(fit_id, all_data['root_log_dir'], _suffix)
+        if response['status'] == 0:
+            return jsonify(status='success', msg=response['msg'])
+        else:
+            return jsonify(status='fail', msg=response['msg'])
     except Exception as e:
         print(e)
         return jsonify(status='fail', msg='Unknown error from server.')
@@ -153,7 +151,7 @@ def table():
 
 
 def save_all_data(all_data, log_dir, log_config_path):
-    if all_data['settings']['Save_settings'] and not all_data['debug']:  # 如果需要保存
+    if all_data['settings']['Save_settings']:  # 如果需要保存
         save_config(all_data, config_path=log_config_path)
 
         # save editable columns

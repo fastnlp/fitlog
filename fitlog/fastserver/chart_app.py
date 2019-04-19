@@ -17,10 +17,7 @@ chart_page = Blueprint("chart_page", __name__, template_folder='templates')
 
 @chart_page.route('/chart', methods=['POST'])
 def chart():
-    if all_data['debug']:
-        log_dir = ''  # 如果是debug，在这里设置log dir
-    else:
-        log_dir = request.values['log_dir']
+    log_dir = request.values['log_dir']
     finish = request.values['finish']
     save_log_dir = os.path.join(all_data['root_log_dir'], log_dir)
     chart_exclude_columns = all_data['chart_settings']['chart_exclude_columns']
