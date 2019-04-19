@@ -5,5 +5,5 @@ recursive-include fitlog/fastserver/static *
 recursive-include fitlog/fastserver/templates *.html
 include fitlog/fastserver/favicon.ico
 prune test/
-include fitlog/fastgit/example/
-include fitlog/fastgit/normal/
+recursive-include fitlog/fastgit/example/ *
+graft fitlog/fastgit/normal
