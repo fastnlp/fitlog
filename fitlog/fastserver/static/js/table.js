@@ -247,7 +247,7 @@ var TableInit = function () {
             pageSize: 10,                       //每页的记录行数（*）
             pageList: [5, 10, 20, 30, 50, 'All'],        //可供选择的每页的行数（*）
             search: true,                       //是否显示表格搜索，此搜索是客户端搜索，不会进服务端，所以，个人感觉意义不大
-            strictSearch: true,
+            strictSearch: false,
             filterControl:filterControl,                 // 是否显示filter栏
             filterShowClear: true,              // 是否显示一键删除所有fitler条件的按钮
             hideUnusedSelectOptions: false,       //不要显示不存在的filter对象，如果为true再选择某个filter之后，这个filter其它选项都消失了

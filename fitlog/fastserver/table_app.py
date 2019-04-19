@@ -13,7 +13,7 @@ from fitlog.fastserver.server.server_config import save_extra_data
 from fitlog.fastserver.server.utils import replace_nan_inf
 from fitlog.fastserver.server.utils import check_uuid
 
-table_page = Blueprint("table_page", __name__, template_folder='fastserver/templates')
+table_page = Blueprint("table_page", __name__, template_folder='templates')
 
 @table_page.route('/table/table')
 def get_table():
@@ -147,7 +147,6 @@ def column_order():
 @table_page.route('/table')
 def table():
     return render_template('table.html')
-
 
 
 def save_all_data(all_data, log_dir, log_config_path):
