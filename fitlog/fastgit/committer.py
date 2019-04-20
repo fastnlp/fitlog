@@ -78,7 +78,7 @@ class Committer:
                     print(colored_string("Can not find the config file.", "red"))
                 return
             path = os.path.dirname(path)
-
+    
     def __read_config(self):
         config = configparser.ConfigParser()
         config.read(self.config_file_path)
@@ -94,7 +94,7 @@ class Committer:
                 elif tmp in ["True", 'true']:
                     self.revert_with_commit_id = True
                 else:
-                    print(colored_string("The config field 'revert_with_commit_id' (value: %s) error."%tmp, "yellow"))
+                    print(colored_string("The config field 'revert_with_commit_id' (value: %s) error." % tmp, "yellow"))
     
     def __get_watched_files(self):
         rules = self.watched_files
@@ -144,7 +144,7 @@ class Committer:
                 print(colored_string("Fitlog project has been initialized. ", "red"))
             return True
         return False
-
+    
     def __commit_files(self, watched_files, commit_message):
         commands = ["cd " + self.work_dir]
         for file in watched_files:
@@ -290,19 +290,19 @@ class Committer:
         work_dir = os.path.abspath(work_dir)
         try:
             # 忽略错误信息
-            lines = subprocess.Popen("cd %s && git log --oneline"%work_dir, shell=True,
-                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.readlines()
-            if len(lines)!=0:
+            lines = subprocess.Popen("cd %s && git log --oneline" % work_dir, shell=True,
+                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.readlines()
+            if len(lines) != 0:
                 line = lines[0].decode('utf-8')
                 git_id = line[:line.index(' ')]
-                git_msg = line[line.index(' ')+1:].strip()
+                git_msg = line[line.index(' ') + 1:].strip()
             else:
                 git_id = None
                 git_msg = None
             return make_info(0, [git_id, git_msg])
         except FileNotFoundError:
             return make_info(1, "Error: Some error occurs")
-
+    
     def get_config(self, run_file_path=None):
         self.__find_config_file(run_file_path, cli=False)
         if self.config_file_path is None:
@@ -310,7 +310,7 @@ class Committer:
         self.__read_config()
         self.__get_work_dir()
         return make_info(0, self.work_dir)
-
+    
     def fitlog_revert(self, commit_id, run_file_path=None, id_suffix=False):
         if self.work_dir is None:
             info = self.get_config(run_file_path)
@@ -321,11 +321,6 @@ class Committer:
     # CLI FUNCTIONS
     def revert_to_directory(self, commit_id, path, id_suffix):
         self.__revert(commit_id, path, cli=True, id_suffix=id_suffix)
-    
-    def init_example(self, pj_name):
-        if pj_name is None:
-            pj_name = 'example_fitlog'
-        self.init_project(pj_name, version="example")
     
     def init_project(self, pj_name, version="normal", hide=False, git=True):
         if pj_name == '.':
@@ -341,6 +336,7 @@ class Committer:
         commands = [
             "cd " + pj_name,
             "cp -r %s/. ." % (tools_path + version),
+            "mv main main.py",
             "git init",
             "git add .",
             "git commit -m \"Project initialized.\""]
@@ -357,7 +353,7 @@ class Committer:
         if git:
             if pj_name == '.' and os.path.exists("/.git"):
                 if hide:
-                    open('.gitignore', 'a').write(".fitlog\n")
+                    open('.gitignore', 'a').write(".fitlog\nlogs\n.gitignore\n")
                 else:
                     # TODO 可能存在一个问题是，如果.gitignore已经被git管理
                     open('.gitignore', 'a').write(".fitlog\n.fitconfig\nlogs\n.gitignore\n")
@@ -369,10 +365,6 @@ class Committer:
                     commands += ["echo .fitlog > .gitignore"]
                 else:
                     commands += ["echo \".gitignore\\n.fitlog/\\n.fitconfig\\nlogs/\" > .gitignore"]
-                # commands += [
-                #     # "git add .gitignore *",
-                #     # "git commit -m \"Project initialized.\"",
-                # ]
                 ret_code = os.system(" && ".join(commands))
                 if ret_code != 0:
                     print(colored_string("Some error occurs.", "red"))
