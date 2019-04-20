@@ -14,7 +14,7 @@ def cmd_parser():
                          required=True, type=str)
     parser.add_argument('-l', '--log_config_name',
                         help="Log config name. Will try to find it in {log_dir}/{log_config_name}. Default is "
-                             "default-cfg.config",
+                             "default.cfg",
                         required=False,
                         type=str, default='default-cfg.config')
     parser.add_argument('-p', '--port', help='What port to use. Default 5000, but when it is blocked, pick 5001 ...',

@@ -43,6 +43,7 @@ $(function () {
             window.column_order_updated = false;
             window.hidden_columns_updated = false;
             window.unchanged_columns = value['unchanged_columns'];
+            window.save_config_name = value['log_config_name'];
             initalizeTable();
             // 如果unchanged_columns不为空，则使得button可见，否则不可见
            if($.isEmptyObject(window.unchanged_columns)){
@@ -281,13 +282,13 @@ var TableInit = function () {
                             id: row['id'],
                             new_field_value: row[field],
                             uuid: window.server_uuid}),
-                        success: function (msg, status) {
-                            if (status === "success") {
+                        success: function (res, status) {
+                            if (res['status'] === "success") {
                                 success_prompt(field + " update successfully.", 1500);
                             }
-                            if (status === 'fail')
+                            if (res['status'] === 'fail')
                             {
-                                bootbox.alert("Fail to save your change. " + msg);
+                                bootbox.alert("Fail to save your change. " + res['msg']);
                             }
                         },
                         error: function (value) {
@@ -312,6 +313,29 @@ var TableInit = function () {
     return oTableInit;
 };
 
+function update_config_name(config_name){
+    if(!window.settings['Offline']){
+           $.ajax({
+            type: "post",
+            url: "/table/save_config_name",
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify({
+                save_config_name: config_name,
+                uuid: window.server_uuid}),
+            success: function (res, status) {
+                if (res['status'] === 'fail'){
+                    bootbox.alert("Fail to set your config name. " + res['msg']);
+                }else{
+                    window.save_config_name = res['msg'];
+                }
+            },
+            error: function (value) {
+                bootbox.alert("Fail to synchronize your config name to the server.")
+            }
+       })
+    }
+}
+
 
 function update_settings(settings){
     // 将新的settings更新到后端
@@ -323,12 +347,12 @@ function update_settings(settings){
                 data: JSON.stringify({
                     settings: settings,
                     uuid: window.server_uuid}),
-                success: function (msg, status) {
-                    if (status === "success") {
+                success: function (res, status) {
+                    if (res['status'] === "success") {
                         // success_prompt( "Settings update successfully.", 1500);
                     }
-                    if (status === 'fail'){
-                        bootbox.alert("Fail to save your settings to server. " + msg);
+                    if (res['status'] === 'fail'){
+                        bootbox.alert("Fail to save your settings to server. " + res['msg']);
                     }
                 },
                 error: function (msg, status) {
@@ -350,12 +374,12 @@ function update_hide_row_ids(ids){
             data: JSON.stringify({
                 ids: ids,
                 uuid: window.server_uuid}),
-            success: function (msg, status) {
-                if (status === "success") {
+            success: function (res, status) {
+                if (res['status'] === "success") {
                     // success_prompt( "Hidden rows update successfully.", 1500);
                 }
-                if (status === 'fail'){
-                    bootbox.alert("Fail to save your hidden rows to server. " + msg);
+                if (res['status'] === 'fail'){
+                    bootbox.alert("Fail to save your hidden rows to server. " + res['msg']);
                 }
             },
             error: function (msg, status) {
@@ -378,12 +402,12 @@ function update_hidden_columns(hidden_columns) {
             data: JSON.stringify({
                 hidden_columns: hidden_columns,
                 uuid: window.server_uuid}),
-            success: function (msg, status) {
-                if (status === "success") {
+            success: function (res, status) {
+                if (res['status'] === "success") {
                     // success_prompt( "Hidden columns update successfully.", 1500);
                 }
-                if (status === 'fail'){
-                    bootbox.alert("Fail to save your hidden columns  to server." + msg);
+                if (res['status'] === 'fail'){
+                    bootbox.alert("Fail to save your hidden columns  to server." + res['msg']);
                 }
             },
             error: function (value) {
@@ -406,12 +430,12 @@ function update_column_order(column_order) {
             data: JSON.stringify({
                 column_order: column_order,
                 uuid: window.server_uuid}),
-            success: function (msg, status) {
-                if (status === "success") {
+            success: function (res, status) {
+                if (res['status'] === "success") {
                     // success_prompt( "Column order update successfully.", 1500);
                 }
-                if (status === 'fail'){
-                    bootbox.alert("Fail to save your column order to server. " + msg);
+                if (res['status'] === 'fail'){
+                    bootbox.alert("Fail to save your column order to server. " + res['msg']);
                 }
             },
             error: function (value) {

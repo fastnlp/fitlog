@@ -11,7 +11,7 @@ arguments:
 
 options:
     -h --help       This is a command to start fitlog server to visualize logs.  
-    -l=L --log-config-name        Log server config name. should under the folder of <log-dir>. [default: default-cfg.config]
+    -l=L --log-config-name        Log server config name. Must under the folder of <log-dir>. [default: default.cfg]
     -p=P --port     Which port to start to looking for usable port.[default: 5000]
     -s=S --standby-hours    How long to wait before the server . [default: 48]
     

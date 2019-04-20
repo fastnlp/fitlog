@@ -46,4 +46,5 @@ def check_uuid(gold_uuid, _uuid):
         return None
     else:
         return {'status': 'fail',
-                'msg': "The data are out-of-date, please refresh this page."}
+                'msg': "The data are out-of-date, please refresh this page. Or, you can set this page as Offline to "
+                       "stop sending updates to the server."}

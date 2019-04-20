@@ -4,7 +4,8 @@ import uuid
 
 from flask import Flask, url_for, redirect
 from fitlog.fastserver.chart_app import chart_page
-from fitlog.fastserver.table_app import table_page, save_all_data
+from fitlog.fastserver.table_app import table_page
+from fitlog.fastserver.server.table_utils import save_all_data
 from fitlog.fastserver.server.app_utils import get_usage_port
 from fitlog.fastserver.server.data_container import all_data
 from fitlog.fastserver.server.data_container import handler_watcher
@@ -56,13 +57,12 @@ def start_app(log_dir, log_config_name, start_port, standby_hours):
     os.chdir(os.path.dirname(os.path.abspath(__file__))) # 可能需要把运行路径移动到这里
     all_data['root_log_dir'] = log_dir # will be used by chart_app
     server_wait_seconds = int(standby_hours*3600)
-    log_config_path = os.path.join(log_dir, log_config_name)
-    all_data['log_config_path'] = log_config_path
+    all_data['log_config_name'] = log_config_name
     log_reader.set_log_dir(log_dir)
     all_data['log_reader'] = log_reader
 
     # 准备数据
-    all_data.update(prepare_data(log_reader, log_dir, log_config_path))
+    all_data.update(prepare_data(log_reader, all_data['root_log_dir'], all_data['log_config_name']))
     print("Finish preparing data. Found {} records in {}.".format(len(all_data['data']), log_dir))
     all_data['uuid'] = str(uuid.uuid1())
 
@@ -73,7 +73,7 @@ def start_app(log_dir, log_config_name, start_port, standby_hours):
 
     # TODO 输出访问的ip地址
     print("Shutting down server...")
-    save_all_data(all_data, log_dir, log_config_path)
+    save_all_data(all_data,  all_data['root_log_dir'], all_data['log_config_name'])
     handler_watcher.stop()
     server_watcher.stop()
 

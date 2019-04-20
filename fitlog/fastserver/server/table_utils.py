@@ -9,6 +9,8 @@ from functools import reduce
 from fitlog.fastserver.server.server_config import read_extra_data
 from fitlog.fastserver.server.server_config import read_server_config
 from fitlog.fastserver.server.utils import expand_dict
+from fitlog.fastserver.server.server_config import save_config
+from fitlog.fastserver.server.server_config import save_extra_data
 
 def generate_columns(logs, hidden_columns=None, column_order=None, editable_columns=None,
                      exclude_columns=None, ignore_unchanged_columns=True,
@@ -283,7 +285,7 @@ def prepare_incremental_data(logs, new_logs, field_columns):
     return new_logs, updated_logs
 
 
-def prepare_data(log_reader, log_dir, log_config_path): # 准备好需要的数据， 应该包含从log dir中读取数据
+def prepare_data(log_reader, log_dir, log_config_name): # 准备好需要的数据， 应该包含从log dir中读取数据
     """
 
     :param log_dir: str, 哪里是存放所有log的大目录
@@ -295,6 +297,7 @@ def prepare_data(log_reader, log_dir, log_config_path): # 准备好需要的数�
     # 1. 从log读取数据
 
     log_dir = os.path.abspath(log_dir)
+    log_config_path = os.path.join(log_dir, log_config_name)
     log_config_path = os.path.abspath(log_config_path)
 
     # 读取config文件
@@ -346,6 +349,19 @@ def replace_with_extra_data(data, extra_data):
             if d in extra_data:
                 for k, v in extra_data[d].items():
                     value[k] = v
+
+def save_all_data(all_data, log_dir, log_config_name):
+    log_config_path = os.path.join(log_dir, log_config_name)
+    if all_data['settings']['Save_settings']:  # 如果需要保存
+        save_config(all_data, config_path=log_config_path)
+
+        # save editable columns
+        if len(all_data['extra_data']) != 0:
+            extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
+            save_extra_data(extra_data_path, all_data['extra_data'])
+
+        print("Settings are saved to {}.".format(log_config_path))
+
 
 
 if __name__ == '__main__':

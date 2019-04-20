@@ -189,6 +189,7 @@
    // 点击setting
     $setting.click(function () {
         var settings = window.settings;
+        var $div = $("#setting_div");
         for(var setting in settings)
         {
             var checked;
@@ -202,7 +203,7 @@
             }else {
               checked = ""
             }
-            $("#setting_div").append("<div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
+            $div.append("<div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
                 "                                      <label class=\"toggle\" style=\"margin-bottom: 0\">\n" +
                 "                                        <input class=\"toggle__input\""  +
                                                     checked +  " name='setting-check-box'  type=\"checkbox\">\n" +
@@ -212,6 +213,13 @@
                 "                                      </label>\n" +
                 "                                    </div>");
         }
+        $div.append('<div class="page__toggle" style="padding: 0 0;margin: 0 0">' +
+            '<label class="toggle" style="margin-bottom: 0">' +
+                '<span class="toggle__text">Save config name: </span>' +
+                '<input type="text" name="config_name" id="config_name_input" value="' + window.save_config_name +'">' +
+            '</label>' +
+            '</div>')
+
     });
     //点击reorder columns
    $choose_columns.click(function () {
@@ -261,6 +269,11 @@
 
    //setting确认
    $setting_confirm.click(function () {
+       var config_name = document.getElementById('config_name_input');
+       if(config_name.value!==window.save_config_name){
+           update_config_name(config_name.value);
+       }
+
        var checkboxes = document.getElementsByName('setting-check-box');
        var index = 0;
        var update = false;
@@ -299,10 +312,10 @@
 
    // 确认选择columns
    $confirm_columns.click(function () {
-
-       var new_column_order = get_new_column_order($("#choose_column_nested"), window.column_order);
+       var $nested = $("#choose_column_nested");
+       var new_column_order = get_new_column_order($nested, window.column_order);
        var new_hidden_columns = window.hidden_columns;
-       get_new_hidden_columns($("#choose_column_nested"), new_hidden_columns, '');
+       get_new_hidden_columns($nested, new_hidden_columns, '');
 
 
        $("#columns_box").modal('hide');

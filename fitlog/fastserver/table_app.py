@@ -8,24 +8,29 @@ from fitlog.fastserver.server.table_utils import prepare_data, prepare_increment
 
 from fitlog.fastserver.server.data_container import all_data
 from fitlog.fastgit import committer
-from fitlog.fastserver.server.server_config import save_config
-from fitlog.fastserver.server.server_config import save_extra_data
 from fitlog.fastserver.server.utils import replace_nan_inf
 from fitlog.fastserver.server.utils import check_uuid
+from fitlog.fastserver.server.table_utils import save_all_data
+
+from werkzeug.utils import secure_filename
 
 table_page = Blueprint("table_page", __name__, template_folder='templates')
 
+first_time_access = True
+
 @table_page.route('/table/table')
 def get_table():
-    log_dir = all_data['root_log_dir']
-    log_config_path = all_data['log_config_path']
-    save_all_data(all_data, log_dir, log_config_path)
-    log_reader = all_data['log_reader']
-    log_reader.set_log_dir(log_dir)
-    all_data.update(prepare_data(log_reader, log_dir, log_config_path))
+    global first_time_access
+    if not first_time_access:
+        log_dir = all_data['root_log_dir']
+        log_config_name = all_data['log_config_name']
+        save_all_data(all_data, log_dir, log_config_name)
+        log_reader = all_data['log_reader']
+        log_reader.set_log_dir(log_dir)
+        all_data.update(prepare_data(log_reader, log_dir, log_config_name))
 
+    first_time_access = False
     data = all_data['data']
-
     replace_nan_inf(data)
 
     return jsonify(column_order=all_data['column_order'], column_dict=all_data['column_dict'],
@@ -33,7 +38,8 @@ def get_table():
                    settings={key.replace('_', ' '):value for key, value in all_data['settings'].items()},
                    uuid=all_data['uuid'],
                    hidden_rows=list(all_data['hidden_rows'].keys()),
-                   unchanged_columns=all_data['unchanged_columns'])
+                   unchanged_columns=all_data['unchanged_columns'],
+                   log_config_name=all_data['log_config_name'])
 
 @table_page.route('/table/refresh', methods=['POST'])
 def refresh_table():
@@ -114,6 +120,20 @@ def settings():
 
     return jsonify(status='success', msg='')
 
+@table_page.route('/table/save_config_name', methods=['POST'])
+def save_config_name():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res!=None:
+        return jsonify(res)
+    log_config_name = request.json['save_config_name']
+    log_config_name = secure_filename(log_config_name)
+    if len(log_config_name)!=0:
+        if all_data['log_config_name']!=log_config_name:
+            all_data['log_config_name'] = log_config_name
+        return jsonify(status='success', msg=log_config_name)
+    else:
+        return jsonify(status='fail', msg='Invalid file name')
+
 @table_page.route('/table/hidden_rows', methods=['POST'])
 def hidden_ids():
     res = check_uuid(all_data['uuid'], request.json['uuid'])
@@ -149,13 +169,3 @@ def table():
     return render_template('table.html')
 
 
-def save_all_data(all_data, log_dir, log_config_path):
-    if all_data['settings']['Save_settings']:  # 如果需要保存
-        save_config(all_data, config_path=log_config_path)
-
-        # save editable columns
-        if len(all_data['extra_data']) != 0:
-            extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
-            save_extra_data(extra_data_path, all_data['extra_data'])
-
-        print("Settings are saved to {}.".format(log_config_path))
