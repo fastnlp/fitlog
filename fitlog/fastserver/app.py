@@ -15,6 +15,10 @@ from flask import request
 import time
 from fitlog.fastserver.server.app_utils import ServerWatcher
 from flask import send_from_directory
+from urllib import request as urequest
+from threading import Timer
+from flask import jsonify
+from fitlog.fastserver.server.utils import check_uuid
 
 from collections import deque
 
@@ -44,6 +48,18 @@ def seriouslykill():
         raise RuntimeError('Not running with the Werkzeug Server')
     func()
     return "stopping"
+
+@app.route('/arange_kill', methods=['POST'])
+def arange_kill():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res!=None:
+        return jsonify(res)
+    def shutdown():
+        req = urequest.Request('http://localhost:5000/kill', headers={}, data=''.encode('utf-8'))
+        page = urequest.urlopen(req).read().decode('utf-8')
+    print("Shutting down from the frontend...")
+    Timer(1.0, shutdown).start()
+    return jsonify(status='success', msg='')
 
 @app.route('/table.ico')
 def get_table_ico():

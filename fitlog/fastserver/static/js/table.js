@@ -106,7 +106,7 @@ window.operateEvents = {
                             }
                         },
                         error: function(error){
-                            bootbox.alert('Error encountered. ' + error);
+                            bootbox.alert('Error encountered. ');
                         }
                 })
               }
@@ -122,9 +122,9 @@ window.operateEvents = {
                 url: '/chart/have_trends',
                 type: 'POST',
                 dataType: 'json',
-                async: false,
                 contentType: 'application/json;charset=UTF-8',
                 data: JSON.stringify({
+                     uuid: window.server_uuid,
                      log_dir: row['id']
                 }),
                 success: function(value){
@@ -132,7 +132,7 @@ window.operateEvents = {
                     if(status==='success' && value['have_trends']){
                         openPostWindow('/chart', {'log_dir': row['id'], 'finish': finish});
                     } else{
-                        bootbox.alert("There is no changing logs for this record.");
+                        bootbox.alert(value['msg']);
                     }
                 },
                 error: function(error){
@@ -221,8 +221,43 @@ function initalizeTable(){
        if(hidden_rows.length>0){
            $display.prop('disabled', false);
        }
+       var new_button = document.createElement("buttion");
+       new_button.className = "btn btn-default";
+       new_button.type = 'button';
+       new_button.name = 'poweroff';
+       new_button.title = 'PowerOff';
+       new_button.onclick = ShutDownServer;
+       new_button.innerHTML = '<i class="glyphicon glyphicon glyphicon-off"></i>';
+       document.getElementsByClassName('columns').item(0).appendChild(new_button)
 }
 
+function ShutDownServer() {
+    bootbox.confirm("This will shut down the server, are you sure to go on?", function(result){
+        if(result){
+          $.ajax({
+                url: '/arange_kill',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                     uuid: window.server_uuid
+                }),
+                success: function(value){
+                    var status = value['status'];
+                    if(status==='success'){
+                        success_prompt("Server is going to shut down in several seconds.")
+                    } else{
+                        bootbox.alert(value['msg']);
+                    }
+                },
+                error: function(error){
+                    bootbox.alert("Some error happens. Fail to shut server down, please shut down in the server.");
+                }
+            })
+        }
+    })
+
+}
 
 
 var TableInit = function () {

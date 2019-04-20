@@ -66,15 +66,18 @@ def chart_new_step():
 @chart_page.route('/chart/have_trends', methods=['POST'])
 def have_trends():
     try:
+        res = check_uuid(all_data['uuid'], request.json['uuid'])
+        if res != None:
+            return jsonify(res)
         log_dir = request.json['log_dir']
         save_log_dir = os.path.join(all_data['root_log_dir'], log_dir)
         if is_log_dir_has_step(save_log_dir):
             return jsonify(status='success', have_trends=True)
         else:
-            return jsonify(status='success', have_trends=False)
+            return jsonify(status='success', have_trends=False, msg='There is no trend data for this log.')
     except Exception:
-        print("Exception detected in have_trends(")
-        return jsonify(status='fail', have_trends=False)
+        print("Exception detected in have_trends()")
+        return jsonify(status='fail', have_trends=False, msg='Error from the server.')
 
 @chart_page.route('/chart/range', methods=['POST'])
 def ranges():
