@@ -2,7 +2,7 @@ from docopt import docopt
 from subprocess import call
 import os
 
-from fitlog.log_cmd import log_cmd
+from fitlog._log_cmd import log_cmd
 
 __doc__ = """
 Usage:
@@ -20,8 +20,8 @@ See "fitlog help <command>" for more information on a specific command
 
 def main():
     filedir = os.path.dirname(__file__)
-    fit_path = os.path.join(filedir, 'fit_cmd.py')
-    log_path = os.path.join(filedir, 'log_cmd.py')
+    fit_path = os.path.join(filedir, '_fit_cmd.py')
+    log_path = os.path.join(filedir, '_log_cmd.py')
     args = docopt(__doc__, version='fitlog v1.0')
     argv = [args['<command>']] + args['<args>']
     if args['<command>'] in ('init', 'revert'):
