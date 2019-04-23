@@ -1,6 +1,6 @@
 [fit_settings]
 revert_with_commit_id = False
-watched_files = *.py
+watched_rules = *.py
 
 [log_settings]
 default_log_dir = ./logs
