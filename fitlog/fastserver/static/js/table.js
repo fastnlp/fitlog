@@ -351,23 +351,24 @@ var TableInit = function () {
 function update_config_name(config_name){
     if(!window.settings['Offline']){
            $.ajax({
-            type: "post",
-            url: "/table/save_config_name",
-            contentType: 'application/json;charset=UTF-8',
-            data: JSON.stringify({
-                save_config_name: config_name,
-                uuid: window.server_uuid}),
-            success: function (res, status) {
-                if (res['status'] === 'fail'){
-                    bootbox.alert("Fail to set your config name. " + res['msg']);
-                }else{
-                    window.save_config_name = res['msg'];
+                type: "post",
+                url: "/table/save_config_name",
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                    save_config_name: config_name,
+                    uuid: window.server_uuid}),
+                success: function (res, status) {
+                    if (res['status'] === 'fail'){
+                        bootbox.alert("Fail to set your config name. " + res['msg']);
+                    }else{
+                        window.save_config_name = res['msg'];
+                        success_prompt("Successfully change the save name for current settings.", 3000)
+                    }
+                },
+                error: function (value) {
+                    bootbox.alert("Fail to synchronize your config name to the server.")
                 }
-            },
-            error: function (value) {
-                bootbox.alert("Fail to synchronize your config name to the server.")
-            }
-       })
+            })
     }
 }
 

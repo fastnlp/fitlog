@@ -41,6 +41,8 @@ class Logger:
         self._default_log_dir = None
         self._cache = []
         self._debug = False
+        self.fit_id = None
+        self.git_id = None
 
     def debug(self):
         """
@@ -60,6 +62,7 @@ class Logger:
         msg = committer.commit(file=file, commit_message=fit_msg)
         if msg['status']==0:# 成功了
             config = committer.config
+            self.fit_id = msg['msg']
             self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')
             self._default_log_dir = os.path.join(committer.work_dir, config.get('log_settings', 'default_log_dir'))
         else:
@@ -172,6 +175,7 @@ class Logger:
         if res['status']==0:
             git_id = res['msg'][0]
             git_msg = res['msg'][1]
+            self.git_id = res['msg'][0]
 
         _dict = {}
         for value, name in zip([fit_id, git_id, fit_msg, git_msg],
