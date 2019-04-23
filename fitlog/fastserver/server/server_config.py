@@ -52,7 +52,7 @@ update_every=3
 max_no_updates=40
 """
 
-from fitlog.fastserver.server.log_config_parser import ConfigParser
+from .log_config_parser import ConfigParser
 import os
 import json
 

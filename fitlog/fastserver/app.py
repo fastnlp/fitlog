@@ -3,22 +3,22 @@ import os
 import uuid
 
 from flask import Flask, url_for, redirect
-from fitlog.fastserver.chart_app import chart_page
-from fitlog.fastserver.table_app import table_page
-from fitlog.fastserver.server.table_utils import save_all_data
-from fitlog.fastserver.server.app_utils import get_usage_port
-from fitlog.fastserver.server.data_container import all_data
-from fitlog.fastserver.server.data_container import handler_watcher
-from fitlog.fastlog import log_reader
-from fitlog.fastserver.server.table_utils import prepare_data
+from .chart_app import chart_page
+from .table_app import table_page
+from .server.table_utils import save_all_data
+from .server.app_utils import get_usage_port
+from .server.data_container import all_data
+from .server.data_container import handler_watcher
+from ..fastlog import log_reader
+from .server.table_utils import prepare_data
 from flask import request
 import time
-from fitlog.fastserver.server.app_utils import ServerWatcher
+from .server.app_utils import ServerWatcher
 from flask import send_from_directory
 from urllib import request as urequest
 from threading import Timer
 from flask import jsonify
-from fitlog.fastserver.server.utils import check_uuid
+from .server.utils import check_uuid
 
 from collections import deque
 
@@ -94,7 +94,7 @@ def start_app(log_dir, log_config_name, start_port, standby_hours):
     server_watcher.stop()
 
 if __name__ == '__main__':
-    from fitlog.fastserver.server.app_utils import cmd_parser
+    from .server.app_utils import cmd_parser
     parser = cmd_parser()
     args =parser.parse_args()
 

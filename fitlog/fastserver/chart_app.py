@@ -4,12 +4,12 @@ from flask import render_template
 from flask import request, jsonify
 import os
 from flask import Blueprint
-from fitlog.fastserver.server.data_container import all_data, all_handlers, handler_watcher
-from fitlog.fastlog.log_read import is_log_dir_has_step, is_log_record_finish
-from fitlog.fastserver.server.chart_utils import ChartStepLogHandler
-from fitlog.fastserver.server.utils import replace_nan_inf
-from fitlog.fastserver.server.utils import check_uuid
-from fitlog.fastserver.server.chart_utils import _refine_logs
+from .server.data_container import all_data, all_handlers, handler_watcher
+from ..fastlog.log_read import is_log_dir_has_step, is_log_record_finish
+from .server.chart_utils import ChartStepLogHandler
+from .server.utils import replace_nan_inf
+from .server.utils import check_uuid
+from .server.chart_utils import _refine_logs
 
 import uuid
 

@@ -4,13 +4,13 @@ from flask import request, jsonify
 import os
 from flask import Blueprint
 
-from fitlog.fastserver.server.table_utils import prepare_data, prepare_incremental_data
+from .server.table_utils import prepare_data, prepare_incremental_data
 
-from fitlog.fastserver.server.data_container import all_data
-from fitlog.fastgit import committer
-from fitlog.fastserver.server.utils import replace_nan_inf
-from fitlog.fastserver.server.utils import check_uuid
-from fitlog.fastserver.server.table_utils import save_all_data
+from .server.data_container import all_data
+from ..fastgit import committer
+from .server.utils import replace_nan_inf
+from .server.utils import check_uuid
+from .server.table_utils import save_all_data
 
 from werkzeug.utils import secure_filename
 

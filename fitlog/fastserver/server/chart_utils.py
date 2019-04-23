@@ -1,6 +1,6 @@
 
-from fitlog.fastlog.log_read import StandbyStepLogReader
-from fitlog.fastserver.server.utils import expand_dict
+from ...fastlog.log_read import StandbyStepLogReader
+from .utils import expand_dict
 
 from collections import defaultdict
 import re
