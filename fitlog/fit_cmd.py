@@ -1,7 +1,4 @@
-from docopt import docopt
-from fitlog.fastgit import committer
-
-__doc__ = """
+"""
 Usage:
     fitlog init [<name>] [--hide] [--no-git]
     fitlog revert <fit_id>  [<path>] [--id-suffix]
@@ -26,6 +23,9 @@ Examples:
     fitlog init                (init the current directory with fitlog)
 
 """
+from docopt import docopt
+from .fastgit import committer
+
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='fitlog v1.0')

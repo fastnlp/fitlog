@@ -1,10 +1,4 @@
-from docopt import docopt
-from subprocess import call
-import os
-
-from fitlog._log_cmd import log_cmd
-
-__doc__ = """
+"""
 Usage:
     fitlog <command> [<args>...]
 
@@ -16,12 +10,17 @@ Supported commands
 See "fitlog help <command>" for more information on a specific command
 
 """
+from docopt import docopt
+from subprocess import call
+import os
+
+from .log_cmd import log_cmd
 
 
 def main():
-    filedir = os.path.dirname(__file__)
-    fit_path = os.path.join(filedir, '_fit_cmd.py')
-    log_path = os.path.join(filedir, '_log_cmd.py')
+    file_dir = os.path.dirname(__file__)
+    fit_path = os.path.join(file_dir, 'fit_cmd.py')
+    log_path = os.path.join(file_dir, 'log_cmd.py')
     args = docopt(__doc__, version='fitlog v1.0')
     argv = [args['<command>']] + args['<args>']
     if args['<command>'] in ('init', 'revert'):
