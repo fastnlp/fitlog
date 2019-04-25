@@ -6,9 +6,6 @@ fitlog.fastlog package
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
-
 fitlog.fastlog.log\_read module
 -------------------------------
 
