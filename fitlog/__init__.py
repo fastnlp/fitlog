@@ -1,3 +1,8 @@
+"""
+fitlog是一款集成了自动版本管理和自动日志记录两种功能的 Python 包，它可以帮助你在进行实验时方便地保存当前的代码、参数和结果。
+fitlog提供给用户的 API 有如下几个：
+
+"""
 __all__ = ["commit", "set_log_dir", "finish", "add_best_metric", "add_metric", "add_loss", "add_hyper", "add_other",
            "add_hyper_in_file"]
 from .fastlog import logger as _logger
@@ -151,5 +156,3 @@ def add_other(value: Union[int, str, float, dict], name: str = None):
     :param name: 如果你传入 name 参数，你传入的 value 参数会被看做形如 {name:value} 的字典
     """
     _logger.add_other(value, name)
-
-

@@ -6,9 +6,6 @@ fitlog.fastgit package
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
-
 fitlog.fastgit.committer module
 -------------------------------
 
