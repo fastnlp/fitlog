@@ -101,9 +101,9 @@ def add_hyper(value: Union[int, str, float, dict], name=None):
 
 def add_hyper_in_file(file_path: str):
     """
-    从文件读取参数。如demo.py所示，两行"#######hyper"之间的参数会被读取出来，并组成一个字典。
-    每个变量最多只能出现在一行中，如果多次出现，只会记录第一次出现的值。demo.py::
-
+    从文件读取参数。如demo.py所示，两行"#######hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
+    如果多次出现，只会记录第一次出现的值。demo.py::
+    
         from numpy as np
         # do something
 
@@ -117,16 +117,15 @@ def add_hyper_in_file(file_path: str):
 
         # do something
         model = Model(xxx)
-  
+    
     如果你把 demo.py 的文件路径传入此函数，会转换出如下字典，并添加到参数中::
-
+    
         {
             'lr': '0.01',
             'char_embed': '300'
             'word_embed': '300'
             'hidden_size': '100'
         }
-
 
     :param file_path: 文件路径
     """

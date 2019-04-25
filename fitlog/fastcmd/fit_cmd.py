@@ -15,7 +15,6 @@ Options:
     --hide                  Hide .fitconfig inside .fitlog folder
     --not-git               Not initialize with a standard git
     --id-suffix             Use commit id as the suffix of reverted folder
-    --show                  Show the head commit of fitlog
 
 Examples:
     fitlog init project     Create a your project named project

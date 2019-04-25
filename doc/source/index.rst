@@ -1,5 +1,3 @@
-
-
 fitlog 中文文档
 ==========================
 
@@ -11,14 +9,24 @@ fitlog是一款集成了自动版本管理和自动日志记录两种功能的 P
 
 .. _fastNLP: https://github.com/fastnlp/fastNLP
 
+用户手册
+------------
+
+.. toctree::
+    :maxdepth: 1
+
+    安装指南 <user/installation>
+    快速上手 <user/quickstart>
+
 API 文档
 -------------
 
 一般情况下你只需要阅读用户 API 文档即可，里面包括了你可以调用的函数接口。内部模块 API 是为后续的开发者准备的。
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   用户 API <fitlog>
+    命令行工具 <user/command_line>
+    用户 API <fitlog>
 
 
