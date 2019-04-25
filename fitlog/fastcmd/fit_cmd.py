@@ -4,7 +4,6 @@ Usage:
     fitlog revert <fit_id>  [<path>] [--id-suffix]
     fitlog -h | --help
 
-
 Arguments:
     name                    Name of the fitlog project
     fit_id                  The id of the commit you want to revert
@@ -19,19 +18,25 @@ Options:
     --show                  Show the head commit of fitlog
 
 Examples:
-    fitlog init your_project   (create a your project named your_project)
-    fitlog init                (init the current directory with fitlog)
+    fitlog init project     Create a your project named project
+    fitlog init             Init the current directory with fitlog
 
 """
 from docopt import docopt
-from .fastgit import committer
+from fitlog.fastgit import committer
 
 
-if __name__ == '__main__':
-    args = docopt(__doc__, version='fitlog v1.0')
+def fit_cmd(argv=None):
+    if argv:
+        args = docopt(__doc__, version='fitlog v1.0', argv=argv)
+    else:
+        args = docopt(__doc__, version='fitlog v1.0')
     if args['init']:
         name = args['<name>'] if args['<name>'] else '.'
         committer.init_project(name, hide=args["--hide"], git=not args["--no-git"])
     elif args['revert']:
         committer.revert_to_directory(args["<fit_id>"], args["<path>"], args["--id-suffix"])
 
+
+if __name__ == '__main__':
+    fit_cmd()
