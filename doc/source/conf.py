@@ -35,6 +35,11 @@ extensions = [
     'sphinx.ext.todo'
 ]
 
+autodoc_default_options = {
+    'member-order': 'bysource',
+    'special-members': '__init__',
+    'undoc-members': True,
+}
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -58,7 +63,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['modules.rst']
+exclude_patterns = ['modules.rst','fitlog.fastserver*']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -107,3 +112,9 @@ texinfo_documents = [
 
 
 # -- Extension configuration -------------------------------------------------
+def maybe_skip_member(app, what, name, obj, skip, options):
+    print(obj)
+    return True
+
+def setup(app):
+    app.connect('autodoc-skip-member', maybe_skip_member)

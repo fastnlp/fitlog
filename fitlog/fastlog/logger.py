@@ -67,7 +67,6 @@ class Logger:
         self.fit_id = None
         self.git_id = None
         
-        self._save_log_dir = None
         self._log_dir = None
     
     def debug(self):
@@ -319,7 +318,7 @@ class Logger:
 
         :param value: 类型为 int, float, str, dict中的一种。如果类型为 dict，它的键的类型只能为 str，
                 它的键值的类型可以为int, float, str 或符合同样条件的 dict
-        :param name: 参数的名字，当value不是字典时需要传入
+        :param name: 如果你传入 name 参数，你传入的 value 参数会被看做形如 {name:value} 的字典  
         :return:
         """
         if name in ('meta', 'hyper', 'metric', 'loss') and not isinstance(value, dict):
@@ -377,9 +376,9 @@ class Logger:
                     between = not between
                 elif between:
                     if len(line) != 0 and not line.startswith('#'):
-                        line = re.sub('#[^#]*$', '', line).strip()  # 删除结尾的注释
+                        line = re.sub(r'#[^#]*$', '', line).strip()  # 删除结尾的注释
                         # replace space before an after =
-                        line = re.sub('\s*=\s*', '=', line)
+                        line = re.sub(r'\s*=\s*', '=', line)
                         values = line.split('=')
                         last_value = values[-1].rstrip("'").rstrip('"').lstrip("'").lstrip('"')
                         for value in values[:-1]:
@@ -398,7 +397,7 @@ class Logger:
         :return:
         """
         assert isinstance(total_steps, int) and total_steps > 0
-        if hasattr(self, '_total_steps'):
+        if hasattr(self, 'total_steps'):
             raise RuntimeError("Cannot set total_steps twice.")
         self.total_steps = total_steps
         self._write_to_logger(json.dumps({"total_steps": total_steps}), 'progress_logger')

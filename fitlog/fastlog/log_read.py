@@ -2,7 +2,7 @@ import os
 import re
 import json
 from collections import defaultdict
-from typing import List, Set
+from typing import List
 import threading
 import time
 
@@ -14,9 +14,7 @@ class LogReader:
     
     def __init__(self):
         """
-        self._line_counter里面的内容:{
-            save_log_dir: {filename: (line_count, last_change_time)}
-        }
+        self._line_counter里面的内容:{save_log_dir: {filename: (line_count, last_change_time)}}
         """
         self._log_dir = None
         self._ignore_null_loss_or_metric = True  # 如果loss和metric都是null的话，则忽略
@@ -38,7 +36,7 @@ class LogReader:
         self._log_dir = log_dir
         self._line_counter.clear()  # 删除记录，使得重新读取
     
-    def read_logs(self, ignore_log_names: Set[str] = None) -> List[dict]:
+    def read_logs(self, ignore_log_names: dict = None) -> List[dict]:
         """
         从日志存放路径读取日志
 

@@ -342,7 +342,7 @@ class Committer:
     
     # 对用户暴露的接口
     def commit(self, file: str, commit_message: str = None) -> Info:
-        """用户用该方法进行 commit，详见fitlog.fastgit.commit的文档
+        """用户用该方法进行 commit
         
         :param file: 执行文件路径，期望传入用户程序中的 __file__
         :param commit_message: 自动 commit 的 commit-message
