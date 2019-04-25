@@ -25,7 +25,21 @@ def commit(file: str, fit_msg: str = None):
 def set_log_dir(log_dir: str):
     """
     设定log 文件夹的路径(在进行其它操作前必须先指定日志路径)。如果你已经顺利执行了 fitlog.commit()命令，
-    log 文件夹会自动设定为.fitconfig 文件中的 default_log_dir 字段的值
+    log 文件夹会自动设定为.fitconfig 文件中的 default_log_dir 字段的值。在某些情况下，可能需要继续往同
+    一个log中写入数据(比如继续训练之前以及保存的模型)，可以通过将log_dir设置为具体的log名。但需要保证
+    step的顺序与之前已有的内容是不冲突的，因为相同的step在fitlog中是覆盖的。
+
+    Example::
+
+        # 假设当前的文件结构为
+        # logs/
+        #    log_20190417_140311
+        #    ...
+        # main.py
+        #以下是main.py中三种设置log位置的方式
+        fitlog.commit() # 如果commit成功，则不需要设置logs文件夹了
+        fitlog.set_log_dir('logs/') # 设置log文件夹为'logs/', fitlog在每次运行的时候会默认以时间戳的方式在里面生成新的log
+        fitlog.set_log_dir('logs/log_20190417_140311') # fitlog将log继续写入到log_20190417_140311里。
 
     :param log_dir: log 文件夹的路径
     """
@@ -69,7 +83,7 @@ def add_loss(value: Union[int, str, float, dict], step: int, name: str = None, e
 
 def add_best_metric(value: Union[int, str, float, dict], name: str = None):
     """
-    用于添加最好的 metric 。用此方法添加的值，会被显示在表格中的 metric 列及其子列中。
+    用于添加最好的 metric 。用此方法添加的值，会被显示在表格中的 metric 列及其子列中。相同key的内容将只保留最后一次传入的值。
 
     :param value: 类型为 int, float, str, dict中的一种。如果类型为 dict，它的键的类型只能为 str，
             它的键值的类型可以为int, float, str 或符合同样条件的 dict
@@ -130,7 +144,7 @@ def add_hyper_in_file(file_path: str):
 
 def add_other(value: Union[int, str, float, dict], name: str = None):
     """
-    用于添加其它参数。用此方法添加到值，会被放置在表格中的 hyper 列及其子列中
+    用于添加其它参数。用此方法添加到值，会被放置在表格中的 other 列及其子列中。相同key的内容将只保留最后一次传入的值。
 
     :param value: 类型为 int, float, str, dict中的一种。如果类型为 dict，它的键的类型只能为 str，
             它的键值的类型可以为int, float, str 或符合同样条件的 dict
