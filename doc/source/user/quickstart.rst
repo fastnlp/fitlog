@@ -99,3 +99,5 @@ Step3
 我们可以点开最后一列的图标符号看到 loss 和 acc 的详细变化图:
 
 .. image:: /figures/fitlog_chart.png
+
+fitlog 网页服务的详细用法参见 :doc:`/user/website`
