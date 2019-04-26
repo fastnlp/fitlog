@@ -89,6 +89,8 @@ def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
     port = get_usage_port(start_port=start_port)
     server_watcher.set_server_wait_seconds(server_wait_seconds)
     server_watcher.start()
+    if all_data['token']!=None:
+        print("You specify token:{}, remember to add this token when access your table.".format(all_data['token']))
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
 
     # TODO 输出访问的ip地址
