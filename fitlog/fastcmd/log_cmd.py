@@ -18,7 +18,6 @@ from ..fastserver.app import start_app
 
 
 def log_cmd(argv=None):
-    print(argv)
     if argv:
         args = docopt(__doc__, version='fitlog v1.0', argv=argv)
     else:
@@ -31,7 +30,6 @@ def log_cmd(argv=None):
     token = args['--token']
     if token is False:
         token = None
-    print("Token:{}".format(token))
     if not os.path.isabs(log_dir):
         cwd = os.getcwd()
         log_dir = os.path.join(cwd, log_dir)
