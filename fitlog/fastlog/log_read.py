@@ -304,7 +304,7 @@ class StandbyStepLogReader(threading.Thread):
         
         :param filepaths: 完整的path路径
         :param ranges: {'metric':[min, max] }
-        :return: 返回值的结构如下
+        :return: 返回值的结构如下。loss这个list是进行了step排序的
                 ::
                 
                     {

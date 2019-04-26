@@ -2,6 +2,7 @@ from flask import render_template
 
 
 from flask import request, jsonify
+import random
 import os
 from flask import Blueprint
 from .server.data_container import all_data, all_handlers, handler_watcher
@@ -12,6 +13,9 @@ from .server.utils import check_uuid
 from .server.chart_utils import _refine_logs
 
 import uuid
+
+# 用于进行字符替换，以使得字符串变短
+full_name_map = {'name':'n', 'epoch':'e', 'value':'v', 'step': 's'}
 
 chart_page = Blueprint("chart_page", __name__, template_folder='templates')
 
@@ -45,17 +49,28 @@ def chart():
                            server_uuid=all_data['uuid'],
                            update_every=update_every_second*1000,
                            max_no_updates=all_data['chart_settings']['max_no_updates'],
-                           total_steps=total_steps)
+                           total_steps=total_steps,
+                           short_name_map = {value:key for key,value in full_name_map.items()})
 
 @chart_page.route('/chart/new_step', methods=['POST'])
 def chart_new_step():
     # 获取某个log_dir的更新
     _uuid = request.json['chart_uuid']
 
+    # TODO 使用更好的办法解决一下。
+    max_point_per_update = 100  # 一次更新只能选取最新的这么多个数据，否则网络传输和前端显示会有问题
     points = {}
     if _uuid in all_handlers:
         handler = all_handlers[_uuid]
         points = handler.update_logs()
+        for key, value in points.items():
+            if isinstance(value, list):
+                if len(value)<max_point_per_update:
+                    continue
+                # 只选择max_point_per_update个更新
+                total_points = len(value)
+                cut_values = [v for v in value if random.random()<max_point_per_update/total_points]
+                points[key] = cut_values
     else:
         points['finish'] = True
 

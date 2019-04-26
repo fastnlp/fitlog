@@ -2,7 +2,6 @@
 
 import threading
 import time
-import os
 
 class HandlerWatcher(threading.Thread):
     def __init__(self):
@@ -21,12 +20,12 @@ class HandlerWatcher(threading.Thread):
                     handler = self.all_handlers[_uuid]
                     if handler.reader._quit:
                         handler.reader.stop()
-                        self.all_handlers.pop(_uuid)
+                        handler = self.all_handlers.pop(_uuid)
                         del handler
             time.sleep(0.5)
         # 删除所有的handler
         for _uuid in list(self.all_handlers.keys()):
-            handler = self.all_handlers[_uuid]
+            handler = self.all_handlers.pop(_uuid)
             if handler.reader._quit:
                 handler.reader.stop()
                 del handler
