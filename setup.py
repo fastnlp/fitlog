@@ -24,7 +24,7 @@ setup(
     install_requires=reqs.strip().split('\n'),
     entry_points={
         'console_scripts':[
-            'fitlog = fitlog.__main__:main'
+            'fitlog = fitlog.__main__:main_cmd'
         ]
     }
 )
