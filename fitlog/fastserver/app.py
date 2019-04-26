@@ -43,6 +43,7 @@ def update_last_request_ms():
 
 @app.route('/kill', methods=['POST'])
 def seriouslykill():
+    time.sleep(1)
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
@@ -55,7 +56,7 @@ def arange_kill():
     if res!=None:
         return jsonify(res)
     def shutdown():
-        req = urequest.Request('http://localhost:5000/kill', headers={}, data=''.encode('utf-8'))
+        req = urequest.Request('http://127.0.0.1:{}/kill'.format(all_data['port']), headers={}, data=''.encode('utf-8'))
         page = urequest.urlopen(req).read().decode('utf-8')
     print("Shutting down from the frontend...")
     Timer(1.0, shutdown).start()
@@ -91,6 +92,7 @@ def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
     server_watcher.start()
     if all_data['token']!=None:
         print("You specify token:{}, remember to add this token when access your table.".format(all_data['token']))
+    all_data['port'] = port
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
 
     # TODO 输出访问的ip地址
