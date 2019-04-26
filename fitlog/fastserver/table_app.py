@@ -166,6 +166,14 @@ def column_order():
 
 @table_page.route('/table')
 def table():
+    if all_data['token'] != None:
+        return jsonify(msg='This url needs a token to access. If you did not specify a token when start the server, '
+                           'you may access the wrong ip or port. If you specify a token when start the server, '
+                           'use http://{your server ip}:{port}/table/{token} to access.')
     return render_template('table.html')
 
-
+@table_page.route('/table/<token>')
+def table_with_token(token):
+    if token!=all_data['token'] or all_data['token'] is None:
+        return jsonify(msg='Wrong token or you are not using a token')
+    return render_template('table.html')

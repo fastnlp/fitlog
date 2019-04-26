@@ -69,13 +69,17 @@ def get_table_ico():
 def get_chart_ico():
     return send_from_directory(os.path.join('.', 'static', 'img'), 'chart.ico')
 
-def start_app(log_dir, log_config_name, start_port, standby_hours):
+def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
     os.chdir(os.path.dirname(os.path.abspath(__file__))) # 可能需要把运行路径移动到这里
     all_data['root_log_dir'] = log_dir # will be used by chart_app
     server_wait_seconds = int(standby_hours*3600)
     all_data['log_config_name'] = log_config_name
     log_reader.set_log_dir(log_dir)
     all_data['log_reader'] = log_reader
+    if token is None:
+        all_data['token'] = None
+    else:
+        all_data['token'] = str(token)
 
     # 准备数据
     all_data.update(prepare_data(log_reader, all_data['root_log_dir'], all_data['log_config_name']))
@@ -85,7 +89,7 @@ def start_app(log_dir, log_config_name, start_port, standby_hours):
     port = get_usage_port(start_port=start_port)
     server_watcher.set_server_wait_seconds(server_wait_seconds)
     server_watcher.start()
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
 
     # TODO 输出访问的ip地址
     print("Shutting down server...")
@@ -98,7 +102,7 @@ if __name__ == '__main__':
     parser = cmd_parser()
     args =parser.parse_args()
 
-    start_app(args.log_dir, args.log_config_name, args.port, 1)
+    start_app(args.log_dir, args.log_config_name, args.port, 1, '123')
 
 
 

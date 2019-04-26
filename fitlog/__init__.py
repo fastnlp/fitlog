@@ -8,6 +8,7 @@ __all__ = ["commit", "set_log_dir", "finish", "add_best_metric", "add_metric", "
 from .fastlog import logger as _logger
 from typing import Union
 
+__version__ = '0.1.0'
 
 def commit(file: str, fit_msg: str = None):
     """

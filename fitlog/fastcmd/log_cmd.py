@@ -1,6 +1,6 @@
 """
 Usage:
-    fitlog log <log-dir> [--log-config-name=L] [--port=P] [--standby-hours=S]
+    fitlog log <log-dir> [--log-config-name=L] [--port=P] [--standby-hours=S] [--token=T]
 
 Arguments:
     log-dir                 Where to find logs.
@@ -10,7 +10,7 @@ Options:
     -l=L --log-config-name  Log server config name. Must under the folder of <log-dir>. [default: default.cfg]
     -p=P --port             Which port to start to looking for usable port.[default: 5000]
     -s=S --standby-hours    How long to wait before the server . [default: 48]
-
+    -t=T --token            If this is used, your have to specify the token when accessing. Default no token.
 """
 from docopt import docopt
 import os
@@ -18,14 +18,20 @@ from ..fastserver.app import start_app
 
 
 def log_cmd(argv=None):
+    print(argv)
     if argv:
         args = docopt(__doc__, version='fitlog v1.0', argv=argv)
     else:
         args = docopt(__doc__, version='fitlog v1.0')
-    start_port = int(args['--port'])
+
     log_dir = args['<log-dir>']
+    start_port = int(args['--port'])
     log_config_name = args['--log-config-name']
     standby_hours = int(args['--standby-hours'])
+    token = args['--token']
+    if token is False:
+        token = None
+    print("Token:{}".format(token))
     if not os.path.isabs(log_dir):
         cwd = os.getcwd()
         log_dir = os.path.join(cwd, log_dir)
@@ -40,7 +46,7 @@ def log_cmd(argv=None):
     if os.path.dirname(log_config_name) != '':
         raise ValueError("log_config_name can only be a filename.")
     
-    start_app(log_dir, log_config_name, start_port, standby_hours)
+    start_app(log_dir, log_config_name, start_port, standby_hours, token)
 
 
 if __name__ == '__main__':
