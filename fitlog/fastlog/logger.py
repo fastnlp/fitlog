@@ -331,7 +331,7 @@ class Logger:
     @_check_log_dir
     def add_hyper_in_file(self, file_path: str):
         """
-        从文件读取参数。如demo.py所示，两行"#######hyper"之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
+        从文件读取参数。如demo.py所示，两行"#######hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
         如果多次出现，只会记录第一次出现的值。demo.py::
         
             from numpy as np
@@ -372,7 +372,7 @@ class Logger:
             lines = f.readlines()
             for line in lines:
                 line = line.strip()
-                if len(re.findall('^#######+hyper$', line)) != 0:
+                if len(re.findall('^#####+hyper$', line)) != 0:
                     between = not between
                 elif between:
                     if len(line) != 0 and not line.startswith('#'):
