@@ -246,3 +246,138 @@ function get_new_hidden_columns(sortable_item, new_hidden_columns, prefix) {
     }
 }
 
+
+// 以下的几个函数用于生成增加row的modal
+function generate_add_row_columns(column_order, column_dict, hidden_columns, ele) {
+    /*
+    column_order: json对象，是每一级的顺序，可以通过OrderKeys元素保证顺序
+    column_dict: json对象，key是path，value是column的item
+    hidden_columns: json对象, 如果某个path在里面，则直接该内容是隐藏的
+    ele: 将内容append到哪里
+     */
+
+    var max_depth = get_max_col_ord_depth(column_order);
+    var html = "<div id=\"add_row_nested\" class=\"list-group col nested-sortable\">";
+    html += generate_hierachy_column_group(column_order, column_dict, hidden_columns, '', 0, max_depth,
+        false);
+    html += '</div>';
+    ele.append(html);
+
+}
+
+function generate_hierachy_column_group(column_order, column_dict, hidden_columns, prefix, depth, max_depth, hide) {
+    // 给定column_order的内容，创建层级元素，用于新增一个rows
+    var html = "";
+    var keys = get_order_keys(column_order);
+    var ignore = true;
+    keys.forEach(function (key) {
+        var field,group;
+        var _hide = false;
+        if(prefix==='')
+        {
+            field = key;
+            group = '#';
+        } else{
+            field = prefix + '-' + key;
+            group = prefix;
+        }
+
+        var item = column_dict[field]; // 一个json对象，包含field, title, editable等
+
+        if(!hide && (field in hidden_columns))
+            _hide = true;
+
+        if(!(_hide && window.settings['Hide hidden columns when reorder'])){
+            var new_add_html = '';
+            if(column_order[key]==='EndOfOrder'){ //说明这是最后一层了
+                new_add_html += generate_add_row_for_end_item(item, depth, max_depth, field, !_hide, true);
+            }else{
+                new_add_html += generate_add_row_for_end_item(item, depth, max_depth, field, !_hide, false);
+                new_add_html += "<div class=\"list-group nested-sortable\" id='" + group + "'>";
+                var child_html = generate_hierachy_column_group(column_order[key], column_dict, hidden_columns, field,
+                    depth+1, max_depth, hide);
+                if(child_html==='') // 如果子节点为空，则没有必要创建了
+                    new_add_html = '';
+                else
+                    new_add_html += child_html + "</div></div>";
+            }
+            html += new_add_html;
+        }
+    });
+    return html;
+}
+
+
+function generate_add_row_for_end_item(item, depth, max_depth, path, hide, include_last_div) {
+    // 为终点结构生成一个div block
+    // include_last_div是否需要补齐一个</div>
+    var color = get_bg_color(depth, max_depth);
+    var title = item['title'];
+    var html;
+    if(include_last_div)
+        html = "<div class=\"list-group-item\" title='" + title + "' style='background-color: "+ color +"'>" +
+            generate_add_row_checkbox(title, path, hide, item['field']) + "</div>";
+    else
+        html = "<div class=\"list-group-item\" title='" + title + "' style='background-color: "+ color +"'>" +
+            generate_add_row_checkbox(title, path, hide, item['field']);
+    return html
+}
+
+function generate_add_row_checkbox(title, path, checked, id) {
+    // 给定title, path, 和checked(bool)状态生成一段checkbox的html
+    if(checked)
+        checked = 'checked';
+    else
+        checked = '';
+
+    if(id===undefined){
+         var html = "              <div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
+            "                      <label class=\"toggle\" style=\"margin-bottom: 0\">\n" +
+            "                          <span class=\"toggle__text\">" + title + "</span>\n" +
+            "                      </label>\n" +
+            "                    </div>";
+    }else{
+        var placeholder = '';
+        if(id==='id'){
+            placeholder += 'placeholder=required';
+        }
+        var html = '<div class="page__toggle" style="padding: 0 0;margin: 0 0">' +
+                '<label class="toggle" style="margin-bottom: 0">' +
+                    '<span class="toggle__text">' + title +': </span>' +
+                    '<input type="text" name="input_row" ' + placeholder +' id='+id+'>' +
+                '</label>' +
+                '</div>';
+    }
+    return html
+}
+
+// 将当前设置保存到文件; 如果有filter条件，一并保存，如果有filter条件将触发刷新页面。
+function save_filter_conditions(){
+    // 获取当前filter条件
+    var filter_divs = document.getElementsByClassName('filter-control');
+
+    var condition = {};
+    for(var index=0;index<filter_divs.length;index++){
+        var filter = filter_divs[index].children[0];
+        var value;
+        var key = filter.className.split(' ')[1].substring(31);
+        if(filter.tagName==='INPUT'){
+            value = filter.value;
+        }else if(filter.tagName==='SELECT'){
+            var _index=filter.selectedIndex;
+            value  = filter.options[_index].value;
+        }
+        if(value!==undefined &&value!==''){
+            condition[key] = value;
+        }
+    }
+    if(Object.keys(condition).length!==0){
+        if($table.bootstrapTable('getData', false).length===0){
+            bootbox.alert("There is no data qualify your condition.")
+        }else{
+            update_filter_condition(condition, false);
+        }
+    }else{
+         update_filter_condition(condition, true);
+    }
+}

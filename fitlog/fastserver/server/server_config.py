@@ -14,7 +14,7 @@ Offline=False
 Save_settings=True
 # row是否是可以通过拖拽交换的，如果可以交换则无法进行复制
 Reorderable_rows=False
-# 当选择revert代码时 revert到的路径: ../<pj_name>-revert or ../<pj_name>-revert-<fit_id>
+# 当选择revert代码时 revert到的路径: ../<pj_name>-revert 或 ../<pj_name>-revert-<fit_id>
 No_suffix_when_reset=True
 
 [basic_settings]
@@ -30,6 +30,8 @@ ignore_unchanged_columns=True
 hidden_logs=
 # 在这里的log将在前端删除。建议通过前端选择
 deleted_logs=
+# 可以设置条件，只有满足以下条件的field才会被显示，请通过前端增加filter条件。
+filter_condition=
 
 [column_settings]
 # 隐藏的column，建议通过前端选择
@@ -98,6 +100,10 @@ def read_server_config(config_path):
     all_data['hidden_rows'] = {log:1 for log in hidden_logs}
     deleted_rows = read_list_from_config(config, 'data_settings', 'deleted_logs', ',')
     all_data['deleted_rows'] = {log: 1 for log in deleted_rows}
+    if len(config.get('data_settings', 'filter_condition'))!=0:
+        all_data['filter_condition'] = json.loads(config.get('data_settings', 'filter_condition'))
+    else:
+        all_data['filter_condition'] = {}
 
     # 读取column_settings
     hidden_columns = read_list_from_config(config, 'column_settings', 'hidden_columns', ',')
@@ -154,6 +160,11 @@ def save_config(all_data, config_path):
     config.set('data_settings', 'hidden_logs', ','.join(hidden_logs))
     deleted_logs = all_data['deleted_rows'].keys()
     config.set('data_settings', 'deleted_logs', ','.join(deleted_logs))
+    if len(all_data['filter_condition'])!=0:
+        filter_condition = json.dumps(all_data['filter_condition'])
+    else:
+        filter_condition = ''
+    config.set('data_settings', 'filter_condition', filter_condition)
 
     # column_settings
     for option in ['hidden_columns', 'editable_columns']:

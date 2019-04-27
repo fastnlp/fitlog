@@ -127,14 +127,14 @@
       </div>
     </div>
 
-    <!--sortable modal-->
+    <!--columns modal-->
     <div class="modal fade" id="columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
             style="font-size: 16px">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="">Columns(uncheck to hide, drag to reorder)</h4>
+            <h4 class="modal-title">Columns(uncheck to hide, drag to reorder)</h4>
           </div>
           <div class="modal-body" id="columns_dialogue">
 
@@ -147,6 +147,25 @@
       </div>
     </div>
 
+    <!--Add a row-->
+    <div class="modal fade" id="row_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Add a row</h4>
+          </div>
+          <div class="modal-body" id="add_row_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" id="cancel_add_row">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_add_row">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!--consistent_columns-->
     <div class="modal fade" id="unchanged_columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
@@ -183,6 +202,8 @@
    var $setting_confirm = $('#setting_confirm');
    var $choose_columns = $('#choose_columns');
    var $confirm_columns = $('#confirm_columns');
+   var $confirm_add_row = $('#confirm_add_row');
+   var $cancel_add_row = $('#cancel_add_row');
 
    var col_sortables = [];
 
@@ -310,6 +331,48 @@
            update_settings(window.settings);
    });
 
+   // add a row确认
+   $confirm_add_row.click(function () {
+       // 获取所有的input
+       var inputs = document.getElementsByName('input_row');
+       var row = {};
+       var index;
+       for(index=0;index<inputs.length;index++){
+           var input = inputs[index];
+           if(input.value!==undefined && input.value!=='' ){
+               if(input.id==='id'){
+                   row[input.id] = input.value.replace('/\s/g', '_');
+               }else{
+                   row[input.id] = input.value;
+               }
+           }
+       }
+       // check id是否为空
+       if(!('id' in row)){
+           bootbox.alert("`id` cannot be empty.");
+       }else{
+           // 不能是已经有的id
+           if(row['id'] in window.table_data){
+               bootbox.alert("Duplicated `id`.")
+           }else{
+               if(Object.keys(row).length===1){
+                   bootbox.alert("Only has `id` is not allowed.")
+               }else{
+                   // 增加到table中
+                   $table.bootstrapTable('prepend', row);
+                   // 保存到服务器
+                   update_new_row(row);
+                   window.table_data[row['id']] = row;
+                   $("#row_box").modal('hide');
+               }
+           }
+       }
+   });
+
+   $cancel_add_row.click(function () {
+       $("#row_box").modal('hide');
+   });
+
    // 确认选择columns
    $confirm_columns.click(function () {
        var $nested = $("#choose_column_nested");
@@ -341,7 +404,6 @@
        }
    });
 
-
    // 清除内容
    $("#columns_box").on('hide.bs.modal', function (e) {
        $("#columns_dialogue").empty();
@@ -352,6 +414,9 @@
    $("#unchanged_columns_box").on('hide.bs.modal', function (e) {
        $("#unchanged_column_modal").empty();
     });
+   $("#row_box").on('hide.bs.modal', function (e) {
+       $("#add_row_dialogue").empty();
+   });
 
    // 当前选中的row的id
    function getIdSelections() {

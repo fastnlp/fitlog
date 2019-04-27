@@ -24,7 +24,6 @@ def get_table():
     if not first_time_access:
         log_dir = all_data['root_log_dir']
         log_config_name = all_data['log_config_name']
-        save_all_data(all_data, log_dir, log_config_name)
         log_reader = all_data['log_reader']
         log_reader.set_log_dir(log_dir)
         all_data.update(prepare_data(log_reader, log_dir, log_config_name))
@@ -34,7 +33,8 @@ def get_table():
     replace_nan_inf(data)
 
     return jsonify(column_order=all_data['column_order'], column_dict=all_data['column_dict'],
-                   hidden_columns=all_data['hidden_columns'], data=data,
+                   hidden_columns=all_data['hidden_columns'],
+                   data=data,
                    settings={key.replace('_', ' '):value for key, value in all_data['settings'].items()},
                    uuid=all_data['uuid'],
                    hidden_rows=list(all_data['hidden_rows'].keys()),
@@ -162,6 +162,32 @@ def column_order():
         return jsonify(res)
     column_order = request.json['column_order']
     all_data['column_order'] = column_order
+    return jsonify(status='success', msg='')
+
+@table_page.route('/table/row', methods=['POST'])
+def add_row():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res != None:
+        return jsonify(res)
+    new_row = request.json['row']
+    if new_row['id'] not in all_data['data']:
+        all_data['data'][new_row['id']] = new_row
+        all_data['extra_data'][new_row['id']] = new_row
+        return jsonify(status='success', msg='')
+    else:
+        return jsonify(status='fail', msg='Duplicated id.')
+
+@table_page.route('/table/save_settings', methods=['POST'])
+def save():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res != None:
+        return jsonify(res)
+    if 'condition' in request.json:
+        condition = request.json['condition'] # {'key': 'value'}
+        all_data['filter_condition'].update(condition)
+    log_dir = all_data['root_log_dir']
+    log_config_name = all_data['log_config_name']
+    save_all_data(all_data, log_dir, log_config_name)
     return jsonify(status='success', msg='')
 
 @table_page.route('/table')

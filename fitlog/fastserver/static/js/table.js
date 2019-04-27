@@ -37,7 +37,7 @@ $(function () {
             window.column_order = column_order;
             window.column_dict = column_dict;
             window.hidden_columns = hidden_columns;
-            window.table_data = value['data'];
+            window.table_data = value['data']; // 是一个json，key为id，value是一行的内容，为一个一层json对象
             window.server_uuid = value['uuid'];
             window.hidden_rows = value['hidden_rows'];
             window.column_order_updated = false;
@@ -221,14 +221,42 @@ function initalizeTable(){
        if(hidden_rows.length>0){
            $display.prop('disabled', false);
        }
-       var new_button = document.createElement("buttion");
+
+       // 在toggle新增加一个add row的操作
+       var new_button = document.createElement("button");
        new_button.className = "btn btn-default";
        new_button.type = 'button';
-       new_button.name = 'poweroff';
-       new_button.title = 'PowerOff';
+       new_button.name = 'add';
+       new_button.title = 'Add row';
+       new_button.setAttribute('data-toggle', 'modal');
+       new_button.setAttribute('data-target', '#row_box');
+       new_button.onclick = AddRowModal;
+       new_button.innerHTML = '<i class="glyphicon glyphicon-plus"></i>';
+       document.getElementsByClassName('columns').item(0).appendChild(new_button);
+       // 保存filter条件
+       new_button = document.createElement("button");
+       new_button.className = "btn btn-default";
+       new_button.type = 'button';
+       new_button.name = 'save';
+       new_button.title = 'Save filter';
+       new_button.onclick = save_filter_conditions;
+       new_button.innerHTML = '<i class="glyphicon glyphicon-floppy-save"></i>';
+       document.getElementsByClassName('columns').item(0).appendChild(new_button);
+       // 在toggle新增一个poweroff的按钮
+       new_button = document.createElement("button");
+       new_button.className = "btn btn-default";
+       new_button.type = 'button';
+       new_button.name = 'PowerOff';
+       new_button.title = 'Shutdown';
        new_button.onclick = ShutDownServer;
-       new_button.innerHTML = '<i class="glyphicon glyphicon glyphicon-off"></i>';
-       document.getElementsByClassName('columns').item(0).appendChild(new_button)
+       new_button.innerHTML = '<i class="glyphicon glyphicon-off"></i>';
+       document.getElementsByClassName('columns').item(0).appendChild(new_button);
+}
+
+function AddRowModal() {
+    // 点击add row之后弹出一个modal. 对应的确认处理在table.html页面
+   generate_add_row_columns(window.column_order, window.column_dict, window.hidden_columns,
+       $("#add_row_dialogue"));
 }
 
 function ShutDownServer() {
@@ -284,9 +312,10 @@ var TableInit = function () {
             pageList: [5, 10, 20, 30, 50, 'All'],        //可供选择的每页的行数（*）
             search: true,                       //是否显示表格搜索，此搜索是客户端搜索，不会进服务端，所以，个人感觉意义不大
             strictSearch: false,
-            filterControl:filterControl,                 // 是否显示filter栏
+            filterControl:filterControl,         // 是否显示filter栏
             filterShowClear: true,              // 是否显示一键删除所有fitler条件的按钮
             hideUnusedSelectOptions: false,       //不要显示不存在的filter对象，如果为true再选择某个filter之后，这个filter其它选项都消失了
+            searchOnEnterKey: false,              //输入enter才开始搜索, 不能用，否则select没响应
             showColumns: false,                  //是否显示所有的列
             stickyHeader: false,                 //是否固定header, 多级header时有bug，不能正常使用
             showRefresh: true,                  //是否显示刷新按钮
@@ -482,3 +511,64 @@ function update_column_order(column_order) {
     }
 }
 
+
+function update_new_row(row){
+    if(!window.settings['Offline']){
+        $.ajax({
+            type: "post",
+            url: "/table/row",
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify({
+                row: row,
+                uuid: window.server_uuid}),
+            success: function (res, status) {
+                if (res['status'] === "success") {
+                    // success_prompt( "Column order update successfully.", 1500);
+                }
+                if (res['status'] === 'fail'){
+                    bootbox.alert("Fail to save your new row to server. " + res['msg']);
+                }
+            },
+            error: function (value) {
+                bootbox.alert("Error. If the server shut down or you can not connect to the server, check Offline " +
+                    "in settings");
+            }
+        })
+    }
+}
+
+
+function update_filter_condition(condition, only_save) {
+    // condition: 一级json; only_save: bool是否只保存没有condition
+    if(!window.settings['Offline']){
+        if(!only_save){
+            var data = JSON.stringify({
+                    condition: condition,
+                    uuid: window.server_uuid});
+        }else{
+            var data = JSON.stringify({
+                    uuid: window.server_uuid});
+        }
+
+        $.ajax({
+            type: "post",
+            url: "/table/save_settings",
+            contentType: 'application/json;charset=UTF-8',
+            data: data,
+            success: function (res, status) {
+                if (res['status'] === "success") {
+                    success_prompt( "Setting are saved to " + window.save_config_name + " successfully.", 1500);
+                    if(!only_save) // 如果不是只save，还需要刷新页面
+                        window.location.reload();
+                }
+                if (res['status'] === 'fail'){
+                    bootbox.alert("Fail to save your settings to server. " + res['msg']);
+                }
+            },
+            error: function (value) {
+                bootbox.alert("Error. If the server shut down or you can not connect to the server, check Offline " +
+                    "in settings");
+            }
+        })
+    }
+}

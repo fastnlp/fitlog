@@ -11,9 +11,10 @@ from .server_config import read_server_config
 from .utils import expand_dict
 from .server_config import save_config
 from .server_config import save_extra_data
+import warnings
 
 def generate_columns(logs, hidden_columns=None, column_order=None, editable_columns=None,
-                     exclude_columns=None, ignore_unchanged_columns=True,
+                     exclude_columns=None, filter_condition=None, ignore_unchanged_columns=True,
                      str_max_length=20, round_to=6):
     """
     :param dict_lst: list of dict对象返回List形式的column数据.
@@ -41,6 +42,10 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
         exclude_columns = {}
     else:
         assert isinstance(exclude_columns, dict), "Only dict is allowed for exclude_columns."
+    if filter_condition is None:
+        filter_condition = {}
+    else:
+        assert isinstance(exclude_columns, dict), "Only dict is allowed for filter_condition."
 
     assert isinstance(logs, list), "Only list type supported."
     for _dict in logs:
@@ -81,13 +86,34 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
     data = []
     max_depth = 1
     field_values = defaultdict(list) # 每种key的不同value
+    exclude_log_ids = {}
     for ID, _dict in enumerate(logs):
         fields = {}
         for key, value in _dict.items():
             max_depth = max(add_field('', key, value, fields, connector, 0), max_depth)
         for key, value in fields.items():
             field_values[key].append(value)
-        data.append(fields)
+        # field是一个一维的dict，内含expanded的key以及它的value
+        filter = False
+        # 如果不满足filter的条件(value不同，包含对应的key)，就不要把它添加到数据中去了
+        for key, value in filter_condition.items():
+            if key in fields:
+                if str(value) != str(fields[key]):
+                    filter = True
+                    break
+            else:
+                filter = True
+                break
+        if not filter:
+            data.append(fields)
+        else:
+            exclude_log_ids[ID] = 1
+    # 删除不满足条件的filter，如果没有满足条件的，则filter失效
+    filtered_logs = [log for idx, log in enumerate(logs) if idx not in exclude_log_ids]
+    if len(filtered_logs)==0:
+        warnings.warn("No log meets the condition.")
+    else:
+        logs = filtered_logs
 
     unchange_columns = {}
     if ignore_unchanged_columns and len(logs)>1:
@@ -225,6 +251,7 @@ def add_columns(prefix, key, value, depth, max_depth, column_dict, order_value, 
                 item['filterControl'] = 'input'
             else:
                 item['filterControl'] = 'select'
+                item['filterStrictSearch'] = True
         if prefix in editable_columns:
             item['editable'] = 'true'
         else:
@@ -328,8 +355,10 @@ def prepare_data(log_reader, log_dir, log_config_name): # 准备好需要的数�
 
     new_all_data = generate_columns(logs=logs, hidden_columns=hidden_columns, column_order=column_order,
                                 editable_columns=editable_columns,
-                     exclude_columns=exclude_columns, ignore_unchanged_columns=ignore_unchanged_columns,
-                     str_max_length=str_max_length, round_to=round_to)
+                                exclude_columns=exclude_columns,
+                                filter_condition=all_data['filter_condition'],
+                                ignore_unchanged_columns=ignore_unchanged_columns,
+                                str_max_length=str_max_length, round_to=round_to)
     all_data.update(new_all_data)
 
     field_columns = {}
@@ -338,17 +367,38 @@ def prepare_data(log_reader, log_dir, log_config_name): # 准备好需要的数�
             field_columns[key] = 1
     all_data['field_columns'] = field_columns
 
-    replace_with_extra_data(all_data['data'], extra_data)
+    replace_with_extra_data(all_data['data'], extra_data, all_data['filter_condition'])
 
     return all_data
 
-def replace_with_extra_data(data, extra_data):
+def replace_with_extra_data(data, extra_data, filter_condition=None):
+    """
+
+    :param data: {}, key是id，value是一阶json，包含了各个field的值
+    :param extra_data: {}, key是id，value是一阶json，包含了各个field的值
+    :param filter_condition: {}, 一级json。满足条件才加入(如果对应位置为空，也算满足条件)
+    :return: 对data进行inplace修改
+    """
     # 将数据进行替换
+    extra_data = extra_data.copy()
     if len(extra_data)!=0:
         for d, value in data.items():
             if d in extra_data:
-                for k, v in extra_data[d].items():
+                tmp = extra_data.pop(d)
+                for k, v in tmp.items():
                     value[k] = v
+    # 将新增到extra_data的内容加进去
+    if filter_condition is None:
+        filter_condition = {}
+    if len(extra_data)>0: # 还有剩余的，说明是新加入的
+        for key, value in extra_data.items():
+            filter = False
+            for f_k, f_v in filter_condition.items():
+                if f_k in value:
+                    if str(value[f_k])!=f_v:
+                        filter = True
+            if not filter:
+                data[key] = value
 
 def save_all_data(all_data, log_dir, log_config_name):
     log_config_path = os.path.join(log_dir, log_config_name)
@@ -358,7 +408,7 @@ def save_all_data(all_data, log_dir, log_config_name):
         # save editable columns
         if len(all_data['extra_data']) != 0:
             extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
-            save_extra_data(extra_data_path, all_data['extra_data'])
+            save_extra_data(extra_data_path, all_data['extra_data']) # extra_data是一个dict。key为id，value为内容
 
         print("Settings are saved to {}.".format(log_config_path))
 
