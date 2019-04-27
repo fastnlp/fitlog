@@ -381,3 +381,8 @@ function save_filter_conditions(){
          update_filter_condition(condition, true);
     }
 }
+
+//生成一个4位uuid
+function generate_uuid() {
+    return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+}

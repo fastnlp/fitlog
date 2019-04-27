@@ -46,15 +46,13 @@ class ChartStepLogHandler:
                 real_v.pop('step', None)
                 real_v.pop('epoch', None)
                 _expand_v = expand_dict('', real_v)
-                for __key in list(_expand_v.keys()):
-                    # 删除不需要的
-                    if __key in self.exclude_columns:
-                        _expand_v.pop(__key)
                 for i_key, i_value in _expand_v.items():
                     if isinstance(i_value, (float, int)):
                         if i_key not in path2path:
                             path2path = self._add_path2path(key, real_v)
                         short_i_key = path2path[i_key]
+                        if short_i_key in self.exclude_columns:
+                            continue
                         i_value = round(i_value, self.round_to)
                         i_expand_v = expand_v.copy()
                         i_expand_v['name'] = short_i_key
@@ -89,16 +87,14 @@ class ChartStepLogHandler:
                     real_v.pop('step', None)
                     real_v.pop('epoch', None)
                     _expand_v = expand_dict('', real_v)
-                    for __key in list(_expand_v.keys()):
-                        # 删除不需要的
-                        if __key in self.exclude_columns:
-                            _expand_v.pop(__key)
                     for i_key, i_value in _expand_v.items():
                         if isinstance(i_value, (float, int)):
                             # TODO 可能需要精简一下路径长度， 比如BMESMetric之类的东西
                             if i_key not in path2path:
                                 path2path = self._add_path2path(key, real_v)
                             short_i_key = path2path[i_key]
+                            if short_i_key in self.exclude_columns:
+                                continue
                             i_value = round(i_value, self.round_to)
                             i_expand_v = expand_v.copy()
                             i_expand_v['name'] = short_i_key

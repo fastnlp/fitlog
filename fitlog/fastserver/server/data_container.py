@@ -40,6 +40,30 @@ class HandlerWatcher(threading.Thread):
                 raise RuntimeError("Some bug happens.")
             count += 1
 # singleton
+"""
+all_data包含以下的key:
+    basic_settings: {} 一级dict包含了config中basic_settings中的setting.
+    hidden_rows: {} 一级dict key为隐藏的row的id
+    deleted_rows: {} 一级dict key为删除的row的id
+    filter_condition: {} 一级dict，expanded的key以及它等于的value
+    hidden_columns: {} 一级dict key为隐藏的column
+    exclude_columns: {} 一级dict，需要排除的column
+    editable_columns: {} 一级dict，支持编辑的column名
+    column_order: {} nested dict. 表示column的顺序的
+    chart_settings: {} 保存chart相关的设置，包含以下的内容
+        chart_exclude_columns:{} 一级dict，需要排除的column名称
+        max_points:int 前端每条线最多显示多少个点
+        update_every: int, 隔多少秒update一次
+        max_no_updates: int 多少次没有得到更新就认为已经停止了
+    config: 读取的ConfigParser对象
+    extra_data: {}, 第一层的key为前端增加的记录获取用户修改某条记录留下的修改记录; 第一层的value对应的是一个一级dict。
+    root_log_dir: str, log文件夹的路径
+    log_config_name: str, 
+    log_reader: LogReader()对象
+    port: int, port
+    uuid: str, 这个server的uuid
+    token: str,None 这个server的token，放访问路径上的
+"""
 all_data = {}
 all_handlers = {}
 handler_watcher = HandlerWatcher()

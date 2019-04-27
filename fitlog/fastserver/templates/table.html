@@ -341,7 +341,7 @@
            var input = inputs[index];
            if(input.value!==undefined && input.value!=='' ){
                if(input.id==='id'){
-                   row[input.id] = input.value.replace('/\s/g', '_');
+                   row[input.id] = input.value.replace('/\s/g', '_') + '_' + generate_uuid();
                }else{
                    row[input.id] = input.value;
                }

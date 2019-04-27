@@ -1,7 +1,6 @@
 from flask import render_template
 
 from flask import request, jsonify
-import os
 from flask import Blueprint
 
 from .server.table_utils import prepare_data, prepare_incremental_data
@@ -11,6 +10,7 @@ from ..fastgit import committer
 from .server.utils import replace_nan_inf
 from .server.utils import check_uuid
 from .server.table_utils import save_all_data
+from .server.table_utils import replace_with_extra_data
 
 from werkzeug.utils import secure_filename
 
@@ -26,10 +26,11 @@ def get_table():
         log_config_name = all_data['log_config_name']
         log_reader = all_data['log_reader']
         log_reader.set_log_dir(log_dir)
-        all_data.update(prepare_data(log_reader, log_dir, log_config_name))
+        all_data.update(prepare_data(log_reader, log_dir, log_config_name, all_data))
 
     first_time_access = False
-    data = all_data['data']
+    data = all_data['data'].copy() # all_data['data'] 只包含从硬盘的读取的log的信息
+    replace_with_extra_data(data, all_data['extra_data'], all_data['filter_condition'])
     replace_nan_inf(data)
 
     return jsonify(column_order=all_data['column_order'], column_dict=all_data['column_dict'],
@@ -68,8 +69,10 @@ def delete_records():
         return jsonify(res)
     ids = request.json['ids']
     for id in ids:
-        all_data['deleted_rows'][id] = 1
-    all_data['data'] = {id:log for id, log in all_data['data'].items() if id not in all_data['deleted_rows']}
+        if id in all_data['data']:
+            all_data['deleted_rows'][id] = 1
+        elif id in all_data['extra_data']: # 如果是新加的数据，直接彻底删除
+            all_data['extra_data'].pop(id)
 
     return jsonify(status='success', msg='')
 

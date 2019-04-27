@@ -312,24 +312,28 @@ def prepare_incremental_data(logs, new_logs, field_columns):
     return new_logs, updated_logs
 
 
-def prepare_data(log_reader, log_dir, log_config_name): # 准备好需要的数据， 应该包含从log dir中读取数据
+def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备好需要的数据， 应该包含从log dir中读取数据
     """
 
+    :param log_reader: 用于读取数据的Reader对象
     :param log_dir: str, 哪里是存放所有log的大目录
     :param log_config_path: 从哪里读取config
-    :param debug: 是否在debug，如果debug的话，就不调用非server的接口
+    :param all_data: dict, 如果不为None则不会从硬盘读取config和extra_data
+
     :return:
     """
     print("Start preparing data.")
     # 1. 从log读取数据
+    if all_data is None:
+        log_dir = os.path.abspath(log_dir)
+        log_config_path = os.path.join(log_dir, log_config_name)
+        log_config_path = os.path.abspath(log_config_path)
 
-    log_dir = os.path.abspath(log_dir)
-    log_config_path = os.path.join(log_dir, log_config_name)
-    log_config_path = os.path.abspath(log_config_path)
-
-    # 读取config文件
-    # 读取log_setting_path
-    all_data = read_server_config(log_config_path)
+        # 读取config文件
+        # 读取log_setting_path
+        all_data = read_server_config(log_config_path)
+    else:
+        assert isinstance(all_data, dict), "all_data must be a dict."
     deleted_rows = all_data['deleted_rows']
 
     logs = log_reader.read_logs(deleted_rows)
@@ -338,11 +342,12 @@ def prepare_data(log_reader, log_dir, log_config_name): # 准备好需要的数�
         raise ValueError("No valid log found in {}.".format(log_dir))
 
     # read extra_data
-    extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
-    extra_data = {}
-    if os.path.exists(extra_data_path):
-        extra_data = read_extra_data(extra_data_path)
-    all_data['extra_data'] = extra_data
+    if 'extra_data' not in all_data: # 只有在第一次需要读取
+        extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
+        extra_data = {}
+        if os.path.exists(extra_data_path):
+            extra_data = read_extra_data(extra_data_path)
+        all_data['extra_data'] = extra_data
 
     # 2. 取出其他settings
     hidden_columns = all_data['hidden_columns']
@@ -366,8 +371,6 @@ def prepare_data(log_reader, log_dir, log_config_name): # 准备好需要的数�
         if 'field' in value:
             field_columns[key] = 1
     all_data['field_columns'] = field_columns
-
-    replace_with_extra_data(all_data['data'], extra_data, all_data['filter_condition'])
 
     return all_data
 
