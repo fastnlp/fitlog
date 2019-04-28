@@ -374,12 +374,13 @@ def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备�
 
     return all_data
 
-def replace_with_extra_data(data, extra_data, filter_condition=None):
+def replace_with_extra_data(data, extra_data, filter_condition=None, deleted_rows=None):
     """
 
     :param data: {}, key是id，value是一阶json，包含了各个field的值
     :param extra_data: {}, key是id，value是一阶json，包含了各个field的值
     :param filter_condition: {}, 一级json。满足条件才加入(如果对应位置为空，也算满足条件)
+    :param deleted_rows:{}, 一级json。在里面的id不能出现在返回的data中
     :return: 对data进行inplace修改
     """
     # 将数据进行替换
@@ -393,8 +394,12 @@ def replace_with_extra_data(data, extra_data, filter_condition=None):
     # 将新增到extra_data的内容加进去
     if filter_condition is None:
         filter_condition = {}
+    if deleted_rows is None:
+        deleted_rows = {}
     if len(extra_data)>0: # 还有剩余的，说明是新加入的
         for key, value in extra_data.items():
+            if key in deleted_rows:
+                continue
             filter = False
             for f_k, f_v in filter_condition.items():
                 if f_k in value:

@@ -30,7 +30,7 @@ def get_table():
 
     first_time_access = False
     data = all_data['data'].copy() # all_data['data'] 只包含从硬盘的读取的log的信息
-    replace_with_extra_data(data, all_data['extra_data'], all_data['filter_condition'])
+    replace_with_extra_data(data, all_data['extra_data'], all_data['filter_condition'], all_data['deleted_rows'])
     replace_nan_inf(data)
 
     return jsonify(column_order=all_data['column_order'], column_dict=all_data['column_dict'],
@@ -71,8 +71,9 @@ def delete_records():
     for id in ids:
         if id in all_data['data']:
             all_data['deleted_rows'][id] = 1
-        elif id in all_data['extra_data']: # 如果是新加的数据，直接彻底删除
-            all_data['extra_data'].pop(id)
+        elif id in all_data['extra_data']:
+            # all_data['extra_data'].pop(id)
+            all_data['deleted_rows'][id] = 1
 
     return jsonify(status='success', msg='')
 
