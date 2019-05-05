@@ -14,7 +14,7 @@ fitlog 依赖如下两个包::
 
 ..  code:: shell
 
-   > pip install fitlog
+   >>> pip install fitlog
 
 
 

@@ -10,7 +10,7 @@ Step1
 
 .. code:: shell
 
-    > fitlog init example
+    >>> fitlog init example
     Initialized empty Git repository in /Users/fdujyn/workspaces/example/.git/
     [master (root-commit) 0b94c29] Project initialized.
      4 files changed, 72 insertions(+)
@@ -26,8 +26,8 @@ Step1
 
 .. code:: shell
 
-    > cd example
-    > ls -al
+    >>> cd example
+    >>> ls -al
     total 24
     drwxr-xr-x   8 fdujyn  staff  256 Apr 25 19:38 .
     drwxr-xr-x@ 20 fdujyn  staff  640 Apr 25 19:38 ..
@@ -80,9 +80,9 @@ Step3
 
 .. code:: shell
 
-    > pwd
+    >>> pwd
     /Users/fdujyn/workspaces/example
-    > fitlog log logs
+    >>> fitlog log logs
     Start preparing data.
     Finish preparing data. Found 4 records in /Users/fdujyn/workspaces/example/logs.
      * Serving Flask app "fitlog.fastserver.app" (lazy loading)
