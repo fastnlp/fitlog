@@ -13,6 +13,7 @@ from .server.table_utils import save_all_data
 from .server.table_utils import replace_with_extra_data
 
 from werkzeug.utils import secure_filename
+import glob
 
 table_page = Blueprint("table_page", __name__, template_folder='templates')
 
@@ -207,3 +208,11 @@ def table_with_token(token):
     if token!=all_data['token'] or all_data['token'] is None:
         return jsonify(msg='Wrong token or you are not using a token')
     return render_template('table.html')
+
+@table_page.route('/table/configs', methods=['POST'])
+def table_configs():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res != None:
+        return jsonify(res)
+    # 读取当前可以使用的config有哪些
+

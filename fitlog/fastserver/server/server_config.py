@@ -16,13 +16,15 @@ Save_settings=True
 Reorderable_rows=False
 # 当选择revert代码时 revert到的路径: ../<pj_name>-revert 或 ../<pj_name>-revert-<fit_id>
 No_suffix_when_reset=True
+# 是否忽略掉filter_condition中的不存在对应key的log
+Ignore_not_exist_log=True
 
 [basic_settings]
 # 如果有内容长度超过这个值，在前端就会被用...替代。
 str_max_length=20
 # float的值保留几位小数
 round_to=6
-# 是否在表格中忽略不改变的column。
+# 是否在表格中忽略不改变的column
 ignore_unchanged_columns=True
 
 [data_settings]
