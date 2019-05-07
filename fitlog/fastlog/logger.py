@@ -217,12 +217,19 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    def finish(self):
+    def finish(self, status:int=0):
         """
         使用此方法告知 fitlog 你的实验已经正确结束。你可以使用此方法来筛选出失败的实验。
+
+        :param int status: 告知当前实验的状态。0: 结束了; 1: 发生了错误
         """
+        if status not in (0, 1):
+            raise ValueError("status only supports 0,1 to stand for 'finish','error'.")
         if hasattr(self, 'meta_logger'):
-            _dict = {'meta': {'state': 'finish'}}
+            if status==0:
+                _dict = {'meta': {'state': 'finish'}}
+            else:
+                _dict = {'meta': {'state': 'error'}}
             self._write_to_logger(json.dumps(_dict), 'meta_logger')
     
     @_check_debug
@@ -291,12 +298,12 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    def add_hyper(self, value: Union[int, str, float, dict], name=None):
+    def add_hyper(self, value: Union[int, str, float, dict, argparse.Namespace, ConfigParser], name=None):
         """
         用于添加超参数。用此方法添加到值，会被放置在 hyper 这一列中
 
-        :param value: 类型为 int, float, str, dict中的一种。如果类型为 dict，它的键的类型只能为 str，
-                它的键值的类型可以为int, float, str 或符合同样条件的 dict
+        :param value: 类型为 int, float, str, dict, argparse.Namespace(即ArgumentParser传入的内容), ConfigParser中的一种
+                。如果类型为 dict，它的键的类型只能为 str，它的键值的类型可以为int, float, str 或符合同样条件的 dict
         :param name: 如果你传入的 value 不是字典，你需要传入 value 对应的名字
         :return:
         """
@@ -380,9 +387,9 @@ class Logger:
                         # replace space before an after =
                         line = re.sub(r'\s*=\s*', '=', line)
                         values = line.split('=')
+                        # 删除str开头结尾的'"
                         last_value = values[-1].rstrip("'").rstrip('"').lstrip("'").lstrip('"')
                         for value in values[:-1]:
-                            # 删除str开头的'"
                             _dict[value] = last_value
         if len(_dict) != 0:
             self.add_hyper(_dict)
@@ -401,7 +408,44 @@ class Logger:
             raise RuntimeError("Cannot set total_steps twice.")
         self.total_steps = total_steps
         self._write_to_logger(json.dumps({"total_steps": total_steps}), 'progress_logger')
-    
+
+    # @_check_debug
+    # def set_rng_seed(self, rng_seed:int = None, random:bool = True, numpy:bool = True,
+    #                  pytorch:bool=True, deterministic:bool=True):
+    #     """
+    #     设置模块的随机数种子。由于pytorch还存在cudnn导致的非deterministic的运行，所以一些情况下可能即使seed一样，结果也不一致
+    #         需要在fitlog.commit()或fitlog.set_log_dir()之后运行才会记录该rng_seed到log中
+    #     :param int rng_seed: 将这些模块的随机数设置到多少，默认为随机生成一个。
+    #     :param bool, random: 是否将python自带的random模块的seed设置为rng_seed.
+    #     :param bool, numpy: 是否将numpy的seed设置为rng_seed.
+    #     :param bool, pytorch: 是否将pytorch的seed设置为rng_seed(设置torch.manual_seed和torch.cuda.manual_seed_all).
+    #     :param bool, deterministic: 是否将pytorch的torch.backends.cudnn.deterministic设置为True
+    #     """
+    #     if rng_seed is None:
+    #         import random
+    #         import sys
+    #         rng_seed = random.randint(sys.maxsize)
+    #     if random:
+    #         import random
+    #         random.seed(rng_seed)
+    #     if numpy:
+    #         try:
+    #             import numpy
+    #             numpy.random.seed(rng_seed)
+    #         except:
+    #             pass
+    #     if pytorch:
+    #         try:
+    #             import torch
+    #             torch.manual_seed(rng_seed)
+    #             torch.cuda.manual_seed_all(rng_seed)
+    #             if deterministic:
+    #                 torch.backends.cudnn.deterministic = True
+    #         except:
+    #             pass
+    #     if self.initialized:
+    #         self.add_other(rng_seed, 'rng_seed')
+
     @_check_debug
     @_check_log_dir
     def _save(self):

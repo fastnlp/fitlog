@@ -1,16 +1,16 @@
 
 $(function () {
     //初始化setting选项
-    var _settings = {};
-    _settings['Ignore null value when filter'] = true;
-    _settings['Wrap display'] = false;
-    _settings['Pagination'] = true;
-    _settings['Hide hidden columns when reorder'] = false;
-    _settings['Offline'] = false;
-    _settings['Save settings'] = true;
-    _settings['Reorderable rows'] = false;
-    _settings['No suffix when reset'] = true;
-    window.settings = _settings;
+    // var _settings = {};
+    // _settings['Ignore null value when filter'] = true;
+    // _settings['Wrap display'] = false;
+    // _settings['Pagination'] = true;
+    // _settings['Hide hidden columns when reorder'] = false;
+    // _settings['Offline'] = false;
+    // _settings['Save settings'] = true;
+    // _settings['Reorderable rows'] = false;
+    // _settings['No suffix when reset'] = true;
+    window.settings = {};
 
     //0. 从后台获取必要的数据，然后用于创建Table
     $.ajax({
@@ -145,30 +145,27 @@ window.operateEvents = {
 
 function openPostWindow(url, params)
 {
-        var form = document.createElement("form");
-        form.setAttribute("method", "post");
-        form.setAttribute("action", url);
-        form.setAttribute("target", '_blank');
+    // 打开新的chart页面
+    var form = document.createElement("form");
+    form.setAttribute("method", "post");
+    form.setAttribute("action", url);
+    form.setAttribute("target", '_blank');
 
-        for (var i in params) {
-            if (params.hasOwnProperty(i)) {
-                var input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = i;
-                input.value = params[i];
-                form.appendChild(input);
-            }
+    for (var i in params) {
+        if (params.hasOwnProperty(i)) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = i;
+            input.value = params[i];
+            form.appendChild(input);
         }
+    }
 
-        document.body.appendChild(form);
+    document.body.appendChild(form);
 
-        //note I am using a post.htm page since I did not want to make double request to the page
-       //it might have some Page_Load call which might screw things up.
-       //  window.open("/chart", name, "width=730,height=345,left=100,top=100,resizable=yes,scrollbars=yes");
+    form.submit();
 
-        form.submit();
-
-        document.body.removeChild(form);
+    document.body.removeChild(form);
 }
 
 
@@ -223,35 +220,37 @@ function initalizeTable(){
        }
 
        // 在toggle新增加一个add row的操作
-       var new_button = document.createElement("button");
-       new_button.className = "btn btn-default";
-       new_button.type = 'button';
-       new_button.name = 'add';
-       new_button.title = 'Add row';
+       var new_button;
+       new_button = generate_a_button("btn btn-default", 'add', 'Add row', AddRowModal,
+           '<i class="glyphicon glyphicon-plus"></i>');
        new_button.setAttribute('data-toggle', 'modal');
        new_button.setAttribute('data-target', '#row_box');
-       new_button.onclick = AddRowModal;
-       new_button.innerHTML = '<i class="glyphicon glyphicon-plus"></i>';
        document.getElementsByClassName('columns').item(0).appendChild(new_button);
        // 保存filter条件
-       new_button = document.createElement("button");
-       new_button.className = "btn btn-default";
-       new_button.type = 'button';
-       new_button.name = 'save';
-       new_button.title = 'Save filter';
-       new_button.onclick = save_filter_conditions;
-       new_button.innerHTML = '<i class="glyphicon glyphicon-floppy-save"></i>';
+       new_button = generate_a_button("btn btn-default", 'save', 'Save', save_filter_conditions,
+           '<i class="glyphicon glyphicon-floppy-save"></i>');
+       document.getElementsByClassName('columns').item(0).appendChild(new_button);
+       // 显示所有的config_name
+       new_button = generate_a_button("btn btn-default", 'config', 'Configs', change_config,
+           '<i class="glyphicon glyphicon-file"></i>');
        document.getElementsByClassName('columns').item(0).appendChild(new_button);
        // 在toggle新增一个poweroff的按钮
-       new_button = document.createElement("button");
-       new_button.className = "btn btn-default";
-       new_button.type = 'button';
-       new_button.name = 'PowerOff';
-       new_button.title = 'Shutdown';
-       new_button.onclick = ShutDownServer;
-       new_button.innerHTML = '<i class="glyphicon glyphicon-off"></i>';
+       new_button = generate_a_button("btn btn-default", 'Poweroff', 'PoweOff', ShutDownServer,
+           '<i class="glyphicon glyphicon-off"></i>');
        document.getElementsByClassName('columns').item(0).appendChild(new_button);
 }
+
+function generate_a_button(className, name, title, onclick, innerHTML){
+    var new_button = document.createElement("button");
+    new_button.className = className;
+    new_button.type = 'button';
+    new_button.name = name;
+    new_button.title = title;
+    new_button.onclick = onclick;
+    new_button.innerHTML = innerHTML;
+    return new_button
+}
+
 
 function AddRowModal() {
     // 点击add row之后弹出一个modal. 对应的确认处理在table.html页面

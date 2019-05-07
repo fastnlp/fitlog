@@ -185,6 +185,26 @@
       </div>
     </div>
 
+    <!--config selection-->
+    <div class="modal fade" id="config_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Select a config</h4>
+          </div>
+          <div class="modal-body" id="change_config_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" id="cancel_change_config">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_change_config">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 {#     style="overflow-x: auto; max-width: 90%; margin-left: 5%; margin-right: 5%"#}
     <div  style="padding-left:15px; padding-right:15px">
         <table id="tb_departments"></table>
@@ -204,6 +224,8 @@
    var $confirm_columns = $('#confirm_columns');
    var $confirm_add_row = $('#confirm_add_row');
    var $cancel_add_row = $('#cancel_add_row');
+   var $config_change_config = $('#confirm_change_config');
+   var $cancel_change_config = $('#cancel_change_config');
 
    var col_sortables = [];
 
@@ -373,6 +395,45 @@
        $("#row_box").modal('hide');
    });
 
+
+   // 确认切换config
+   $config_change_config.click(function () {
+       var value = $("input:radio:checked").val();
+       if(!(value===window.save_config_name)){
+          bootbox.confirm("This will reload this page, make sure you have save your settings.", function (result) {
+              if(result){
+                  $.ajax({
+                        url: '/table/change_config',
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                            uuid: window.server_uuid,
+                            config_name: value
+                        }),
+                        success: function(value){
+                            var status = value['status'];
+                            if(status==='success'){
+                                $('#config_box').modal('hide');
+                                window.location.reload();
+                            } else{
+                                bootbox.alert(value['msg']);
+                            }
+                        },
+                        error: function(error){
+                            bootbox.alert("Some error happens. Fail to change config file.");
+                        }
+                    })
+              }
+          })
+       }
+       $('#config_box').modal('hide');
+   });
+
+   $cancel_change_config.click(function () {
+       $('#config_box').modal('hide');
+   });
+
    // 确认选择columns
    $confirm_columns.click(function () {
        var $nested = $("#choose_column_nested");
@@ -417,6 +478,9 @@
    $("#row_box").on('hide.bs.modal', function (e) {
        $("#add_row_dialogue").empty();
    });
+   $("#config_box").on('hide.bs.modal', function () {
+       $("#change_config_dialogue").empty();
+   });
 
    // 当前选中的row的id
    function getIdSelections() {
@@ -456,6 +520,8 @@
                                 field: 'id',
                                 values: ids
                               });
+                            for(var index=0;index<ids.length;index++)
+                                delete window.table_data[ids[index]];
                             $delete.prop('disabled', true);
                             $hide.prop('disabled', true);
                             if(value['status']==='fail'){

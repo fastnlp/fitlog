@@ -15,12 +15,18 @@ import warnings
 
 def generate_columns(logs, hidden_columns=None, column_order=None, editable_columns=None,
                      exclude_columns=None, filter_condition=None, ignore_unchanged_columns=True,
-                     str_max_length=20, round_to=6):
+                     str_max_length=20, round_to=6, ignore_not_exist=False):
     """
-    :param dict_lst: list of dict对象返回List形式的column数据.
+
+    :param logs: list of dict对象返回List形式的column数据.
     :param hidden_columns: {}, can chooose parent columns, then all children will be hidden
-    :param column_order: dict
+    :param column_order: dict, column的顺序
+    :param editable_columns: dict，那些column是可以编辑的
+    :param filter_condition: dict, 每个key的筛选条件
+    :param ignore_unchanged_columns: 是否忽略不变的column
+    :param int str_max_length: 长于这个的str会被以...替代
     :param round_to: int，保留多少位小数
+    :param ignore_not_exist: bool, 如果不存在filter_condition中的内容，则认为是不满足条件
 
     return:
         data: List[]数据
@@ -101,7 +107,7 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
                 if str(value) != str(fields[key]):
                     filter = True
                     break
-            else:
+            elif ignore_not_exist:
                 filter = True
                 break
         if not filter:
@@ -115,14 +121,24 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
     else:
         logs = filtered_logs
 
+    # 删掉的log需要排除
+    field_values = defaultdict(list) # 每种key的不同value
+    for ID, _dict in enumerate(logs):
+        fields = {}
+        for key, value in _dict.items():
+            max_depth = max(add_field('', key, value, fields, connector, 0), max_depth)
+        for key, value in fields.items():
+            field_values[key].append(value)
+
     unchange_columns = {}
     if ignore_unchanged_columns and len(logs)>1:
         must_include_columns = ['meta-fit_id', 'meta-git_id']
         for key, value in field_values.items():
-            value_set = set(value)
-            # 每次都是一样的结果, 但排除只有一个元素的value以及可修改的column
-            if len(value_set) == 1 and len(value)!=1 and key not in editable_columns:
-                unchange_columns[key] = value[0]  # 防止加入column中
+            if len(value)==len(logs):
+                value_set = set(value)
+                # 每次都是一样的结果, 但排除只有一个元素的value以及可修改的column
+                if len(value_set) == 1 and len(value)!=1 and key not in editable_columns:
+                    unchange_columns[key] = value[0]  # 防止加入column中
         exclude_columns.update(unchange_columns) # 所有不变的column都不选择了
         for column in must_include_columns:
             if column in exclude_columns:
@@ -324,16 +340,16 @@ def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备�
     """
     print("Start preparing data.")
     # 1. 从log读取数据
-    if all_data is None:
-        log_dir = os.path.abspath(log_dir)
-        log_config_path = os.path.join(log_dir, log_config_name)
-        log_config_path = os.path.abspath(log_config_path)
+    log_dir = os.path.abspath(log_dir)
+    log_config_path = os.path.join(log_dir, log_config_name)
+    log_config_path = os.path.abspath(log_config_path)
 
-        # 读取config文件
-        # 读取log_setting_path
-        all_data = read_server_config(log_config_path)
-    else:
-        assert isinstance(all_data, dict), "all_data must be a dict."
+    # 读取config文件
+    # 读取log_setting_path
+    if all_data is None:
+        all_data = {}
+    all_data.update(read_server_config(log_config_path))
+
     deleted_rows = all_data['deleted_rows']
 
     logs = log_reader.read_logs(deleted_rows)
@@ -363,7 +379,8 @@ def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备�
                                 exclude_columns=exclude_columns,
                                 filter_condition=all_data['filter_condition'],
                                 ignore_unchanged_columns=ignore_unchanged_columns,
-                                str_max_length=str_max_length, round_to=round_to)
+                                str_max_length=str_max_length, round_to=round_to,
+                                ignore_not_exist=all_data['settings']['Ignore_filter_condition_not_exist_log'])
     all_data.update(new_all_data)
 
     field_columns = {}
@@ -374,13 +391,14 @@ def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备�
 
     return all_data
 
-def replace_with_extra_data(data, extra_data, filter_condition=None, deleted_rows=None):
+def replace_with_extra_data(data, extra_data, filter_condition=None, deleted_rows=None, ignore_not_exist=False):
     """
 
     :param data: {}, key是id，value是一阶json，包含了各个field的值
     :param extra_data: {}, key是id，value是一阶json，包含了各个field的值
     :param filter_condition: {}, 一级json。满足条件才加入(如果对应位置为空，也算满足条件)
     :param deleted_rows:{}, 一级json。在里面的id不能出现在返回的data中
+    :param bool ignore_not_exist: 是否忽略不存在的filter_condition的key的log
     :return: 对data进行inplace修改
     """
     # 将数据进行替换
@@ -397,16 +415,19 @@ def replace_with_extra_data(data, extra_data, filter_condition=None, deleted_row
     if deleted_rows is None:
         deleted_rows = {}
     if len(extra_data)>0: # 还有剩余的，说明是新加入的
-        for key, value in extra_data.items():
+        for key, value in extra_data.items(): # key是log的id，value是这个log新加入的内容
             if key in deleted_rows:
                 continue
-            filter = False
+            filter = False  # 是否忽略掉
             for f_k, f_v in filter_condition.items():
                 if f_k in value:
                     if str(value[f_k])!=f_v:
                         filter = True
+                elif ignore_not_exist:
+                    filter = True
             if not filter:
-                data[key] = value
+                if 'id' in value:  # 只有有id的才是用户加入的row
+                    data[key] = value
 
 def save_all_data(all_data, log_dir, log_config_name):
     log_config_path = os.path.join(log_dir, log_config_name)

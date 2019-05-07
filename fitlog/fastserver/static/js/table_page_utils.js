@@ -258,14 +258,14 @@ function generate_add_row_columns(column_order, column_dict, hidden_columns, ele
 
     var max_depth = get_max_col_ord_depth(column_order);
     var html = "<div id=\"add_row_nested\" class=\"list-group col nested-sortable\">";
-    html += generate_hierachy_column_group(column_order, column_dict, hidden_columns, '', 0, max_depth,
+    html += generate_hierachy_column_when_add_row(column_order, column_dict, hidden_columns, '', 0, max_depth,
         false);
     html += '</div>';
     ele.append(html);
 
 }
 
-function generate_hierachy_column_group(column_order, column_dict, hidden_columns, prefix, depth, max_depth, hide) {
+function generate_hierachy_column_when_add_row(column_order, column_dict, hidden_columns, prefix, depth, max_depth, hide) {
     // 给定column_order的内容，创建层级元素，用于新增一个rows
     var html = "";
     var keys = get_order_keys(column_order);
@@ -290,11 +290,11 @@ function generate_hierachy_column_group(column_order, column_dict, hidden_column
         if(!(_hide && window.settings['Hide hidden columns when reorder'])){
             var new_add_html = '';
             if(column_order[key]==='EndOfOrder'){ //说明这是最后一层了
-                new_add_html += generate_add_row_for_end_item(item, depth, max_depth, field, !_hide, true);
+                new_add_html += generate_add_row_for_end_item(item, depth, max_depth, field, true);
             }else{
-                new_add_html += generate_add_row_for_end_item(item, depth, max_depth, field, !_hide, false);
+                new_add_html += generate_add_row_for_end_item(item, depth, max_depth, field, false);
                 new_add_html += "<div class=\"list-group nested-sortable\" id='" + group + "'>";
-                var child_html = generate_hierachy_column_group(column_order[key], column_dict, hidden_columns, field,
+                var child_html = generate_hierachy_column_when_add_row(column_order[key], column_dict, hidden_columns, field,
                     depth+1, max_depth, hide);
                 if(child_html==='') // 如果子节点为空，则没有必要创建了
                     new_add_html = '';
@@ -308,7 +308,7 @@ function generate_hierachy_column_group(column_order, column_dict, hidden_column
 }
 
 
-function generate_add_row_for_end_item(item, depth, max_depth, path, hide, include_last_div) {
+function generate_add_row_for_end_item(item, depth, max_depth, path, include_last_div) {
     // 为终点结构生成一个div block
     // include_last_div是否需要补齐一个</div>
     var color = get_bg_color(depth, max_depth);
@@ -316,19 +316,15 @@ function generate_add_row_for_end_item(item, depth, max_depth, path, hide, inclu
     var html;
     if(include_last_div)
         html = "<div class=\"list-group-item\" title='" + title + "' style='background-color: "+ color +"'>" +
-            generate_add_row_checkbox(title, path, hide, item['field']) + "</div>";
+            generate_add_input(title, path, item['field']) + "</div>";
     else
         html = "<div class=\"list-group-item\" title='" + title + "' style='background-color: "+ color +"'>" +
-            generate_add_row_checkbox(title, path, hide, item['field']);
+            generate_add_input(title, path, item['field']);
     return html
 }
 
-function generate_add_row_checkbox(title, path, checked, id) {
-    // 给定title, path, 和checked(bool)状态生成一段checkbox的html
-    if(checked)
-        checked = 'checked';
-    else
-        checked = '';
+function generate_add_input(title, path, id) {
+    // 给定title, path, id(相当与是field_name, 只有需要填写内容的field才有的)生成一段input的html
 
     if(id===undefined){
          var html = "              <div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
@@ -385,4 +381,73 @@ function save_filter_conditions(){
 //生成一个4位uuid
 function generate_uuid() {
     return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+}
+
+
+/*
+用于处理切换config
+
+ */
+//1. 生成对应的modal
+function change_config(){
+      $.ajax({
+            url: '/table/configs',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify({
+                 uuid: window.server_uuid,
+            }),
+            success: function(value){
+                var status = value['status'];
+                if(status==='success'){
+                    // 显示modal
+                    var configs = value['configs']; // 一个一级json
+                    if(window.save_config_name in configs){
+                        if(!configs[window.save_config_name]){
+                            bootbox.alert("This page is out-of-date, please refresh.")
+                        }else{
+                            $('#config_box').modal('show');
+                            generate_single_choose_config_modal(configs, $("#change_config_dialogue"))
+                        }
+                    }else{
+                        bootbox.alert("The current config name:" + window.save_config_name  +" cannot be found in server," +
+                            "you may need to save it first.")
+                    }
+                } else{
+                    bootbox.alert(value['msg']);
+                }
+            },
+            error: function(error){
+                bootbox.alert("Some error happens. You may disconnect from the server.");
+            }
+    })
+}
+
+function generate_single_choose_config_modal(configs, ele){
+    // 给定一个configs的json文件，被选中为1. 将生成的html append到ele
+    var html = '';
+    for(var config_name in configs){
+        html += generate_radio_config_item(config_name, configs[config_name]);
+    }
+    ele.append(html);
+}
+
+function generate_radio_config_item(config_name, checked) {
+    // 给定config_name是否checked，返回对应的html
+    if(checked)
+        checked = 'checked';
+    else
+        checked = '';
+
+    var html = "              <div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
+        "                      <label class=\"toggle\" style=\"margin-bottom: 0\">\n" +
+        "                        <input class=\"toggle__input\" type=\"radio\" id='config_name_checkbox' " +
+        " name='config' value='" + config_name + "'"  + checked + " style='position:static;margin:0;display:none'>\n" +
+        "                        <span class=\"toggle__label\" style='padding: 0 0 0 24px'>\n" +
+        "                          <span class=\"toggle__text\">" + config_name + "</span>\n" +
+        "                        </span>\n" +
+        "                      </label>\n" +
+        "                    </div>";
+    return html
 }

@@ -42,6 +42,7 @@ class HandlerWatcher(threading.Thread):
 # singleton
 """
 all_data包含以下的key:
+    settings: {} 一级dict，包含了所有的frontend_settings中的内容，value全部是bool值
     basic_settings: {} 一级dict包含了config中basic_settings中的setting.
     hidden_rows: {} 一级dict key为隐藏的row的id
     deleted_rows: {} 一级dict key为删除的row的id
@@ -63,6 +64,7 @@ all_data包含以下的key:
     port: int, port
     uuid: str, 这个server的uuid
     token: str,None 这个server的token，放访问路径上的
+    data: {id1:{'id':id1, 'field1':xxx,}, id2:{}}, 所有的数据都在这个里面，这是一个一级dict
 """
 all_data = {}
 all_handlers = {}

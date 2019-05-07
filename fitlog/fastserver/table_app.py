@@ -13,7 +13,7 @@ from .server.table_utils import save_all_data
 from .server.table_utils import replace_with_extra_data
 
 from werkzeug.utils import secure_filename
-import glob
+from .server.server_config import _get_config_names
 
 table_page = Blueprint("table_page", __name__, template_folder='templates')
 
@@ -31,7 +31,8 @@ def get_table():
 
     first_time_access = False
     data = all_data['data'].copy() # all_data['data'] 只包含从硬盘的读取的log的信息
-    replace_with_extra_data(data, all_data['extra_data'], all_data['filter_condition'], all_data['deleted_rows'])
+    replace_with_extra_data(data, all_data['extra_data'], all_data['filter_condition'], all_data['deleted_rows'],
+                             all_data['settings']['Ignore_filter_condition_not_exist_log'])
     replace_nan_inf(data)
 
     return jsonify(column_order=all_data['column_order'], column_dict=all_data['column_dict'],
@@ -81,7 +82,7 @@ def delete_records():
 @table_page.route('/table/edit', methods=['POST'])
 def table_edit():
     try:
-        # 包含field, id, new_field_value三个值
+        # 包含field, id, new_field_value三个值. 修改某个值
         res = check_uuid(all_data['uuid'], request.json['uuid'])
         if res != None:
             return jsonify(res)
@@ -92,6 +93,8 @@ def table_edit():
             all_data['extra_data'][id][field] = new_field_value
         else:
             all_data['extra_data'][id] = {field:new_field_value}
+        if id in all_data['data'] and field in all_data['data'][id]:
+            all_data['data'][id][field] = new_field_value
 
         return jsonify(status='success', msg='')
     except Exception as e:
@@ -215,4 +218,27 @@ def table_configs():
     if res != None:
         return jsonify(res)
     # 读取当前可以使用的config有哪些
+    config_names = _get_config_names(all_data['root_log_dir'])
+    if len(config_names)==0:
+        return jsonify(status='fail', msg='There is no valid config file in {}.'.format(all_data['root_log_dir']))
+    if config_names.index(all_data['log_config_name'])==-1:
+        return jsonify(status='fail', msg='There current config file:{} is not exist.'.format(all_data['log_config_name']))
+    configs = {}
+    for config in config_names:
+        configs[config] = config==all_data['log_config_name']
+    return jsonify(status='success', msg='', configs=configs)
 
+@table_page.route('/table/change_config', methods=['POST'])
+def table_change_config():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res != None:
+        return jsonify(res)
+    if 'config_name' in request.json:
+        config_names = _get_config_names(all_data['root_log_dir'])
+        if config_names.index(request.json['config_name'])!=-1:
+            all_data['log_config_name'] = request.json['config_name']
+            return jsonify(status='success', msg='')
+        else:
+            return jsonify(status='fail', msg='There is no config named:{}.'.format(request.json['config_name']))
+    else:
+        return jsonify(status='fail', msg='There is no config_name in your request.')

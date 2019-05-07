@@ -7,6 +7,8 @@ __all__ = ["commit", "set_log_dir", "finish", "add_best_metric", "add_metric", "
            "add_hyper_in_file"]
 from .fastlog import logger as _logger
 from typing import Union
+import argparse
+from configparser import ConfigParser
 
 __version__ = '0.1.0'
 
@@ -52,11 +54,13 @@ def set_log_dir(log_dir: str):
     _logger.set_log_dir(log_dir)
 
 
-def finish():
+def finish(status:int=0):
     """
-    使用此方法告知 fitlog 你的实验已经顺利结束。你可以使用此方法来筛选出中途关闭的实验。
+        使用此方法告知 fitlog 你的实验已经正确结束。你可以使用此方法来筛选出失败的实验。
+
+        :param int status: 告知当前实验的状态。0: 结束了; 1: 发生了错误
     """
-    _logger.finish()
+    _logger.finish(status)
 
 
 def add_metric(value: Union[int, str, float, dict], step: int, name: str = None, epoch: int = None):
@@ -102,12 +106,12 @@ def add_best_metric(value: Union[int, str, float, dict], name: str = None):
     _logger.add_best_metric(value, name)
 
 
-def add_hyper(value: Union[int, str, float, dict], name=None):
+def add_hyper(value: Union[int, str, float, dict, argparse.Namespace, ConfigParser], name=None):
     """
     用于添加超参数。用此方法添加到值，会被放置在表格中的 hyper 列及其子列中
 
-    :param value: 类型为 int, float, str, dict中的一种。如果类型为 dict，它的键的类型只能为 str，
-            它的键值的类型可以为int, float, str 或符合同样条件的 dict
+    :param value: 类型为 int, float, str, dict, argparse.Namespace(即ArgumentParser传入的内容), ConfigParser中的一种
+            。如果类型为 dict，它的键的类型只能为 str，它的键值的类型可以为int, float, str 或符合同样条件的 dict
     :param name: 如果你传入 name 参数，你传入的 value 参数会被看做形如 {name:value} 的字典
     :return:
     """
@@ -116,12 +120,14 @@ def add_hyper(value: Union[int, str, float, dict], name=None):
 
 def add_hyper_in_file(file_path: str):
     """
-    从文件读取参数。如demo.py所示，两行"#######hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
+    从文件读取参数。如下面的文件所示，两行"#####hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
     如果多次出现，只会记录第一次出现的值。demo.py::
     
         from numpy as np
+        import fitlog
         # do something
 
+        fitlog.add_hyper_in_file(__file__)  # 会把本python文件的hyper加入进去
         ############hyper
         lr = 0.01 # some comments
         char_embed = word_embed = 300
@@ -142,7 +148,7 @@ def add_hyper_in_file(file_path: str):
             'hidden_size': '100'
         }
 
-    :param file_path: 文件路径
+    :param file_path: 文件路径。如果是读取本python文件中的hyper parameter可以直接fitlog.add_hyper_in_file(__file__)
     """
     _logger.add_hyper_in_file(file_path)
 
@@ -156,3 +162,27 @@ def add_other(value: Union[int, str, float, dict], name: str = None):
     :param name: 如果你传入 name 参数，你传入的 value 参数会被看做形如 {name:value} 的字典
     """
     _logger.add_other(value, name)
+
+
+def add_progress(total_steps: int = None):
+    """
+    传入总的step数量，用于前端计算进度。
+
+    :param total_steps: int, 总共有多少个step
+    """
+    _logger.add_progress(total_steps)
+
+# TODO 好像不work
+# def set_rng_seed(rng_seed:int = None, random:bool = True, numpy:bool = True,
+#                      pytorch:bool=True, deterministic:bool=True):
+#     """
+#     设置模块的随机数种子。由于pytorch还存在cudnn导致的非deterministic的运行，所以一些情况下可能即使seed一样，结果也不一致
+#         需要在fitlog.commit()或fitlog.set_log_dir()之后运行才会记录该rng_seed到log中
+#     :param int rng_seed: 将这些模块的随机数设置到多少，默认为随机生成一个。
+#     :param bool, random: 是否将python自带的random模块的seed设置为rng_seed.
+#     :param bool, numpy: 是否将numpy的seed设置为rng_seed.
+#     :param bool, pytorch: 是否将pytorch的seed设置为rng_seed(设置torch.manual_seed和torch.cuda.manual_seed_all).
+#     :param bool, deterministic: 是否将pytorch的torch.backends.cudnn.deterministic设置为True。如果该值不为True，有时候即使
+#         全部随机数种子都一样也不能跑出相同的结果; 关掉的话可能会有一点性能损失。
+#     """
+#     _logger.set_rng_seed(rng_seed, random, numpy, pytorch, deterministic)

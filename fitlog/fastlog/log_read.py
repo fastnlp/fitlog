@@ -290,7 +290,7 @@ class StandbyStepLogReader(threading.Thread):
                 if len(line) != 0:
                     try:
                         _dict = json.loads(line)['meta']
-                        if 'state' in _dict and _dict['state'] == 'finish':
+                        if 'state' in _dict and _dict['state'] in ('finish', 'error'):
                             return True
                     except:
                         pass

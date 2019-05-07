@@ -1,6 +1,6 @@
 
 
-
+# TODO可以修改为使用fastgit/normal下的内容，这样不用维持两份
 default_cfg = """
 [frontend_settings]
 # 以下的几个设置主要是用于控制前端的显示
@@ -17,7 +17,7 @@ Reorderable_rows=False
 # 当选择revert代码时 revert到的路径: ../<pj_name>-revert 或 ../<pj_name>-revert-<fit_id>
 No_suffix_when_reset=True
 # 是否忽略掉filter_condition中的不存在对应key的log
-Ignore_not_exist_log=True
+Ignore_filter_condition_not_exist_log=True
 
 [basic_settings]
 # 如果有内容长度超过这个值，在前端就会被用...替代。
@@ -59,6 +59,7 @@ max_no_updates=40
 from .log_config_parser import ConfigParser
 import os
 import json
+import glob
 
 def read_server_config(config_path):
     """
@@ -219,15 +220,19 @@ def read_list_from_config(config, section, option, sep):
     return items
 
 def check_config(config):
+    # 检查config是否拥有所有的值，如果没有的话，使用默认值填写
     default_config = ConfigParser()
     default_config.read_string(default_cfg)
     for section in default_config.sections():
         if not config.has_section(section):
-            raise KeyError("Section:`{}` is not in config.".format(section))
+            # raise KeyError("Section:`{}` is not in config.".format(section))
+            config.add_section(section)
+            for option, value in default_config.items(section):
+                config.set(section, option, value)
         for opt in default_config.options(section):
             if not config.has_option(section, opt):
-                raise KeyError("Option:`{}` is not in Section:`{}` is not in config.".format(opt, section))
-
+                # raise KeyError("Option:`{}` is not in Section:`{}` is not in config.".format(opt, section))
+                config.set(section, opt, default_config.get(section, opt))
 
 def get_dict_from_config(config, section, container, dtype=None):
     if dtype == 'int':
@@ -249,10 +254,15 @@ def save_extra_data(path, data):
         json.dump(data, f)
 
 
-if __name__=='__main__':
-    # config = configparser.ConfigParser(allow_no_value=True)
-    # config.read_string(default_cfg)
-    # print(config['display_settings'].getboolean('Ignore_null_value_when_filter'))
-    os.mknod('../test/test.txt')
+def _get_config_names(root_log_dir):
+    """
+    给定log的路径, 返回下面所有结尾为.cfg的文件
+
+    :param str, root_log_dir:
+    :return: list(dir)
+    """
+    configs = glob.glob(os.path.join(root_log_dir, '*.cfg'))
+    configs = [os.path.basename(config) for config in configs]
+    return configs
 
 
