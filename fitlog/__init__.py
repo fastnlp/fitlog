@@ -10,7 +10,7 @@ from typing import Union
 import argparse
 from configparser import ConfigParser
 
-__version__ = '0.1.0'
+__version__ = '1.0'
 
 def commit(file: str, fit_msg: str = None):
     """

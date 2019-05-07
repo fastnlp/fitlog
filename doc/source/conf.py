@@ -21,6 +21,11 @@ project = 'fitlog'
 copyright = '2019, fastNLP'
 author = 'fastNLP'
 
+# The short X.Y version
+version = '1.0'
+# The full version, including alpha/beta/rc tags
+release = '1.0'
+
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be

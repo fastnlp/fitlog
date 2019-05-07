@@ -2,6 +2,7 @@
 Usage:
     fitlog <command> [<args>...]
     fitlog -h|--help
+    fitlog --version
 
 Supported commands
     init            Initialize a fitlog project
