@@ -72,7 +72,7 @@ def read_server_config(config_path):
         config_dir = os.path.dirname(config_path)
         if not os.path.isdir(config_dir):
             os.makedirs(config_dir)
-        os.mknod(config_path)  # 不存在就创建空文件
+        # os.mknod(config_path)  # 不存在就创建空文件
         config.read_string(default_cfg)
         with open(config_path, 'w') as f:
             config.write(f)
