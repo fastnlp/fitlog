@@ -319,7 +319,7 @@ def prepare_incremental_data(logs, new_logs, field_columns):
             log = merge(logs[key], value, use_b=True)
             updated_logs.append(log)
         else:
-            new_dict[key]['memo'] = 'click to edit'
+            new_dict[key]['memo'] = 'Click to edit'
     new_logs = list(new_dict.values())
 
     for key, value in new_dict.items():
