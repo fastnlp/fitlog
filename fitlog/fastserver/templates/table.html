@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Fitlog Table</title>
+     <!--<link rel="shortcut icon" href="#" />-->
+    <link rel="shortcut icon" href="/table.ico" >
+
+    <link href="/static/css/bootstrap.css" rel="stylesheet" />
+    <link href="/static/css/bootstrap-table.css" rel="stylesheet" />
+    <link href="/static/css/bootstrap-table-filter-control.css" rel="stylesheet"/>
+    <link href="/static/css/table.css" rel="stylesheet"/>
+
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+    <script src="/static/js/bootstrap-editable.js"></script>
+    <script src="/static/js/bootstrap-table.js"></script>
+    <script src="/static/js/bootbox.js"></script>
+    <script src="/static/js/bootstrap-table-editable.js"></script>
+    <script src="/static/js/jquery.tablednd.js"></script>
+    <script src="/static/js/bootstrap-table-reorder-rows.js"></script>
+
+    <script src="/static/js/tableExport.js"></script>
+    <script src="/static/js/bootstrap-table-export.js"></script>
+    <script src="/static/js/clone.js"></script>
+    <script src="/static/js/table.js"></script>
+    <script src="/static/js/table_page_utils.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/bootstrap-table-filter-control.js"></script>
+    <script src="/static/js/Sortable.js"></script>
+
+    <style>
+        .alert {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 300px;
+            max-width: 600px;
+            transform: translate(-50%,-50%);
+            z-index: 99999;
+            text-align: center;
+            padding: 15px;
+            border-radius: 3px;
+        }
+
+        .alert-success {
+            color: #31708f;
+            background-color: #d9edf7;
+            border-color: #bce8f1;
+        }
+
+        .alert-info {
+            color: #3c763d;
+            background-color: #dff0d8;
+            border-color: #d6e9c6;
+        }
+
+        .alert-warning {
+            color: #8a6d3b;
+            background-color: #fcf8e3;
+            border-color: #faebcc;
+        }
+
+        .alert-danger {
+            color: #a94442;
+            background-color: #f2dede;
+            border-color: #ebccd1;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <div id="toolbar" class="btn-group" style="margin-left: 20px">
+        <button id="delete" class="btn btn-danger" disabled style="margin-right: 5px">
+            <i class="glyphicon glyphicon-remove"></i> Delete
+        </button>
+        <button id="hide" type="button" class="btn btn-warning" disabled style="margin-left: 5px;margin-right: 5px">
+            <i class="glyphicon glyphicon-eye-close"></i> Hide
+        </button>
+        <button id="display" type="button" class="btn btn-success" disabled style="margin-left: 5px;margin-right: 5px">
+            <i class="glyphicon glyphicon-eye-open"></i> Display
+        </button>
+        <button id="checkInvert" type="button" class="btn btn-default" style="margin-left: 5px;margin-right: 5px;
+                background: #dca7a7;">
+            <i class="glyphicon glyphicon-retweet"></i> InvertCheck
+        </button>
+        <!--model button, choose columns-->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#columns_box"
+                style="margin-left: 5px;margin-right: 5px" id="choose_columns">
+          <i class="glyphicon glyphicon-th icon-th"></i> Columns
+        </button>
+
+        <!--setting-->
+        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#setting_box"
+                style="margin-left: 5px;margin-right: 5px" id="setting">
+          <i class="glyphicon glyphicon-option-horizontal"></i> Setting
+        </button>
+
+        <!--consisten columns-->
+        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#unchanged_columns_box"
+                style="margin-left: 5px;margin-right: 5px" id="consistent_cols">
+          <i class="glyphicon glyphicon-th-list"></i> Con. cols.
+        </button>
+
+    </div>
+
+    <!--setting Modal -->
+    <div class="modal fade" id="setting_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 18px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Settings</h4>
+          </div>
+          <div class="modal-body " id="setting_div">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" data-dismiss="modal" id="setting_cancel">Cancel</button>
+            <button type="button" class="btn btn-primary" id="setting_confirm">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--columns modal-->
+    <div class="modal fade" id="columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Columns(uncheck to hide, drag to reorder)</h4>
+          </div>
+          <div class="modal-body" id="columns_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel_columns">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_columns">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--Add a row-->
+    <div class="modal fade" id="row_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Add a row</h4>
+          </div>
+          <div class="modal-body" id="add_row_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" id="cancel_add_row">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_add_row">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--consistent_columns-->
+    <div class="modal fade" id="unchanged_columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 18px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">The following columns have consistent value.</h4>
+          </div>
+          <div class="modal-body" id="unchanged_column_modal">
+
+          </div>
+          <div class="modal-footer" >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--config selection-->
+    <div class="modal fade" id="config_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Select a config</h4>
+          </div>
+          <div class="modal-body" id="change_config_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" id="cancel_change_config">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_change_config">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{#     style="overflow-x: auto; max-width: 90%; margin-left: 5%; margin-right: 5%"#}
+    <div  style="padding-left:15px; padding-right:15px">
+        <table id="tb_departments"></table>
+    </div>
+
+</body>
+
+<script>
+   var $delete = $('#delete');
+   var $hide = $('#hide');
+   var $table = $('#tb_departments');
+   var $display = $('#display');
+   var $checkInvert = $('#checkInvert');
+   var $setting = $('#setting');
+   var $setting_confirm = $('#setting_confirm');
+   var $choose_columns = $('#choose_columns');
+   var $confirm_columns = $('#confirm_columns');
+   var $confirm_add_row = $('#confirm_add_row');
+   var $cancel_add_row = $('#cancel_add_row');
+   var $config_change_config = $('#confirm_change_config');
+   var $cancel_change_config = $('#cancel_change_config');
+
+   var col_sortables = [];
+
+   // 点击setting
+    $setting.click(function () {
+        var settings = window.settings;
+        var $div = $("#setting_div");
+        for(var setting in settings)
+        {
+            var checked;
+            checked = settings[setting];
+            if(setting==='Offline' && checked){
+                continue; // 不允许再次修改Offline为Online
+            }
+            if(checked)
+            {
+              checked = 'checked'
+            }else {
+              checked = ""
+            }
+            $div.append("<div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
+                "                                      <label class=\"toggle\" style=\"margin-bottom: 0\">\n" +
+                "                                        <input class=\"toggle__input\""  +
+                                                    checked +  " name='setting-check-box'  type=\"checkbox\">\n" +
+                "                                        <span class=\"toggle__label\">\n" +
+                "                                          <span class=\"toggle__text\">"  + setting + "</span>\n" +
+                "                                        </span>\n" +
+                "                                      </label>\n" +
+                "                                    </div>");
+        }
+        $div.append('<div class="page__toggle" style="padding: 0 0;margin: 0 0">' +
+            '<label class="toggle" style="margin-bottom: 0">' +
+                '<span class="toggle__text">Save config name: </span>' +
+                '<input type="text" name="config_name" id="config_name_input" value="' + window.save_config_name +'">' +
+            '</label>' +
+            '</div>')
+
+    });
+    //点击reorder columns
+   $choose_columns.click(function () {
+       generate_sortable_columns(window.column_order, window.column_dict, window.hidden_columns,
+           $("#columns_dialogue"));
+       var nestedSortables = [].slice.call(document.querySelectorAll('.nested-sortable'));
+
+       col_sortables = [];
+       for (var i = 0; i < nestedSortables.length; i++) {
+            col_sortables.push(new Sortable(nestedSortables[i], {
+                group: {
+                    'name': nestedSortables[i].getAttribute('id'),
+                    'pull':false,
+                    'put':false},
+                animation: 150,
+                fallbackOnBody:true,
+                swapThreshold:0.65,
+                dataIdAttr: 'title'
+            }));
+        }
+       //检查是否所有的checkbox都已经正确运行了
+        check_checkbox_valid($("#choose_column_nested"));
+
+        // 触发column的点击
+       $('input').change(function () {
+          var $cb = $(this);
+          if($cb[0].getAttribute('id')==='choose_column_checkbox') {
+              var $group_item = $cb.closest('.list-group-item');
+              var state = $cb.prop('checked');
+              change_children_state($group_item, state);
+              change_parent_state($group_item, state);
+          }
+       });
+   });
+
+   //点击con. cols.
+   $("#consistent_cols").click(function () {
+       var unchanged_columns = window.unchanged_columns;
+       for(var key in unchanged_columns)
+      {
+          var value = unchanged_columns[key];
+          $("#unchanged_column_modal").append("<div class=\"pretty p-default\" " +
+              "style='min-width:20px;margin-left: 5px;margin-right: 5px;'>" +
+              "<div class='state p-primary'><label>" + key + ": " + value + "</label></div></div>");
+      }
+   });
+
+   //setting确认
+   $setting_confirm.click(function () {
+       var config_name = document.getElementById('config_name_input');
+       if(config_name.value!==window.save_config_name){
+           update_config_name(config_name.value);
+       }
+
+       var checkboxes = document.getElementsByName('setting-check-box');
+       var index = 0;
+       var update = false;
+       var update_to_server = false;
+       for(var setting in window.settings)
+       {
+            if((setting==='Pagination' && (window.settings[setting]!==checkboxes[index].checked)))
+            {
+                update = true;
+                window.settings['Pagination'] = checkboxes[index].checked;
+            }
+            else if((setting==='Wrap display' && (window.settings[setting]!==checkboxes[index].checked)))
+            {
+                update = true;
+                window.settings['Wrap display'] = checkboxes[index].checked;
+            }
+            else if((setting==='Reorderable rows' && (window.settings[setting]!==checkboxes[index].checked)))
+            {
+                update = true;
+                window.settings['Reorderable rows'] = checkboxes[index].checked;
+            }
+            else if(window.settings[setting]!==checkboxes[index].checked){
+                window.settings[setting] = checkboxes[index].checked;
+                update_to_server = true;
+            }
+            index += 1;
+       }
+       $("#setting_box").modal('hide');
+       if (update){
+           initalizeTable();
+       }
+
+       if(update_to_server || update)
+           update_settings(window.settings);
+   });
+
+   // add a row确认
+   $confirm_add_row.click(function () {
+       // 获取所有的input
+       var inputs = document.getElementsByName('input_row');
+       var row = {};
+       var index;
+       for(index=0;index<inputs.length;index++){
+           var input = inputs[index];
+           if(input.value!==undefined && input.value!=='' ){
+               if(input.id==='id'){
+                   row[input.id] = input.value.replace('/\s/g', '_') + '_' + generate_uuid();
+               }else{
+                   row[input.id] = input.value;
+               }
+           }
+       }
+       // check id是否为空
+       if(!('id' in row)){
+           bootbox.alert("`id` cannot be empty.");
+       }else{
+           // 不能是已经有的id
+           if(row['id'] in window.table_data){
+               bootbox.alert("Duplicated `id`.")
+           }else{
+               if(Object.keys(row).length===1){
+                   bootbox.alert("Only has `id` is not allowed.")
+               }else{
+                   // 增加到table中
+                   $table.bootstrapTable('prepend', row);
+                   // 保存到服务器
+                   update_new_row(row);
+                   window.table_data[row['id']] = row;
+                   $("#row_box").modal('hide');
+               }
+           }
+       }
+   });
+
+   $cancel_add_row.click(function () {
+       $("#row_box").modal('hide');
+   });
+
+
+   // 确认切换config
+   $config_change_config.click(function () {
+       var value = $("input:radio:checked").val();
+       if(!(value===window.save_config_name)){
+          bootbox.confirm("This will reload this page, make sure you have save your settings.", function (result) {
+              if(result){
+                  $.ajax({
+                        url: '/table/change_config',
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                            uuid: window.server_uuid,
+                            config_name: value
+                        }),
+                        success: function(value){
+                            var status = value['status'];
+                            if(status==='success'){
+                                $('#config_box').modal('hide');
+                                window.location.reload();
+                            } else{
+                                bootbox.alert(value['msg']);
+                            }
+                        },
+                        error: function(error){
+                            bootbox.alert("Some error happens. Fail to change config file.");
+                        }
+                    })
+              }
+          })
+       }
+       $('#config_box').modal('hide');
+   });
+
+   $cancel_change_config.click(function () {
+       $('#config_box').modal('hide');
+   });
+
+   // 确认选择columns
+   $confirm_columns.click(function () {
+       var $nested = $("#choose_column_nested");
+       var new_column_order = get_new_column_order($nested, window.column_order);
+       var new_hidden_columns = window.hidden_columns;
+       get_new_hidden_columns($nested, new_hidden_columns, '');
+
+
+       $("#columns_box").modal('hide');
+       // 更新columns
+       if(window.column_order_updated) {
+           window.column_order = new_column_order;
+           update_column_order(new_column_order);
+       }
+       if(window.hidden_columns_updated){
+           window.hidden_columns = new_hidden_columns;
+           update_hidden_columns(new_hidden_columns);
+       }
+
+       if(window.column_order_updated || window.hidden_columns_updated)
+           initalizeTable();
+       window.column_order_updated = false;
+       window.hidden_columns_updated = false;
+
+       for(var i=0;i<col_sortables.length;i++)
+       {
+           var sortable = col_sortables.pop();
+           sortable.destroy();
+       }
+   });
+
+   // 清除内容
+   $("#columns_box").on('hide.bs.modal', function (e) {
+       $("#columns_dialogue").empty();
+    });
+   $("#setting_box").on('hide.bs.modal', function (e) {
+       $("#setting_div").empty();
+    });
+   $("#unchanged_columns_box").on('hide.bs.modal', function (e) {
+       $("#unchanged_column_modal").empty();
+    });
+   $("#row_box").on('hide.bs.modal', function (e) {
+       $("#add_row_dialogue").empty();
+   });
+   $("#config_box").on('hide.bs.modal', function () {
+       $("#change_config_dialogue").empty();
+   });
+
+   // 当前选中的row的id
+   function getIdSelections() {
+    return $.map($table.bootstrapTable('getSelections'), function (row) {
+      return row.id
+    })
+  }
+
+    // 是否运行点击相应的按钮
+   $table.on('check.bs.table uncheck.bs.table ' +
+      'check-all.bs.table uncheck-all.bs.table',
+    function () {
+      $delete.prop('disabled', !$table.bootstrapTable('getSelections').length);
+      $hide.prop('disabled',!$table.bootstrapTable('getSelections').length);
+    });
+
+   //点击delete
+    $delete.click(function () {
+        var ids = getIdSelections();
+        var msg = "This action will mark rows with id=" + JSON.stringify(ids) + " as delete in hard disk, and they will " +
+            " not be displayed any more but you can still read them in server, are sure to go on?";
+        bootbox.confirm(msg, function(result){
+            if(!window.settings['Offline']){
+                if(result){
+                    $.ajax({
+                        url: '/table/delete_records',
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                            ids: ids,
+                            uuid: window.server_uuid
+                        }),
+                        success: function(value){
+                            //delete success.
+                            $table.bootstrapTable('remove', {
+                                field: 'id',
+                                values: ids
+                              });
+                            for(var index=0;index<ids.length;index++)
+                                delete window.table_data[ids[index]];
+                            $delete.prop('disabled', true);
+                            $hide.prop('disabled', true);
+                            if(value['status']==='fail'){
+                                warning_prompt("Delete in front-page, but not update to the server.", 2000);
+                            }else{
+                                success_prompt("Deletion succeed.", 1500);
+                            }
+
+                        },
+                        error: function(error){
+                            bootbox.alert("Fail to execute deletion, please delete in server.")
+                        }
+                     })
+                }
+            }else{
+                $table.bootstrapTable('remove', {
+                    field: 'id',
+                    values: ids
+                  });
+                $delete.prop('disabled', true);
+                $hide.prop('disabled', true);
+                success_prompt("Deletion succeed.", 1500);
+            }
+        });
+    });
+
+    // 点击hide
+    $hide.click(function () {
+        var ids = getIdSelections();
+        $table.bootstrapTable('uncheckAll');
+        hide_row_by_ids(ids, $table);
+
+        $delete.prop('disabled', true);
+        $hide.prop('disabled', true);
+        $display.prop('disabled', false);
+
+        window.hidden_rows = window.hidden_rows.concat(ids);
+        update_hide_row_ids(window.hidden_rows);
+    });
+    
+    //点击checkInvert
+   $checkInvert.click(function () {
+       $table.bootstrapTable('checkInvert');
+   });
+    
+    //点击diplay
+    $display.click(function () {
+        $table.bootstrapTable('getHiddenRows', true);
+        $display.prop('disabled', true);
+        window.hidden_rows = [];
+        update_hide_row_ids([]);
+    });
+
+    //获取对应的index
+    function getRowOrderByProperty(table, key, value) {
+      var data = $(table).bootstrapTable("getData");
+      var result = [];
+      data.filter(function (o, i) {
+        if (o[key] === value) {
+          result.push(i);
+        }
+      });
+      return result;
+    }
+
+    function hide_row_by_ids(ids, $table) {
+        // 传入table对象和ids的array，将这些隐藏
+        var results = [];
+        ids.forEach( function(id, i)
+        {
+           var result = getRowOrderByProperty($table, 'id', id);
+           results = results.concat(result);
+        });
+
+        results.forEach(function (index, i) {
+            $table.bootstrapTable('hideRow', {'index': index})
+        });
+    }
+
+$table.on('refresh.bs.table', function () {
+      $.ajax({
+            url: '/table/refresh',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify({
+                 uuid: window.server_uuid
+            }),
+            success: function(value){
+                var status = value['status'];
+                var msg = value['msg'];
+                if(status==='success'){
+                    if(value['new_logs'].length===0 && value['updated_logs'].length===0){
+                        success_prompt(msg, 2000);
+                    }else {
+                        new_logs = value['new_logs'];
+                        updated_logs = value['updated_logs'];
+                        if(new_logs.length>0){
+                            $('#tb_departments').bootstrapTable('prepend', new_logs);
+                            for(var index=0;index<new_logs.length;index++){
+                                window.table_data[new_logs[index]['id']] = new_logs[index];
+                            }
+                        }
+                        if(updated_logs.length>0){
+                            for(var index=0;index<updated_logs.length;index++){
+                                $('#tb_departments').bootstrapTable('updateByUniqueId', {
+                                    id: updated_logs[index]['id'],
+                                    row: updated_logs[index]
+                                });
+                                window.table_data[updated_logs[index]['id']] = updated_logs[index];
+                            }
+                        }
+                        success_prompt(msg, 2000);
+                    }
+                }
+                else{
+                    bootbox.alert("Update failed! " + msg);
+                }
+            },
+            error: function(error){
+                bootbox.alert('Error encountered. Check your connection to server.');
+            }
+    })
+});
+
+</script>
+
+</html>
