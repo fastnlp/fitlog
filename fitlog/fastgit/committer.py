@@ -479,9 +479,8 @@ class Committer:
             "cd " + pj_name,
             "cp -r %s/. ." % (tools_path + version),
             "mv main main.py",
-            "git init",
-            "git add .",
-            "git commit -m \"Project initialized.\""]
+            "git init"
+        ]
         if pj_name != '.':
             commands = ["mkdir " + pj_name] + commands
         if hide:
@@ -491,6 +490,8 @@ class Committer:
             print(_colored_string("Some error occurs.", "red"))
             return ret_code
         self._switch_to_standard_git(os.path.abspath(pj_name))
+        
+        self.commit(pj_name + "/main.py", "Project initialized.")
         
         if git:
             if pj_name == '.' and os.path.exists("/.git"):
