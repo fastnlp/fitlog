@@ -296,19 +296,32 @@ def merge(a, b, path=None, use_b=True):
             a[key] = b[key]
     return a
 
-def prepare_incremental_data(logs, new_logs, field_columns):
+def prepare_incremental_data(logs, new_logs, field_columns, filter_condition=None, ignore_not_exist=False):
     """
 
-    :param logs: {'log_dir':dict, ...}, 之前的数据, flatten, dict.
+    :param logs: {'id':dict, ...}, 之前的数据, flatten, dict.
     :param new_logs: List[dict,], 新读取到的数据, nested
     :param field_columns: {field:1}, 在前端显示的内容field
+    :param filter_condition: {}, 用于过滤不需要的内容
+    :param ignore_not_exist: bool, 是否删除过滤条件不存在的log
     :return: {'new_logs':[dict(), dict()...], 'update_logs':[dict(), dict()...]}
     """
+    if filter_condition is None:
+        filter_condition = {}
+
     # 1. 将new_logs的内容展平
     new_dict = {}
     for log in new_logs:
         ex_dict = expand_dict('', log, connector='-', include_fields=field_columns)
-        new_dict[log['id']] = ex_dict
+        filter = False  # 是否忽略掉
+        for f_k, f_v in filter_condition.items():
+            if f_k in ex_dict:
+                if str(ex_dict[f_k]) != f_v:
+                    filter = True
+            elif ignore_not_exist:
+                filter = True
+        if not filter:
+            new_dict[log['id']] = ex_dict
 
     # 2. 将logs中的内容进行替换，或增加.
     updated_logs = []

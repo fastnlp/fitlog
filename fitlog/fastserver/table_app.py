@@ -51,11 +51,19 @@ def refresh_table():
         return jsonify(res)
     log_reader = all_data['log_reader']
     new_logs = log_reader.read_logs(all_data['deleted_rows'])
+    # 删除不满足条件的
     try:
         if len(new_logs)==0:
             return jsonify(status='success', msg='Update successfully, no update found.', new_logs=[], updated_logs=[])
         else:
-            new_logs, updated_logs = prepare_incremental_data(all_data['data'], new_logs, all_data['field_columns'])
+            new_logs, updated_logs = prepare_incremental_data(all_data['data'], new_logs, all_data['field_columns'],
+                                                              all_data['filter_condition'],
+                                                              all_data['settings'][
+                                                                  'Ignore_filter_condition_not_exist_log'])
+            if len(new_logs)==0 and len(updated_logs)==0:
+                return jsonify(status='success', msg='Update successfully, no update found.', new_logs=[],
+                               updated_logs=[])
+            # 需要过滤filter_condition
             replace_nan_inf(new_logs)
             replace_nan_inf(updated_logs)
             return jsonify(status='success', msg='Update successfully, {} log have updates, {} newly added.'\

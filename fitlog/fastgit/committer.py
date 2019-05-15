@@ -494,7 +494,7 @@ class Committer:
         self.commit(pj_name + "/main.py", "Project initialized.")
         
         if git:
-            if pj_name == '.' and os.path.exists("/.git"):
+            if pj_name == '.' and os.path.exists(".git"):
                 if hide:
                     open('.gitignore', 'a').write(".fitlog\nlogs\n.gitignore\n")
                 else:

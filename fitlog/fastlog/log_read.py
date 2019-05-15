@@ -41,7 +41,14 @@ class LogReader:
         从日志存放路径读取日志
 
         :param ignore_log_names: 如果包含在这个里面，就不会读取该log
-        :return: 如果有内容或者有更新的内容，则返回一个 list，里面每个元素都是nested的dict
+        :return: 如果有内容或者有更新的内容，则返回一个 list，里面每个元素都是nested的dict.
+            [{
+                'id':
+                'metric': {nested dict},
+                'meta': {},
+                ...
+            },{
+            }]
         """
         assert self._log_dir is not None, "You have to set log_dir first."
         if ignore_log_names is None:
@@ -66,7 +73,7 @@ def _read_save_log(_save_log_dir: str, ignore_null_loss_or_metric: bool = True, 
     给定一个包含metric.log, hyper.log, meta.log以及other.log的文件夹，返回一个包含数据的dict. 如果为null则返回空字典
     不读取loss.log, 因为里面的内容对table无意义。
     
-    :param _save_log_dir: 日志存放的目录
+    :param _save_log_dir: 日志存放的目录， 已经最后一级了，即该目录下应该包含metric.log等了
     :param ignore_null_loss_or_metric: 是否metric为空的文件
     :param file_stats::
     
@@ -76,6 +83,9 @@ def _read_save_log(_save_log_dir: str, ignore_null_loss_or_metric: bool = True, 
             }
             
     :return:
+        _dict: {'metric': {nested dict}, 'loss': {} }
+        file_stats: {'meta.log': [current_line, last_modified_time],
+                     'metric.log': [, ]} # 只包含有更新的文件的内容
     """
     try:
         filenames = ['meta.log', 'hyper.log', 'metric.log', 'other.log']
