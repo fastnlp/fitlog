@@ -498,7 +498,6 @@ class Committer:
                 if hide:
                     open('.gitignore', 'a').write(".fitlog\nlogs\n.gitignore\n")
                 else:
-                    # TODO 可能存在一个问题是，如果.gitignore已经被git管理
                     open('.gitignore', 'a').write(".fitlog\n.fitconfig\nlogs\n.gitignore\n")
             else:
                 commands = [
