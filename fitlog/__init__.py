@@ -53,6 +53,21 @@ def set_log_dir(log_dir: str):
     """
     _logger.set_log_dir(log_dir)
 
+def debug():
+    """
+    调用该方法之后，所有的fitlog方法都不会产生任何作用。可用于调试代码时避免输出大量无用的信息。
+
+    Example::
+
+        fitlog.debug()
+        fitlog.commit()
+        fitlog.add_metric(0.3, f1)
+
+    由于有fitlog.debug(), commit()和add_metric()都不会实际执行的。
+
+    :return:
+    """
+    _logger.debug()
 
 def finish(status:int=0):
     """
