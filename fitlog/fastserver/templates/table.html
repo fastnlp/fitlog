@@ -400,7 +400,7 @@
    $config_change_config.click(function () {
        var value = $("input:radio:checked").val();
        if(!(value===window.save_config_name)){
-          bootbox.confirm("This will reload this page, make sure you have save your settings.", function (result) {
+          bootbox.confirm("This will reload this page, make sure you have saved your settings.", function (result) {
               if(result){
                   $.ajax({
                         url: '/table/change_config',
