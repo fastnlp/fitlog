@@ -41,7 +41,7 @@ hidden_columns=
 # 不需要显示的column，用逗号隔开，不要使用引号。需要将其从父节点一直写到它本身，比如排除meta中的fit_id, 写为meta-fit_id
 exclude_columns=
 # 允许编辑的column
-editable_columns=memo,meta-fig_msg,meta-git_msg
+editable_columns=memo,meta-fit_msg,meta-git_msg
 # column的显示顺序，强烈推荐不要手动更改
 column_order=
 
