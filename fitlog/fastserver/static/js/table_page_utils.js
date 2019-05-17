@@ -247,7 +247,19 @@ function get_new_hidden_columns(sortable_item, new_hidden_columns, prefix) {
 }
 
 
+
+
 // 以下的几个函数用于生成增加row的modal
+
+function add_a_row(row){
+    //row: {'id':, 'key1': value}
+    // 增加到table中
+    $table.bootstrapTable('prepend', row);
+    // 保存到服务器
+    update_new_row(row);
+    window.table_data[row['id']] = row;
+}
+
 function generate_add_row_columns(column_order, column_dict, hidden_columns, ele) {
     /*
     column_order: json对象，是每一级的顺序，可以通过OrderKeys元素保证顺序
@@ -450,4 +462,95 @@ function generate_radio_config_item(config_name, checked) {
         "                      </label>\n" +
         "                    </div>";
     return html
+}
+
+
+/*
+// 计算多个row的min, max, mean, std
+* */
+
+
+function getFirstJsonValue(obj) {
+    for (var k in obj) return obj[k];
+}
+
+function getJsonKeys(obj){
+    var keys = [];
+    for(var key in obj) keys.push(key)
+    return keys
+}
+
+function generate_metric_stats_table(formatted_metrics) {
+    // {metric_name: {min:, max:, std:, }}
+    // 返回table的str
+    var html = '<table class="table table-striped">';
+    var keys = getJsonKeys(getFirstJsonValue(formatted_metrics));
+    // 第一行
+    html += '<thead><tr>';
+    html += '<th>Metric name</th>';
+    for(var index=0;index<keys.length;index++){
+        html += '<th>' + keys[index] + '</th>';
+    }
+    html += '</thead></tr><tbody>';
+    // 后面的内容
+    for(var key in formatted_metrics){
+        var value = formatted_metrics[key];
+        html += '<tr><td>' + key + '</td>';
+        for(var index=0;index<keys.length;index++){
+            html += '<td>' + value[keys[index]] + '</td>';
+        }
+        html += '</tr>';
+    }
+    html += '</tbody></table>';
+    return html
+}
+
+var sum = function(x,y){ return x+y;};　　//求和函数
+var square = function(x){ return x*x;};　　//数组中每个元素求它的平方
+
+function getMaxMin(arr,maximin)
+{
+    if(maximin==="max")
+    {
+        return Math.max.apply(Math,arr);
+    }
+    else if(maximin==="min")
+    {
+        return Math.min.apply(Math, arr);
+    }
+}
+
+function calculate_stats(metrics){
+    // metrics: {key1:[v1, v2], key2:[v1, v2], key3:[v1, v2]}.
+    // 计算这些值的max，min，std，avg。 返回是{key1: {max:v, min:v, avg:v}}
+    // 如果返回为空， 说明没有合法的值
+    var new_metrics = {};
+    for(var key in metrics){
+        var value = metrics[key];
+        var f_value = [];
+        for(var index=0;index<value.length;index++){
+            var float_value = parseFloat(value[index]);
+            if(!(float_value===float_value)){
+                f_value = []; //说明有无法转为float的
+                break;
+            }else{
+                f_value.push(float_value);
+            }
+        }
+        if(f_value.length>0)
+            new_metrics[key] = f_value;
+    }
+    var results = {};
+    for(var key in new_metrics){
+        var result = {};
+        var data = new_metrics[key];
+        result['max'] = getMaxMin(data, 'max').toFixed(6);
+        result['min'] = getMaxMin(data, 'min').toFixed(6);
+        var mean = data.reduce(sum)/data.length;
+        result['avg'] = mean.toFixed(6);
+        var deviations = data.map(function(x){return x-mean;});
+        result['std'] = Math.sqrt(deviations.map(square).reduce(sum)/(data.length-1)).toFixed(6);
+        results[key] = result;
+    }
+    return results
 }

@@ -167,6 +167,26 @@
       </div>
     </div>
 
+    <!--statistics-->
+    <div class="modal fade" id="stats_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Statistics of metrics</h4>
+          </div>
+          <div class="modal-body" id="stats_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" id="cancel_stats">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_stats">Add a row</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!--consistent_columns-->
     <div class="modal fade" id="unchanged_columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
             style="font-size: 18px">
@@ -226,6 +246,8 @@
    var $cancel_add_row = $('#cancel_add_row');
    var $config_change_config = $('#confirm_change_config');
    var $cancel_change_config = $('#cancel_change_config');
+   var $cancel_stats = $('#cancel_stats');
+   var $confirm_stats = $('#confirm_stats');
 
    var col_sortables = [];
 
@@ -380,11 +402,7 @@
                if(Object.keys(row).length===1){
                    bootbox.alert("Only has `id` is not allowed.")
                }else{
-                   // 增加到table中
-                   $table.bootstrapTable('prepend', row);
-                   // 保存到服务器
-                   update_new_row(row);
-                   window.table_data[row['id']] = row;
+                   add_a_row(row);
                    $("#row_box").modal('hide');
                }
            }
@@ -394,7 +412,6 @@
    $cancel_add_row.click(function () {
        $("#row_box").modal('hide');
    });
-
 
    // 确认切换config
    $config_change_config.click(function () {
@@ -465,6 +482,30 @@
        }
    });
 
+   $confirm_stats.click(function () {
+       // 考虑把结果直接加入一行到结果中
+      var row = {};
+      var id = 'stats_' + generate_uuid();
+      row['id'] = id;
+      var metric_names = getJsonKeys(window.row_stats['stats']);
+      for(var index=0;index<metric_names.length;index++){
+          var value = window.row_stats['stats'][metric_names[index]];
+          if(!('avg' in value)){
+              bootbox.alert("Average value is not found for " + metric_names[index] + '.');
+          }else
+            row[metric_names[index]] = value['avg'];
+      }
+      // add a memo to specify components
+      row['memo'] = 'Combined from ' + window.row_stats['ids'].join(', ');
+        add_a_row(row);
+
+      $('#stats_box').modal('hide');
+   });
+
+   $cancel_stats.click(function () {
+      $('#stats_box').modal('hide');
+   });
+
    // 清除内容
    $("#columns_box").on('hide.bs.modal', function (e) {
        $("#columns_dialogue").empty();
@@ -480,6 +521,9 @@
    });
    $("#config_box").on('hide.bs.modal', function () {
        $("#change_config_dialogue").empty();
+   });
+   $('#stats_box').on('hide.bs.modal', function () {
+       $("#stats_dialogue").empty();
    });
 
    // 当前选中的row的id

@@ -234,6 +234,10 @@ function initalizeTable(){
        new_button = generate_a_button("btn btn-default", 'config', 'Configs', change_config,
            '<i class="glyphicon glyphicon-file"></i>');
        document.getElementsByClassName('columns').item(0).appendChild(new_button);
+       //显示选中的row的statics
+        new_button = generate_a_button("btn btn-default", 'statistics', 'Stats', show_statistics,
+            '<i class="glyphicon glyphicon-sort-by-attributes-alt"></i>');
+        document.getElementsByClassName('columns').item(0).appendChild(new_button);
        // 在toggle新增一个poweroff的按钮
        new_button = generate_a_button("btn btn-default", 'Poweroff', 'PoweOff', ShutDownServer,
            '<i class="glyphicon glyphicon-off"></i>');
@@ -251,6 +255,55 @@ function generate_a_button(className, name, title, onclick, innerHTML){
     return new_button
 }
 
+function show_statistics(){
+    // 获取已经选中的ids
+    var ids = getIdSelections();
+    if(ids.length<2){
+        bootbox.alert("You have not chosen enough logs(at least 2).")
+    }else{
+        // 计算它们的metric下面的值。目前仅支持完全都有的，不支持缺省的
+        var logs = [];
+        for(var index=0;index<ids.length;index++){
+            logs.push(window.table_data[ids[index]]);
+        }
+        // 获取所有的值
+        var metrics = {};
+        for(var index=0;index<logs.length;index++){
+            var log = logs[index];
+            for(var key in log){
+                if(key.startsWith('metric')){
+                    if(key==='metric-epoch' || key==='metric-step'){
+                        continue
+                    }
+                    if(!(key in metrics)){
+                        metrics[key] = [log[key]];
+                    }else{
+                        metrics[key].push(log[key]);
+                    }
+                }
+            }
+        }
+        // 判断是否都有相同的长度。
+        for(var key in metrics){
+            if(metrics[key].length!==ids.length){
+                bootbox.alert(key + " has empty entries.");
+                return;
+            }
+        }
+
+        // 前端页面显示需要展示的值
+        var formatted_metrics = calculate_stats(metrics);
+        if(getJsonKeys(formatted_metrics).length>0){
+            //
+            window.row_stats = {'ids': ids, 'stats':formatted_metrics};
+            var html = generate_metric_stats_table(formatted_metrics);
+             $('#stats_dialogue').append(html);
+            $('#stats_box').modal('show');
+        }else{
+            bootbox.alert("No valid value found.")
+        }
+    }
+}
 
 function AddRowModal() {
     // 点击add row之后弹出一个modal. 对应的确认处理在table.html页面

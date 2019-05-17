@@ -33,7 +33,10 @@ def log_cmd(argv=None):
     if not os.path.isabs(log_dir):
         cwd = os.getcwd()
         log_dir = os.path.join(cwd, log_dir)
-    
+
+    if log_config_name!=None and not log_config_name.endswith('.cfg'):
+        raise RuntimeError("log_config_name has to end with .cfg.")
+
     if not os.path.exists(log_dir):
         raise RuntimeError("{} is not exist.".format(log_dir))
     

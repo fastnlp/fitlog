@@ -78,7 +78,7 @@ def read_server_config(config_path):
             config.write(f)
     else:
         config.read(config_path)
-        # check configparser, 必须拥有一样的section
+        # check configparser, 没有的话用默认值覆盖填写
         check_config(config)
 
     all_data = {}
