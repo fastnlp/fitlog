@@ -93,10 +93,12 @@ htmlhelp_basename = 'fitlogdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-# latex_documents = [
-#     (master_doc, 'fitlog.tex', 'fitlog Documentation',
-#      'fastNLP', 'manual'),
-# ]
+latex_elements = {
+}
+latex_documents = [
+    (master_doc, 'fitlog.tex', 'fitlog Documentation',
+     'fastNLP', 'manual'),
+]
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
