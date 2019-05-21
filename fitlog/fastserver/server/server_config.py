@@ -1,61 +1,4 @@
 
-
-# TODO可以修改为使用fastgit/normal下的内容，这样不用维持两份
-default_cfg = """
-[frontend_settings]
-# 以下的几个设置主要是用于控制前端的显示
-Ignore_null_value_when_filter=True
-Wrap_display=True
-Pagination=True
-Hide_hidden_columns_when_reorder=False
-# 前端的任何变动都不会尝试更新到服务器，即所有改动不会保存
-Offline=False
-# 是否保存本次前端页面的改动，以使得下次打开是与本次一致的页面
-Save_settings=True
-# row是否是可以通过拖拽交换的，如果可以交换则无法进行复制
-Reorderable_rows=False
-# 当选择revert代码时 revert到的路径: ../<pj_name>-revert 或 ../<pj_name>-revert-<fit_id>
-No_suffix_when_reset=True
-# 是否忽略掉filter_condition中的不存在对应key的log
-Ignore_filter_condition_not_exist_log=True
-
-[basic_settings]
-# 如果有内容长度超过这个值，在前端就会被用...替代。
-str_max_length=20
-# float的值保留几位小数
-round_to=6
-# 是否在表格中忽略不改变的column
-ignore_unchanged_columns=True
-
-[data_settings]
-# 在这里的log将不在前端显示出来，但是可以通过display点击出来。建议通过前端选择
-hidden_logs=
-# 在这里的log将在前端删除。建议通过前端选择
-deleted_logs=
-# 可以设置条件，只有满足以下条件的field才会被显示，请通过前端增加filter条件。
-filter_condition=
-
-[column_settings]
-# 隐藏的column，建议通过前端选择
-hidden_columns=
-# 不需要显示的column，用逗号隔开，不要使用引号。需要将其从父节点一直写到它本身，比如排除meta中的fit_id, 写为meta-fit_id
-exclude_columns=
-# 允许编辑的column
-editable_columns=memo,meta-fit_msg,meta-git_msg
-# column的显示顺序，强烈推荐不要手动更改
-column_order=
-
-[chart_settings]
-# 在走势图中，每个对象最多显示的点的数量，不要太大，否则前端可能会卡住
-max_points=200
-# 不需要在走势图中显示的column名称
-chart_exclude_columns=
-# 前端间隔秒多久尝试更新一次走势图，不要设置为太小。
-update_every=4
-# 如果前端超过max_no_updates次更新都没有获取到更新的数据，就停止刷新。如果evaluation的时间特别长，可能需要调大这个选项。
-max_no_updates=40
-"""
-
 from .log_config_parser import ConfigParser
 import os
 import json
@@ -72,8 +15,7 @@ def read_server_config(config_path):
         config_dir = os.path.dirname(config_path)
         if not os.path.isdir(config_dir):
             os.makedirs(config_dir)
-        # os.mknod(config_path)  # 不存在就创建空文件
-        config.read_string(default_cfg)
+        _read_default_config(config)
         with open(config_path, 'w') as f:
             config.write(f)
     else:
@@ -219,10 +161,21 @@ def read_list_from_config(config, section, option, sep):
         items = [item.strip() for item in items]
     return items
 
+def _read_default_config(config):
+    """
+
+    :param config: ConfigParser对象
+    :return:
+    """
+    default_cfg_fp = os.path.join(os.path.realpath(__file__)[:-len("server_config.py")], '..',
+                                  '..', 'fastgit', 'normal', 'logs', 'default.cfg')
+    config.read(default_cfg_fp)
+    return config
+
 def check_config(config):
     # 检查config是否拥有所有的值，如果没有的话，使用默认值填写
     default_config = ConfigParser()
-    default_config.read_string(default_cfg)
+    default_config = _read_default_config(default_config)
     for section in default_config.sections():
         if not config.has_section(section):
             # raise KeyError("Section:`{}` is not in config.".format(section))
