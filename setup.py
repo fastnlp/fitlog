@@ -2,7 +2,7 @@
 # coding=utf-8
 from setuptools import setup, find_packages
 
-with open('README.md', encoding='utf-8') as f:
+with open('README.rst', encoding='utf-8') as f:
     readme = f.read()
 
 with open('LICENSE', encoding='utf-8') as f:
