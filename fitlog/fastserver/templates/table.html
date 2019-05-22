@@ -271,7 +271,7 @@
             $div.append("<div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
                 "                                      <label class=\"toggle\" style=\"margin-bottom: 0\">\n" +
                 "                                        <input class=\"toggle__input\""  +
-                                                    checked +  " name='setting-check-box'  type=\"checkbox\">\n" +
+                                                    checked +  " name='setting-check-box'  type=\"checkbox\" id='"+ setting + "'>\n" +
                 "                                        <span class=\"toggle__label\">\n" +
                 "                                          <span class=\"toggle__text\">"  + setting + "</span>\n" +
                 "                                        </span>\n" +
@@ -340,31 +340,33 @@
        }
 
        var checkboxes = document.getElementsByName('setting-check-box');
-       var index = 0;
+       var checkbox_json = {};
+       checkboxes.forEach(function (element, index, array) {
+          checkbox_json[element.getAttribute('id')] = element.checked;
+       });
        var update = false;
        var update_to_server = false;
-       for(var setting in window.settings)
+       for(var setting in checkbox_json)
        {
-            if((setting==='Pagination' && (window.settings[setting]!==checkboxes[index].checked)))
+            if((setting==='Pagination' && (window.settings[setting]!==checkbox_json[setting])))
             {
                 update = true;
-                window.settings['Pagination'] = checkboxes[index].checked;
+                window.settings['Pagination'] = checkbox_json[setting];
             }
-            else if((setting==='Wrap display' && (window.settings[setting]!==checkboxes[index].checked)))
+            else if((setting==='Wrap display' && (window.settings[setting]!==checkbox_json[setting])))
             {
                 update = true;
-                window.settings['Wrap display'] = checkboxes[index].checked;
+                window.settings['Wrap display'] = checkbox_json[setting];
             }
-            else if((setting==='Reorderable rows' && (window.settings[setting]!==checkboxes[index].checked)))
+            else if((setting==='Reorderable rows' && (window.settings[setting]!==checkbox_json[setting])))
             {
                 update = true;
-                window.settings['Reorderable rows'] = checkboxes[index].checked;
+                window.settings['Reorderable rows'] = checkbox_json[setting];
             }
-            else if(window.settings[setting]!==checkboxes[index].checked){
-                window.settings[setting] = checkboxes[index].checked;
+            else if(window.settings[setting]!==checkbox_json[setting]){
+                window.settings[setting] = checkbox_json[setting];
                 update_to_server = true;
             }
-            index += 1;
        }
        $("#setting_box").modal('hide');
        if (update){

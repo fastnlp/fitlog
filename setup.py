@@ -2,7 +2,7 @@
 # coding=utf-8
 from setuptools import setup, find_packages
 
-with open('README.rst', encoding='utf-8') as f:
+with open('README.md', encoding='utf-8') as f:
     readme = f.read()
 
 with open('LICENSE', encoding='utf-8') as f:
@@ -16,8 +16,8 @@ setup(
     version='0.1.0',
     description='fitlog: Log tool for Deep Learning, developed by Fudan FastNLP Team',
     long_description=readme,
+    long_description_content_type='text/markdown',
     license=license,
-    author='FudanNLP',
     python_requires='>=3.6',
     include_package_data=True,
     packages=find_packages(),
