@@ -504,6 +504,36 @@
   };
 
 
+  // 给出三个选项，cancel:0, delete:1, erase:2
+  exports.deleteConfirm = function () {
+    var options;
+
+    options = mergeDialogOptions('deleteConfirm', ['cancel', 'delete', 'erase'],
+        ['message', 'callback'], arguments);
+
+    // confirm specific validation; they don't make sense without a callback so make
+    // sure it's present
+    if (!$.isFunction(options.callback)) {
+      throw new Error('confirm requires a callback');
+    }
+
+    // overrides; undo anything the user tried to set they shouldn't have
+    options.buttons.cancel.callback = options.onEscape = function () {
+      return options.callback.call(this, 0);
+    };
+
+    options.buttons.delete.callback = function () {
+      return options.callback.call(this, 1);
+    };
+
+    options.buttons.erase.callback = function () {
+      return options.callback.call(this, 2)
+    };
+
+    return exports.dialog(options);
+  };
+
+
   // Helper function to simulate the native prompt() behavior. **NOTE**: This is non-blocking, so any
   // code that must happen after the prompt is dismissed should be placed within the callback function
   // for this prompt.

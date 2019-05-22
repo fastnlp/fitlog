@@ -2,6 +2,8 @@ from flask import render_template
 
 from flask import request, jsonify
 from flask import Blueprint
+import os
+import shutil
 
 from .server.table_utils import prepare_data, prepare_incremental_data
 
@@ -86,6 +88,34 @@ def delete_records():
             all_data['deleted_rows'][id] = 1
 
     return jsonify(status='success', msg='')
+
+@table_page.route('/table/erase_records', methods=['POST'])
+def erase_records():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res != None:
+        return jsonify(res)
+    ids = request.json['ids']
+    fail_ids = []
+    for index in range(len(ids)-1, -1, -1):
+        id = ids[index]
+        if id in all_data['data']:
+            all_data['data'].pop(id, None)
+            all_data['deleted_rows'].pop(id, None)
+            # 删除
+            try:
+                record_path = os.path.join(all_data['root_log_dir'], id)
+                if os.path.isdir(record_path):
+                    shutil.rmtree(record_path)
+            except Exception as e:
+                fail_ids.append(id)
+
+        elif id in all_data['extra_data']:
+            all_data['extra_data'].pop(id)
+
+    if len(fail_ids)!=0:
+        return jsonify(status='fail', msg=fail_ids)
+    else:
+        return jsonify(status='success', msg='')
 
 @table_page.route('/table/edit', methods=['POST'])
 def table_edit():

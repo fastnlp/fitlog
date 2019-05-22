@@ -546,11 +546,11 @@
    //点击delete
     $delete.click(function () {
         var ids = getIdSelections();
-        var msg = "This action will mark rows with id=" + JSON.stringify(ids) + " as delete in hard disk, and they will " +
-            " not be displayed any more but you can still read them in server, are sure to go on?";
-        bootbox.confirm(msg, function(result){
+        var msg = "Delete rows with id=" + JSON.stringify(ids) + ". `delete` only make" +
+                " them invisible in current setting; `erase` will delete them from disk.";
+        bootbox.deleteConfirm(msg, function(result){
             if(!window.settings['Offline']){
-                if(result){
+                if(result===1){
                     $.ajax({
                         url: '/table/delete_records',
                         type: 'POST',
@@ -579,6 +579,39 @@
                         },
                         error: function(error){
                             bootbox.alert("Fail to execute deletion, please delete in server.")
+                        }
+                     })
+                }
+                if(result===2){// erase
+                    $.ajax({
+                        url: '/table/erase_records',
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                            ids: ids,
+                            uuid: window.server_uuid
+                        }),
+                        success: function(value){
+                            //delete success.
+                            $table.bootstrapTable('remove', {
+                                field: 'id',
+                                values: ids
+                              });
+                            for(var index=0;index<ids.length;index++)
+                                delete window.table_data[ids[index]];
+                            $delete.prop('disabled', true);
+                            $hide.prop('disabled', true);
+                            if(value['status']==='fail'){
+                                var fail_ids = value['msg'];
+                                bootbox.alert("Fail to erase: " + JSON.stringify(fail_ids) + " from disk.");
+                            }else{
+                                success_prompt("Erase succeed.", 1500);
+                            }
+
+                        },
+                        error: function(error){
+                            bootbox.alert("Fail to execute erase, please erase in server.")
                         }
                      })
                 }
