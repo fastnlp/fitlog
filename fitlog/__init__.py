@@ -4,13 +4,48 @@ fitlog提供给用户的 API 有如下几个：
 
 """
 __all__ = ["commit", "set_log_dir", "finish", "add_best_metric", "add_metric", "add_loss", "add_hyper", "add_other",
-           "add_hyper_in_file"]
+           "add_hyper_in_file", "get_commit_id", "get_fit_id"]
 from .fastlog import logger as _logger
+from .fastgit import Committer, committer as _committer
 from typing import Union
 import argparse
 from configparser import ConfigParser
 
 __version__ = '0.1.0'
+
+
+def get_commit_id(file):
+    """用户用此命令获取上一次 Git 记录的 id, 期望的使用方法如下::
+        
+        id = fitlog.get_commit_id(__file__)
+        
+    :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可:
+    :return: Git 的上次记录的 commit-id 的前七位；错误时返回 `error`
+    """
+    work_dir = _committer._find_config_file(file)
+    res = Committer.git_last_commit(work_dir)
+    if res['status'] == 0:
+        return res['msg'][0]
+    else:
+        return 'error'
+
+
+def get_fit_id(file):
+    """用户用此命令获取上一次 fitlog 自动记录 commit 的 id, 期望的使用方法如下::
+        
+        id = fitlog.get_fit_id(__file__)
+        
+    
+    :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可
+    :return: Fitlog 的上次自动记录的 commit-id 的前七位；错误时返回 `error`
+    """
+    work_dir = _committer._find_config_file(file)
+    res = Committer.fit_last_commit(work_dir)
+    if res['status'] == 0:
+        return res['msg'][0]
+    else:
+        return 'error'
+
 
 def commit(file: str, fit_msg: str = None):
     """
@@ -55,6 +90,7 @@ def set_log_dir(log_dir: str, new_log:bool=False):
     """
     _logger.set_log_dir(log_dir, new_log)
 
+
 def debug():
     """
     调用该方法之后，所有的fitlog方法都不会产生任何作用。可用于调试代码时避免输出大量无用的信息。
@@ -71,7 +107,8 @@ def debug():
     """
     _logger.debug()
 
-def finish(status:int=0):
+
+def finish(status: int = 0):
     """
         使用此方法告知 fitlog 你的实验已经正确结束。你可以使用此方法来筛选出失败的实验。
 

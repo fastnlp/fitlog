@@ -75,23 +75,12 @@ class Committer:
         self.commits = []  # 自动 commit 的历史记录
         self.last_commit = None  # 上一次 commit 的历史记录
     
-    def _get_work_dir(self) -> str:
-        """从配置文件路径中获取工作目录路径
-        
-        :return: 返回工作目录路径，同时也在 self.work_dir 中存储
-        """
-        work_dir = os.path.dirname(self.config_file_path)
-        if work_dir.endswith(".fitlog"):
-            work_dir = work_dir[:-8]
-        self.work_dir = work_dir
-        return work_dir
-    
     def _find_config_file(self, run_file_path: str = None, cli: bool = True) -> str:
         """
         
         :param run_file_path: 执行 commit 操作文件的目录
         :param cli: 是否在命令行输出信息
-        :return: 返回配置文件路径，同时也在 self.config_file_path 中存储
+        :return: 返回workdir，同时在 self.config_file_path 中存储配置文件路径
         """
         config_file_name = '.fitconfig'
         if run_file_path is None:
@@ -111,10 +100,12 @@ class Committer:
                 return "Error"
             if os.path.isfile(path + "/" + config_file_name):
                 self.config_file_path = path + "/" + config_file_name
-                return self.config_file_path
+                self.work_dir = path
+                return path
             if os.path.isfile(path + "/.fitlog/" + config_file_name):
                 self.config_file_path = path + "/.fitlog/" + config_file_name
-                return self.config_file_path
+                self.work_dir = path
+                return path
             if path == home_path or path == root_path:
                 if cli:
                     print(_colored_string("Reach the root or home.", "red"))
@@ -355,7 +346,6 @@ class Committer:
             if self.config_file_path is None:
                 return Info(1, "Error: Config file is not found")
             self._read_config()
-            self._get_work_dir()
             if not os.path.exists(self.work_dir + "/.fitlog"):
                 print(_colored_string(".fitlog folder is not found", "red"))
                 return Info(1, "Error: .fitlog folder is not found")
@@ -441,6 +431,32 @@ class Committer:
             else:
                 git_id = None
                 git_msg = None
+            return Info(0, Commit(git_id, git_msg))
+        except FileNotFoundError:
+            return Info(1, "Error: Some error occurs")
+    
+    @staticmethod
+    def fit_last_commit(work_dir: str) -> Info:
+        """获取标准 fit 的上一次 commit 的信息
+
+        :param work_dir: 工作目录的路径
+        :return: 返回带状态码的信息。如果成功，信息为一个 Commit 类型的 commit 信息
+        """
+        work_dir = os.path.abspath(work_dir)
+        try:
+            Committer._switch_to_fast_git(work_dir)
+            # 忽略错误信息
+            lines = subprocess.Popen("cd %s && git log --oneline" % work_dir, shell=True,
+                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.readlines()
+            if len(lines) != 0:
+                line = lines[0].decode('utf-8')
+                git_id = line[:line.index(' ')]
+                git_msg = line[line.index(' ') + 1:].strip()
+            else:
+                git_id = None
+                git_msg = None
+            
+            Committer._switch_to_standard_git(work_dir)
             return Info(0, Commit(git_id, git_msg))
         except FileNotFoundError:
             return Info(1, "Error: Some error occurs")
