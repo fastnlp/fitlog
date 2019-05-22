@@ -10,7 +10,7 @@ from typing import Union
 import argparse
 from configparser import ConfigParser
 
-__version__ = '1.0'
+__version__ = '0.1.0'
 
 def commit(file: str, fit_msg: str = None):
     """
@@ -30,7 +30,7 @@ def commit(file: str, fit_msg: str = None):
     _logger.commit(file, fit_msg)
 
 
-def set_log_dir(log_dir: str):
+def set_log_dir(log_dir: str, new_log:bool=False):
     """
     设定log 文件夹的路径(在进行其它操作前必须先指定日志路径)。如果你已经顺利执行了 fitlog.commit()命令，
     log 文件夹会自动设定为.fitconfig 文件中的 default_log_dir 字段的值。在某些情况下，可能需要继续往同
@@ -50,8 +50,10 @@ def set_log_dir(log_dir: str):
         fitlog.set_log_dir('logs/log_20190417_140311') # fitlog将log继续写入到log_20190417_140311里。
 
     :param log_dir: log 文件夹的路径
+    :param new_log: 是否重新创建一个log，仅在同一次python启动但是需要记录多个log时使用(但是只能分阶段地用，即同一时间
+        只会有一个logger存在，设置new_log为True时，仅仅是开了一个新的logger，但同时前一个就关闭了。)
     """
-    _logger.set_log_dir(log_dir)
+    _logger.set_log_dir(log_dir, new_log)
 
 def debug():
     """

@@ -10,7 +10,7 @@ from configparser import ConfigParser
 
 from .log_read import is_dirname_log_record
 from ..fastgit import committer
-
+import warnings
 
 def _check_debug(func):
     """
@@ -100,9 +100,9 @@ class Logger:
         """
         是否只在 metric操作后创建 log 文件
         
-            1 If False, then any record action will create log files. But usually this is not necessary.
+            1 如果为False, 只要有任何add_*方法都会创建log文件，但大多数时候这都是不必要的。
             
-            2 If True, only when at least one metric(calling logger.add_metric()) is recorded, it will create log files.
+            2 如果为True, 只有在第一次存入metric或者loss时才会真正创建log。
         
         :param flag:
         :return:
@@ -111,13 +111,17 @@ class Logger:
         self.save_on_first_metric_or_loss = flag
     
     @_check_debug
-    def set_log_dir(self, log_dir: str):
+    def set_log_dir(self, log_dir: str, new_log: bool=False):
         """
         设定log 文件夹的路径，在进行其它操作前必须先指定日志路径
 
         :param log_dir: log 文件夹的路径
+        :param new_log: 是否开始新的一条log记录
         :return:
         """
+        if new_log:
+            self._clear()
+
         if self.initialized:
             if self._log_dir != log_dir:
                 raise RuntimeError("Don't set log dir again.")
@@ -131,7 +135,7 @@ class Logger:
         
         # prepare file directory
         if is_dirname_log_record(log_dir):
-            print("Append to already exist log.")
+            warnings.warn("Append to an already exist log.")
             self._log_dir = os.path.dirname(log_dir)
             self._save_log_dir = log_dir
         else:
@@ -141,7 +145,30 @@ class Logger:
             raise PermissionError("write is not allowed in `{}`. Check your permission.".format(log_dir))
         
         self.initialized = True
-    
+
+    def _clear(self):
+        """
+        内部函数，将logger置为未初始化
+        :return:
+        """
+        self._save()
+        self.initialized = False
+        self._cache = []
+        for attr_name in ['_save_log_dir', '_log_dir', 'total_steps']:
+            if hasattr(self, attr_name):
+                delattr(self, attr_name)
+
+        for logger_name in ['meta_logger', 'hyper_logger', 'metric_logger', 'other_logger', 'progress_logger',
+                          'loss_logger']:
+            if hasattr(self, logger_name):
+                logger = getattr(self, logger_name)
+                handlers = logger.handlers[:]
+                for handler in handlers:
+                    handler.close()
+                    handler.flush()
+                    logger.removeHandler(handler)
+                delattr(self, logger_name)
+
     def _create_log_files(self):
         """
         创建日志文件

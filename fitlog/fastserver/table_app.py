@@ -222,6 +222,7 @@ def table_with_token(token):
 
 @table_page.route('/table/configs', methods=['POST'])
 def table_configs():
+    # 显示有哪些config文件的接口
     res = check_uuid(all_data['uuid'], request.json['uuid'])
     if res != None:
         return jsonify(res)
@@ -238,12 +239,16 @@ def table_configs():
 
 @table_page.route('/table/change_config', methods=['POST'])
 def table_change_config():
+    # 改变config的接口
     res = check_uuid(all_data['uuid'], request.json['uuid'])
     if res != None:
         return jsonify(res)
     if 'config_name' in request.json:
         config_names = _get_config_names(all_data['root_log_dir'])
         if config_names.index(request.json['config_name'])!=-1:
+            log_dir = all_data['root_log_dir']
+            log_config_name = all_data['log_config_name']
+            save_all_data(all_data, log_dir, log_config_name)
             all_data['log_config_name'] = request.json['config_name']
             return jsonify(status='success', msg='')
         else:
