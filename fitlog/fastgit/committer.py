@@ -395,7 +395,6 @@ class Committer:
         if self.config_file_path is None:
             return Info(1, "Error: Config file is not found")
         self._read_config()
-        self._get_work_dir()
         return Info(0, self.work_dir)
     
     def fitlog_revert(self, commit_id: str, run_file_path: str = None, id_suffix: bool = False) -> Info:
