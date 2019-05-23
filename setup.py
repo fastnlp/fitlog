@@ -17,7 +17,7 @@ setup(
     description='fitlog: Log tool for Deep Learning, developed by Fudan FastNLP Team',
     long_description=readme,
     long_description_content_type='text/markdown',
-    license=license,
+    license='Apache license',
     python_requires='>=3.6',
     include_package_data=True,
     packages=find_packages(),
