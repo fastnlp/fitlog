@@ -371,12 +371,11 @@ def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备�
         raise ValueError("No valid log found in {}.".format(log_dir))
 
     # read extra_data
-    if 'extra_data' not in all_data: # 只有在第一次需要读取
-        extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
-        extra_data = {}
-        if os.path.exists(extra_data_path):
-            extra_data = read_extra_data(extra_data_path)
-        all_data['extra_data'] = extra_data
+    extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
+    extra_data = {}
+    if os.path.exists(extra_data_path):
+        extra_data = read_extra_data(extra_data_path)
+    all_data['extra_data'] = extra_data
 
     # 2. 取出其他settings
     hidden_columns = all_data['hidden_columns']
