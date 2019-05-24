@@ -311,7 +311,8 @@ class Committer:
                         print(_colored_string("The <path> can't in your project directory.", "red"))
                     return Info(1, "Error: The <path> can't in your project directory.")
                 else:
-                    ret_code = os.system("mkdir -p %s && /bin/cp -rf %s/.fitlog %s/.fitlog" % (path, work_dir, path))
+                    ret_code = os.system("mkdir -p %s && rm -rf %s/.fitlog && /bin/cp -rf %s/.fitlog %s/.fitlog" %
+                                         (path, path, work_dir, path))
                     if ret_code != 0:
                         if cli:
                             print(_colored_string("Some error occurs in cp", "red"))
@@ -474,7 +475,7 @@ class Committer:
     def init_project(self, pj_name: str, version: str = "normal", hide: bool = False, git: bool = True) -> int:
         """命令行用来初始化一个 fitlog 项目
         
-        :param pj_name: 项目名称
+        :param pj_name: 项目名称`
         :param version: 项目初始化文件夹的版本，目前只有 normal 这一种
         :param hide: 是否隐藏 .fitconfig 文件到 .fitlog 文件夹中
         :param git: 是否在初始化 fitlog 的同时为项目初始化 git
