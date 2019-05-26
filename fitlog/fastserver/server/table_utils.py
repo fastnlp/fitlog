@@ -334,6 +334,13 @@ def _filter_cmp_expression(condition, condition_key, value):
                     else:
                         con = expr[:-1]
                         operator = '<'
+            elif '!=' in expr:
+                index = expr.index('!=')
+                if index==0:
+                    con = expr[2:]
+                elif index==len(expr)-2:
+                    con = expr[:-1]
+                operator = '!='
             elif '=' in expr:
                 index = expr.index('=')
                 if 0<index<len(expr)-1:
