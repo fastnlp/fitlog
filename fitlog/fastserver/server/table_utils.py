@@ -334,6 +334,18 @@ def _filter_cmp_expression(condition, condition_key, value):
                     else:
                         con = expr[:-1]
                         operator = '<'
+            elif '=' in expr:
+                index = expr.index('=')
+                if 0<index<len(expr)-1:
+                    print(_colored_string(f"Corrupted filter_condition in `{condition_key}`, '=' can only be in the beginning"
+                                            "or in the end", 'red'))
+                    return False
+                else:
+                    if index == 0:
+                        con = expr[1:]
+                    else:
+                        con = expr[:-1]
+                    operator = '=='
             else:
                 print(_colored_string(f"Corrupted filter_condition in `{condition_key}`, cannot find filter condition.",
                                       'red'))
@@ -378,7 +390,7 @@ def _filter_this_log_or_not(filter_condition, expanded_log, ignore_not_exist=Fal
             for condition in f_v:
                 if isinstance(condition, str):
                     # 考虑使用具备大小关系的过滤条件
-                    if '<' in condition or '>' in condition: # 如果使用了特殊比较关系符号
+                    if '<' in condition or '>' in condition or '=' in condition: # 如果使用了特殊比较关系符号
                         _filter = _filter_cmp_expression(condition, f_k, value)
                     elif condition in str(value): # 如果是str，则不包含就认为是filter掉了
                         _filter = False
@@ -534,9 +546,9 @@ def replace_with_extra_data(data, extra_data, filter_condition=None, deleted_row
                 if 'id' in value:  # 只有有id的才是用户加入的row
                     data[key] = value
 
-def save_all_data(all_data, log_dir, log_config_name):
+def save_all_data(all_data, log_dir, log_config_name, force_save=False):
     # 保存settings和extra文件, 会根据情况判断是否存储。
-    if all_data['settings']['Save_settings']:  # 如果需要保存
+    if all_data['settings']['Save_settings'] or force_save:  # 如果需要保存
         log_config_path = os.path.join(log_dir, log_config_name)
         save_config(all_data, config_path=log_config_path)
         # save editable columns

@@ -367,13 +367,14 @@ function save_filter_conditions(){
     var condition = {};
     for(var index=0;index<filter_divs.length;index++){
         var filter = filter_divs[index].children[0];
-        var value;
+        var value='';
         var key = filter.className.split(' ')[1].substring(31);
         if(filter.tagName==='INPUT'){
             value = filter.value;
         }else if(filter.tagName==='SELECT'){
             var _index=filter.selectedIndex;
-            value  = filter.options[_index].value;
+            if(filter.options[_index].value!=='' && filter.options[_index].value!==undefined)
+                value  = '=' + filter.options[_index].value;
         }
         if(value!==undefined &&value!==''){
             condition[key] = value;

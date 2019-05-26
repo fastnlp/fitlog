@@ -235,7 +235,7 @@ def save():
         all_data['filter_condition'].update(condition)
     log_dir = all_data['root_log_dir']
     log_config_name = all_data['log_config_name']
-    save_all_data(all_data, log_dir, log_config_name)
+    save_all_data(all_data, log_dir, log_config_name, force_save=True)
     return jsonify(status='success', msg='')
 
 @table_page.route('/table')
