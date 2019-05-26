@@ -487,9 +487,9 @@
    $confirm_stats.click(function () {
        // 考虑把结果直接加入一行到结果中
       var row = {};
-      var id = 'stats_' + generate_uuid();
+      var id = 'stats_avg_' + generate_uuid();
       row['id'] = id;
-      var metric_names = getJsonKeys(window.row_stats['stats']);
+      var metric_names = getJsonKeys(window.row_stats['stats']); // metric_names就是metric的名称; 每个metric对应着自己的值
       for(var index=0;index<metric_names.length;index++){
           var value = window.row_stats['stats'][metric_names[index]];
           if(!('avg' in value)){
@@ -499,7 +499,7 @@
       }
       // add a memo to specify components
       row['memo'] = 'Combined from ' + window.row_stats['ids'].join(', ');
-        add_a_row(row);
+      add_a_row(row);
 
       $('#stats_box').modal('hide');
    });
@@ -521,10 +521,10 @@
    $("#row_box").on('hide.bs.modal', function (e) {
        $("#add_row_dialogue").empty();
    });
-   $("#config_box").on('hide.bs.modal', function () {
+   $("#config_box").on('hide.bs.modal', function (e) {
        $("#change_config_dialogue").empty();
    });
-   $('#stats_box').on('hide.bs.modal', function () {
+   $('#stats_box').on('hide.bs.modal', function (e) {
        $("#stats_dialogue").empty();
    });
 
@@ -680,52 +680,51 @@
         });
     }
 
-$table.on('refresh.bs.table', function () {
-      $.ajax({
-            url: '/table/refresh',
-            type: 'POST',
-            dataType: 'json',
-            contentType: 'application/json;charset=UTF-8',
-            data: JSON.stringify({
-                 uuid: window.server_uuid
-            }),
-            success: function(value){
-                var status = value['status'];
-                var msg = value['msg'];
-                if(status==='success'){
-                    if(value['new_logs'].length===0 && value['updated_logs'].length===0){
-                        success_prompt(msg, 2000);
-                    }else {
-                        new_logs = value['new_logs'];
-                        updated_logs = value['updated_logs'];
-                        if(new_logs.length>0){
-                            $('#tb_departments').bootstrapTable('prepend', new_logs);
-                            for(var index=0;index<new_logs.length;index++){
-                                window.table_data[new_logs[index]['id']] = new_logs[index];
+    $table.on('refresh.bs.table', function () {
+          $.ajax({
+                url: '/table/refresh',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                     uuid: window.server_uuid
+                }),
+                success: function(value){
+                    var status = value['status'];
+                    var msg = value['msg'];
+                    if(status==='success'){
+                        if(value['new_logs'].length===0 && value['updated_logs'].length===0){
+                            success_prompt(msg, 2000);
+                        }else {
+                            new_logs = value['new_logs'];
+                            updated_logs = value['updated_logs'];
+                            if(new_logs.length>0){
+                                $('#tb_departments').bootstrapTable('prepend', new_logs);
+                                for(var index=0;index<new_logs.length;index++){
+                                    window.table_data[new_logs[index]['id']] = new_logs[index];
+                                }
                             }
-                        }
-                        if(updated_logs.length>0){
-                            for(var index=0;index<updated_logs.length;index++){
-                                $('#tb_departments').bootstrapTable('updateByUniqueId', {
-                                    id: updated_logs[index]['id'],
-                                    row: updated_logs[index]
-                                });
-                                window.table_data[updated_logs[index]['id']] = updated_logs[index];
+                            if(updated_logs.length>0){
+                                for(var index=0;index<updated_logs.length;index++){
+                                    $('#tb_departments').bootstrapTable('updateByUniqueId', {
+                                        id: updated_logs[index]['id'],
+                                        row: updated_logs[index]
+                                    });
+                                    window.table_data[updated_logs[index]['id']] = updated_logs[index];
+                                }
                             }
+                            success_prompt(msg, 2000);
                         }
-                        success_prompt(msg, 2000);
                     }
+                    else{
+                        bootbox.alert("Update failed! " + msg);
+                    }
+                },
+                error: function(error){
+                    bootbox.alert('Error encountered. Check your connection to server.');
                 }
-                else{
-                    bootbox.alert("Update failed! " + msg);
-                }
-            },
-            error: function(error){
-                bootbox.alert('Error encountered. Check your connection to server.');
-            }
-    })
-});
-
+        })
+    });
 </script>
 
 </html>

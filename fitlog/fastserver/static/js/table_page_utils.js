@@ -419,8 +419,10 @@ function change_config(){
                         if(!configs[window.save_config_name]){
                             bootbox.alert("This page is out-of-date, please refresh.")
                         }else{
+                            var dialogue = $("#change_config_dialogue");
+                            dialogue.empty();
                             $('#config_box').modal('show');
-                            generate_single_choose_config_modal(configs, $("#change_config_dialogue"))
+                            generate_single_choose_config_modal(configs, dialogue)
                         }
                     }else{
                         bootbox.alert("The current config name:" + window.save_config_name  +" cannot be found in server," +

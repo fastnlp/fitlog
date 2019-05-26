@@ -4,6 +4,7 @@ import os
 import json
 import glob
 from ...fastgit.committer import _colored_string
+import numbers
 def read_server_config(config_path):
     """
     给定config的path，读取里面的config。如果config不存在，则按照默认的值创建
@@ -49,12 +50,12 @@ def read_server_config(config_path):
         all_data['filter_condition'] = json.loads(config.get('data_settings', 'filter_condition'))
         for key in list(all_data['filter_condition'].keys()):
             delete = False
-            if not isinstance(all_data['filter_condition'][key], (str, list)):
+            if not isinstance(all_data['filter_condition'][key], (str, list, numbers.Number)):
                 print(_colored_string("Unsupported type found in filter_condition in `{}`.".format(key), 'red'))
                 delete = True
             if isinstance(all_data['filter_condition'][key], list):
                 for value in all_data['filter_condition'][key]:
-                    if not isinstance(value, str):
+                    if not isinstance(value, (str, numbers.Number)):
                         print(_colored_string("Unsupported type found in filter_condition in `{}`.".format(key), 'red'))
                         delete = True
             if delete:

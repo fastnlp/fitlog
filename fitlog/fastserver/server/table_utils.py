@@ -11,6 +11,7 @@ from .server_config import read_server_config
 from .utils import expand_dict
 from .server_config import save_config
 from .server_config import save_extra_data
+import numbers
 from ...fastgit.committer import _colored_string
 import warnings
 
@@ -107,6 +108,8 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
         else:
             exclude_log_ids[ID] = 1
     # 删除不满足条件的filter，如果没有满足条件的，则filter失效
+    if len(exclude_log_ids)!=0:
+        print(_colored_string(f"Filter out `{len(exclude_log_ids)}` logs.", 'red'))
     filtered_logs = [log for idx, log in enumerate(logs) if idx not in exclude_log_ids]
     if len(filtered_logs)==0:
         warnings.warn("No log meets the condition.")
@@ -289,26 +292,111 @@ def merge(a, b, path=None, use_b=True):
     return a
 
 
-def _filter_this_log_or_not(filter_condition, expaned_log, ignore_not_exist=False):
+# TODO 需要加速一下
+def _filter_cmp_expression(condition, condition_key, value):
     """
-    根据filter_condition判断是否过滤掉这个log
+
+    :param condition: 表达式，可以使用 <, >与&&
+    :param condition_key: 哪条条件
+    :param value: 需要判断是否满足表达式
+    :return: bool. 不满足返回True，满足返回False(说明不要filter掉)
+    """
+    try:
+        if '&&' in condition:  # 如果使用了and符号
+            exprs = condition.split('&&')
+        else:
+            exprs = [condition]
+        for expr in exprs:
+            expr = expr.strip()  # 删去空格
+            if '<' in expr:
+                index = expr.index('<')
+                if 0<index<len(expr)-1:
+                    print(_colored_string(f"Corrupted filter_condition in `{condition_key}`, '<' can only be in the beginning"
+                                            "or in the end", 'red'))
+                    return False
+                else:
+                    if index == 0:
+                        con = expr[1:]
+                        operator = '<'
+                    else:
+                        con = expr[:-1]
+                        operator = '>'
+            elif '>' in expr:
+                index = expr.index('>')
+                if 0<index<len(expr)-1:
+                    print(_colored_string(f"Corrupted filter_condition in `{condition_key}`, '>' can only be in the beginning"
+                                            "or in the end", 'red'))
+                    return False
+                else:
+                    if index == 0:
+                        con = expr[1:]
+                        operator = '>'
+                    else:
+                        con = expr[:-1]
+                        operator = '<'
+            else:
+                print(_colored_string(f"Corrupted filter_condition in `{condition_key}`, cannot find filter condition.",
+                                      'red'))
+                return False
+            try:
+                con = type(value)(con)
+                con_expr = 'value'+operator+'con'
+                _filter = eval(con_expr) # 满足条件为True, 说明不能删掉
+                if not _filter:
+                    return True
+            except:
+                print(_colored_string(f"Corrupted filter_condition in `{condition_key}`. Cannot convert to type "
+                    f"{type(value)}.", 'red'))
+    except Exception as e:
+        print(e)
+        return False
+    return False
+
+
+def _filter_this_log_or_not(filter_condition, expanded_log, ignore_not_exist=False):
+    """
+    根据filter_condition判断是否过滤掉这个log。
 
     :param filter_condition: 支持{"hyper-data_name": "pku"}或{"hyper-data_name": ["pku", "cityu"]}， list表示满足任何一个
         条件即可
-    :param expaned_log: 一级json，已经被expand的log
+    :param expanded_log: 一级dict，已经被expand的log
     :param ignore_not_exist: 如果过滤条件不存在，就忽略吗？
-    :return:
+    :return: 如果满足过滤条件返回False(保留)，返回True表示这个log要filter掉。
     """
-    _filter = False  # 是否忽略掉
+    _filter = False
+    and_filters = True # 不同的filter_condition之间为and的关系
+    if 'and_filters' in filter_condition:
+        and_filters = bool(filter_condition['and_filters'])
     for f_k, f_v in filter_condition.items():
+        if f_k == 'and_filters':
+            continue
         if isinstance(f_v, str):
             f_v = [f_v]
-
-        if f_k in expaned_log:
-            if str(expaned_log[f_k]) not in f_v:
-                _filter = True
+        if f_k in expanded_log:
+            _filter = True  # 默认删除
+            value = expanded_log[f_k]
+            for condition in f_v:
+                if isinstance(condition, str):
+                    # 考虑使用具备大小关系的过滤条件
+                    if '<' in condition or '>' in condition: # 如果使用了特殊比较关系符号
+                        _filter = _filter_cmp_expression(condition, f_k, value)
+                    elif condition in str(value): # 如果是str，则不包含就认为是filter掉了
+                        _filter = False
+                elif isinstance(condition, numbers.Number): # 如果是数字，则对比是否相等
+                    if value==condition:
+                        _filter = False
+                if not _filter: # 同一个filter条件中为或的关系，满足其中一个条件就不用再验证了
+                    break
+            if and_filters and _filter:
+                return True   # 不同的filter为与关系，任何一个filter不满足，则排除该log。
+            elif and_filters is False and _filter is False:
+                return False  # 不同filter为或关系，任何一个filter满足，则包含该filter
         elif ignore_not_exist:
-            _filter = True
+            if and_filters: # 因为是and的关系，所以只要一个条件不包含，则过滤掉
+                return True
+        else:
+            if not and_filters:  # 因为是or的关系，只要有一个条件不存在，则包含进来
+                return False
 
     return _filter
 
@@ -456,19 +544,3 @@ def save_all_data(all_data, log_dir, log_config_name):
             extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
             save_extra_data(extra_data_path, all_data['extra_data']) # extra_data是一个dict。key为id，value为内容
         print("Settings are saved to {}.".format(log_config_path))
-
-
-
-if __name__ == '__main__':
-    _dict = json.loads('{"id":0, "a":1,"b":{"a":{"d":4,"e":5},"b":2}}')
-    print(_dict)
-    data = generate_columns([_dict], column_order={'memo':0, 'b':{'b':0, 'a':{'e':0, 'd':0}}, 'a':0, 'id':0})
-    print(data['column_order'])
-    print(data['column_dict'])
-    import json
-    print(json.dumps(_dict))
-
-    # _dict = {'a': 1}
-    # print(str(_dict))
-    # print(json.loads('{"a":1,"b":2,"c":3,"d":4,"e":5}'))
-    # print(type(json.loads('{"a":1,"b":{"a":1,"b":2},"c":3,"d":4,"e":5}')))

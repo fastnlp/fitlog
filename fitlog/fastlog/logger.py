@@ -419,6 +419,10 @@ class Logger:
                         values = line.split('=')
                         # 删除str开头结尾的'"
                         last_value = values[-1].rstrip("'").rstrip('"').lstrip("'").lstrip('"')
+                        if last_value=='False':
+                            last_value = False
+                        elif last_value == 'True':
+                            last_value = True
                         for value in values[:-1]:
                             _dict[value] = last_value
         if len(_dict) != 0:
