@@ -74,7 +74,7 @@ def _read_save_log(_save_log_dir: str, ignore_null_loss_or_metric: bool = True, 
     不读取loss.log, 因为里面的内容对table无意义。
     
     :param _save_log_dir: 日志存放的目录， 已经最后一级了，即该目录下应该包含metric.log等了
-    :param ignore_null_loss_or_metric: 是否metric为空的文件
+    :param ignore_null_loss_or_metric: 是否忽略metric和loss都为空的文件
     :param file_stats::
     
             {
@@ -96,16 +96,20 @@ def _read_save_log(_save_log_dir: str, ignore_null_loss_or_metric: bool = True, 
                 file_stats[filename] = [-1, -1]
         empty = True
         _dict = {}
-        with open(os.path.join(_save_log_dir, 'metric.log'), 'r', encoding='utf-8') as f:
-            for line in f:
-                if len(line.strip()) != 0:
-                    empty = False
-                    break
-        with open(os.path.join(_save_log_dir, 'loss.log'), 'r', encoding='utf-8') as f:
-            for line in f:
-                if len(line.strip()) != 0:
-                    empty = False
-                    break
+        metric_filepath = os.path.join(_save_log_dir, 'metric.log')
+        if os.path.exists(metric_filepath):
+            with open(metric_filepath, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if len(line.strip()) != 0:
+                        empty = False
+                        break
+        loss_filepath = os.path.join(_save_log_dir, 'loss.log')
+        if os.path.exists(loss_filepath):
+            with open(loss_filepath, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if len(line.strip()) != 0:
+                        empty = False
+                        break
         
         if empty and ignore_null_loss_or_metric:
             return _dict, file_stats
@@ -121,7 +125,8 @@ def _read_save_log(_save_log_dir: str, ignore_null_loss_or_metric: bool = True, 
             file_stats[filename][0] = end_line
             _dict = merge(_dict, __dict, use_b=False)  # 在这里，需要以文件指定顺序，保留靠前的内容的值
     except Exception as e:
-        print("Exception raised when read {}".format(os.path.abspath(filepath)))
+        print("Exception raised when read {}".format(os.path.abspath(_save_log_dir)))
+        print(repr(e))
         raise e
     return _dict, file_stats
 

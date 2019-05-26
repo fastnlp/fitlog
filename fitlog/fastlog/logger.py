@@ -11,6 +11,8 @@ from configparser import ConfigParser
 from .log_read import is_dirname_log_record
 from ..fastgit import committer
 import warnings
+import numpy as np
+import numbers
 
 def _check_debug(func):
     """
@@ -376,6 +378,7 @@ class Logger:
             char_embed = word_embed = 300
     
             hidden_size = 100
+            # num_layers = 3 # 这个值不会被记录，通过#注释掉的行将被忽略
             ....
             ############hyper
     
@@ -390,7 +393,7 @@ class Logger:
                 'word_embed': '300'
                 'hidden_size': '100'
             }
-        
+
 
         :param file_path: 文件路径
         :return:
@@ -566,7 +569,7 @@ def _check_dict_value(_dict: dict, prefix: str = ''):
     keys = list(_dict.keys())
     for key in keys:
         value = _dict[key]
-        if isinstance(value, (int, float, str)):
+        if isinstance(value, (np.str, str)) or isinstance(value, numbers.Number):
             continue
         elif isinstance(value, dict):
             _check_dict_value(value, prefix=prefix + ':' + key)

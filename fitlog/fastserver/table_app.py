@@ -52,9 +52,9 @@ def refresh_table():
     if res != None:
         return jsonify(res)
     log_reader = all_data['log_reader']
-    new_logs = log_reader.read_logs(all_data['deleted_rows'])
-    # 删除不满足条件的
     try:
+        new_logs = log_reader.read_logs(all_data['deleted_rows'])
+        # 删除不满足条件的
         if len(new_logs)==0:
             return jsonify(status='success', msg='Update successfully, no update found.', new_logs=[], updated_logs=[])
         else:
