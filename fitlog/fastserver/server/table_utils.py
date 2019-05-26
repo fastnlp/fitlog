@@ -11,6 +11,7 @@ from .server_config import read_server_config
 from .utils import expand_dict
 from .server_config import save_config
 from .server_config import save_extra_data
+from ...fastgit.committer import _colored_string
 import warnings
 
 def generate_columns(logs, hidden_columns=None, column_order=None, editable_columns=None,
@@ -99,18 +100,9 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
             max_depth = max(add_field('', key, value, fields, connector, 0), max_depth)
         for key, value in fields.items():
             field_values[key].append(value)
-        # field是一个一维的dict，内含expanded的key以及它的value
-        filter = False
-        # 如果不满足filter的条件(value不同，包含对应的key)，就不要把它添加到数据中去了
-        for key, value in filter_condition.items():
-            if key in fields:
-                if str(value) != str(fields[key]):
-                    filter = True
-                    break
-            elif ignore_not_exist:
-                filter = True
-                break
-        if not filter:
+        # fields是一个一维的dict，内含expanded的key以及它的value
+        _filter = _filter_this_log_or_not(filter_condition, fields, ignore_not_exist)
+        if not _filter:
             data.append(fields)
         else:
             exclude_log_ids[ID] = 1
@@ -296,6 +288,31 @@ def merge(a, b, path=None, use_b=True):
             a[key] = b[key]
     return a
 
+
+def _filter_this_log_or_not(filter_condition, expaned_log, ignore_not_exist=False):
+    """
+    根据filter_condition判断是否过滤掉这个log
+
+    :param filter_condition: 支持{"hyper-data_name": "pku"}或{"hyper-data_name": ["pku", "cityu"]}， list表示满足任何一个
+        条件即可
+    :param expaned_log: 一级json，已经被expand的log
+    :param ignore_not_exist: 如果过滤条件不存在，就忽略吗？
+    :return:
+    """
+    _filter = False  # 是否忽略掉
+    for f_k, f_v in filter_condition.items():
+        if isinstance(f_v, str):
+            f_v = [f_v]
+
+        if f_k in expaned_log:
+            if str(expaned_log[f_k]) not in f_v:
+                _filter = True
+        elif ignore_not_exist:
+            _filter = True
+
+    return _filter
+
+
 def prepare_incremental_data(logs, new_logs, field_columns, filter_condition=None, ignore_not_exist=False):
     """
 
@@ -313,14 +330,8 @@ def prepare_incremental_data(logs, new_logs, field_columns, filter_condition=Non
     new_dict = {}
     for log in new_logs:
         ex_dict = expand_dict('', log, connector='-', include_fields=field_columns)
-        filter = False  # 是否忽略掉
-        for f_k, f_v in filter_condition.items():
-            if f_k in ex_dict:
-                if str(ex_dict[f_k]) != f_v:
-                    filter = True
-            elif ignore_not_exist:
-                filter = True
-        if not filter:
+        _filter = _filter_this_log_or_not(filter_condition, ex_dict, ignore_not_exist)
+        if not _filter:
             new_dict[log['id']] = ex_dict
 
     # 2. 将logs中的内容进行替换，或增加.
@@ -430,19 +441,13 @@ def replace_with_extra_data(data, extra_data, filter_condition=None, deleted_row
         for key, value in extra_data.items(): # key是log的id，value是这个log新加入的内容
             if key in deleted_rows:
                 continue
-            filter = False  # 是否忽略掉
-            for f_k, f_v in filter_condition.items():
-                if f_k in value:
-                    if str(value[f_k])!=f_v:
-                        filter = True
-                elif ignore_not_exist:
-                    filter = True
-            if not filter:
+            _filter = _filter_this_log_or_not(filter_condition, value, ignore_not_exist)
+            if not _filter:
                 if 'id' in value:  # 只有有id的才是用户加入的row
                     data[key] = value
 
 def save_all_data(all_data, log_dir, log_config_name):
-    # 保存settings和extra文件
+    # 保存settings和extra文件, 会根据情况判断是否存储。
     if all_data['settings']['Save_settings']:  # 如果需要保存
         log_config_path = os.path.join(log_dir, log_config_name)
         save_config(all_data, config_path=log_config_path)

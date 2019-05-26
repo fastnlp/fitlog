@@ -226,7 +226,7 @@ function initalizeTable(){
        new_button.setAttribute('data-toggle', 'modal');
        new_button.setAttribute('data-target', '#row_box');
        document.getElementsByClassName('columns').item(0).appendChild(new_button);
-       // 保存filter条件
+       // 保存配置
        new_button = generate_a_button("btn btn-default", 'save', 'Save', save_filter_conditions,
            '<i class="glyphicon glyphicon-floppy-save"></i>');
        document.getElementsByClassName('columns').item(0).appendChild(new_button);

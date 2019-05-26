@@ -46,7 +46,8 @@ all_data包含以下的key:
     basic_settings: {} 一级dict包含了config中basic_settings中的setting.
     hidden_rows: {} 一级dict key为隐藏的row的id
     deleted_rows: {} 一级dict key为删除的row的id
-    filter_condition: {} 一级dict，expanded的key以及它等于的value
+    filter_condition: {} 一级dict，expanded的key以及它等于的value. value可以为str或者list[str], list[str]表示满足任意条件
+        即可
     hidden_columns: {} 一级dict key为隐藏的column
     exclude_columns: {} 一级dict，需要排除的column
     editable_columns: {} 一级dict，支持编辑的column名

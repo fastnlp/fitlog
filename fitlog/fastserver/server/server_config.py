@@ -3,7 +3,7 @@ from .log_config_parser import ConfigParser
 import os
 import json
 import glob
-
+from ...fastgit.committer import _colored_string
 def read_server_config(config_path):
     """
     给定config的path，读取里面的config。如果config不存在，则按照默认的值创建
@@ -47,6 +47,18 @@ def read_server_config(config_path):
     all_data['deleted_rows'] = {log: 1 for log in deleted_rows}
     if len(config.get('data_settings', 'filter_condition'))!=0:
         all_data['filter_condition'] = json.loads(config.get('data_settings', 'filter_condition'))
+        for key in list(all_data['filter_condition'].keys()):
+            delete = False
+            if not isinstance(all_data['filter_condition'][key], (str, list)):
+                print(_colored_string("Unsupported type found in filter_condition in `{}`.".format(key), 'red'))
+                delete = True
+            if isinstance(all_data['filter_condition'][key], list):
+                for value in all_data['filter_condition'][key]:
+                    if not isinstance(value, str):
+                        print(_colored_string("Unsupported type found in filter_condition in `{}`.".format(key), 'red'))
+                        delete = True
+            if delete:
+                all_data['filter_condition'].pop(key)
     else:
         all_data['filter_condition'] = {}
 
@@ -89,7 +101,6 @@ def save_config(all_data, config_path):
         config_dir = os.path.dirname(config_path)
         if not os.path.isdir(config_dir):
             os.makedirs(config_dir)
-        os.mknod(config_path)  # 不存在就创建空文件
 
     # frontend_settings
     settings = all_data['settings']

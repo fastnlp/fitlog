@@ -176,6 +176,8 @@ def save_config_name():
     if len(log_config_name)!=0:
         if all_data['log_config_name']!=log_config_name:
             all_data['log_config_name'] = log_config_name
+        log_dir = all_data['root_log_dir']
+        save_all_data(all_data, log_dir, log_config_name)
         return jsonify(status='success', msg=log_config_name)
     else:
         return jsonify(status='fail', msg='Invalid file name')

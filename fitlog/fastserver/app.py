@@ -19,6 +19,7 @@ from urllib import request as urequest
 from threading import Timer
 from flask import jsonify
 from .server.utils import check_uuid
+from ..fastgit.committer import _colored_string
 
 from collections import deque
 
@@ -91,7 +92,8 @@ def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
     server_watcher.set_server_wait_seconds(server_wait_seconds)
     server_watcher.start()
     if all_data['token']!=None:
-        print("You specify token:{}, remember to add this token when access your table.".format(all_data['token']))
+        print(_colored_string("You specify token:{}, remember to add this token when access your table.".format(all_data['token']),
+                              color='red'))
     all_data['port'] = port
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
 
