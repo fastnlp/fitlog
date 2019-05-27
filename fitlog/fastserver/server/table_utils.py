@@ -306,6 +306,7 @@ def _filter_cmp_expression(condition, condition_key, value):
             exprs = condition.split('&&')
         else:
             exprs = [condition]
+        con = ''
         for expr in exprs:
             expr = expr.strip()  # 删去空格
             if '<' in expr:
@@ -358,7 +359,13 @@ def _filter_cmp_expression(condition, condition_key, value):
                                       'red'))
                 return False
             try:
-                con = type(value)(con)
+                if isinstance(value, bool):
+                    if con.lower()=='false':
+                        con = False
+                    else:
+                        con = True
+                else:
+                    con = type(value)(con)
                 con_expr = 'value'+operator+'con'
                 _filter = eval(con_expr) # 满足条件为True, 说明不能删掉
                 if not _filter:
