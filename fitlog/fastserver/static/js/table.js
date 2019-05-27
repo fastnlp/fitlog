@@ -1,15 +1,19 @@
 
 $(function () {
-    //初始化setting选项
-    // var _settings = {};
-    // _settings['Ignore null value when filter'] = true;
-    // _settings['Wrap display'] = false;
-    // _settings['Pagination'] = true;
-    // _settings['Hide hidden columns when reorder'] = false;
-    // _settings['Offline'] = false;
-    // _settings['Save settings'] = true;
-    // _settings['Reorderable rows'] = false;
-    // _settings['No suffix when reset'] = true;
+    /*初始化setting选项
+        window.settings: json包含所有的设置选项
+        window.column_order: nested json, 包含的是column的顺序
+        window.column_dict: 2级json，key为header的名称，value是一个json包含这个header的设置. 用于设置header的，不包含
+            不变的column。如果为底层header(与每一个row的值是对应，可以通过是否包含field判断)
+        window.hidden_columns: json, 包含被隐藏的column的名称。
+        window.table_data: 2级json，是一个json，key为id，value是一行的内容，为一个一层json对象
+        window.server_uuid: str, 当前这个页面的uuid
+        window.hidden_rows: json，当前隐藏的row
+        window.column_order_updated: bool, 当前是否更新了column_order,用于判断是否需要向服务器发送更新
+        window.hidden_columns_updated: bool, 是否更新了隐藏column，用于向服务器发送更新
+        window.unchanged_columns: json, 值永远都恒定的column。
+        window.save_config_name: str, 保存当前的setting到哪个文件。
+    */
     window.settings = {};
 
     //0. 从后台获取必要的数据，然后用于创建Table

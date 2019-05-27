@@ -20,8 +20,8 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
                      str_max_length=20, round_to=6, ignore_not_exist=False):
     """
 
-    :param logs: list of dict对象返回List形式的column数据.
-    :param hidden_columns: {}, can chooose parent columns, then all children will be hidden
+    :param logs: list of dict. [{'id': xx, nested:xxx}]
+    :param hidden_columns: {}, can choose parent columns, then all children will be hidden
     :param column_order: dict, column的顺序
     :param editable_columns: dict，那些column是可以编辑的
     :param filter_condition: dict, 每个key的筛选条件
