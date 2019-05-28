@@ -297,7 +297,7 @@ function show_statistics(){
             //
             window.row_stats = {'ids': ids, 'stats':formatted_metrics};
             var html = generate_metric_stats_table(formatted_metrics);
-             $('#stats_dialogue').append(html);
+             $('#stats_dialogue').append(html).append('Calculate from ' + ids.length + ' logs.');
             $('#stats_box').modal('show');
         }else{
             bootbox.alert("No valid value found.")

@@ -11,7 +11,7 @@ from typing import Union
 import argparse
 from configparser import ConfigParser
 
-__version__ = '0.1.0'
+__version__ = '0.1.3'
 
 
 def get_commit_id(file):
