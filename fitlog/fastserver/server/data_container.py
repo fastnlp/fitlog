@@ -52,6 +52,8 @@ all_data包含以下的key:
     exclude_columns: {} 一级dict，需要排除的column
     editable_columns: {} 一级dict，支持编辑的column名
     column_order: {} nested dict. 表示column的顺序的
+    field_columns: {}, 一级dict，key是expanded后的且会显示在前端table的名称，比如hyper-lr, id
+    column_dict: {}, 二级dict，第一级是展开的key, 比如hyper-lr; 第二级是{'title':, 'field':}等用于生成前端header的内容。
     chart_settings: {} 保存chart相关的设置，包含以下的内容
         chart_exclude_columns:{} 一级dict，需要排除的column名称
         max_points:int 前端每条线最多显示多少个点

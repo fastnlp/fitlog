@@ -431,8 +431,8 @@ def prepare_incremental_data(logs, new_logs, field_columns, filter_condition=Non
     """
 
     :param logs: {'id':dict, ...}, 之前的数据, flatten, dict.
-    :param new_logs: List[dict,], 新读取到的数据, nested
-    :param field_columns: {field:1}, 在前端显示的内容field
+    :param new_logs: List[dict,], 新读取到的数据, nested。包含了新增加的log以及更新的log
+    :param field_columns: {field:1}, 在前端table显示的内容field. 只用抽取这些field即可
     :param filter_condition: {}, 用于过滤不需要的内容
     :param ignore_not_exist: bool, 是否删除过滤条件不存在的log
     :return: {'new_logs':[dict(), dict()...], 'update_logs':[dict(), dict()...]}
@@ -443,10 +443,13 @@ def prepare_incremental_data(logs, new_logs, field_columns, filter_condition=Non
     # 1. 将new_logs的内容展平
     new_dict = {}
     for log in new_logs:
-        ex_dict = expand_dict('', log, connector='-', include_fields=field_columns)
-        _filter = _filter_this_log_or_not(filter_condition, ex_dict, ignore_not_exist)
-        if not _filter:
-            new_dict[log['id']] = ex_dict
+        ex_dict = expand_dict('', log, connector='-')
+        if log['id'] not in logs: # 说明之前没有的, 需要考虑是否过滤掉
+            _filter = _filter_this_log_or_not(filter_condition, ex_dict, ignore_not_exist)
+            if _filter:
+                continue
+        # 只取出需要的key
+        new_dict[log['id']] = {key:ex_dict[key] for key in field_columns.keys() if key in ex_dict}
 
     # 2. 将logs中的内容进行替换，或增加.
     updated_logs = []

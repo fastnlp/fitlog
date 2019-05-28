@@ -65,7 +65,6 @@ def refresh_table():
             if len(new_logs)==0 and len(updated_logs)==0:
                 return jsonify(status='success', msg='Update successfully, no update found.', new_logs=[],
                                updated_logs=[])
-            # 需要过滤filter_condition
             replace_nan_inf(new_logs)
             replace_nan_inf(updated_logs)
             return jsonify(status='success', msg='Update successfully, {} log have updates, {} newly added.'\
