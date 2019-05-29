@@ -94,6 +94,10 @@ class Logger:
             self.fit_id = msg['msg']
             self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')
             self.default_log_dir = os.path.join(committer.work_dir, config.get('log_settings', 'default_log_dir'))
+            # 获取git的id
+            res = committer.git_last_commit(self._log_dir)
+            if res['status'] == 0:
+                self.git_id = res['msg'][0]
         else:
             raise RuntimeError("It seems like you are not running under a folder governed by fitlog.\n" + msg['msg'])
     
@@ -219,21 +223,21 @@ class Logger:
         """
         logger自动调用此方法添加meta信息
         """
-        fit_id = None
-        fit_msg = None
-        if committer.last_commit is not None:
-            fit_id = committer.last_commit[0]
-            fit_msg = committer.last_commit[1]
-        git_id = None
-        git_msg = None
-        res = committer.git_last_commit(self._log_dir)
-        if res['status'] == 0:
-            git_id = res['msg'][0]
-            git_msg = res['msg'][1]
-            self.git_id = res['msg'][0]
-        
+        if not hasattr(self, 'fit_id'): # 获取过了
+            self.fit_id = None
+            self.fit_msg = None
+            if committer.last_commit is not None:
+                self.fit_id = committer.last_commit[0]
+                self.fit_msg = committer.last_commit[1]
+            self.git_id = None
+            self.git_msg = None
+            res = committer.git_last_commit(self._log_dir)
+            if res['status'] == 0:
+                self.git_id = res['msg'][0]
+                self.git_msg = res['msg'][1]
+
         _dict = {}
-        for value, name in zip([fit_id, git_id, fit_msg, git_msg],
+        for value, name in zip([self.fit_id, self.git_id, self.fit_msg, self.git_msg],
                                ['fit_id', 'git_id', 'fit_msg', 'git_msg']):
             if value is not None:
                 if 'id' in name:

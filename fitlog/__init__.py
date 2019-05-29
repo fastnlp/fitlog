@@ -86,7 +86,8 @@ def set_log_dir(log_dir: str, new_log:bool=False):
 
     :param log_dir: log 文件夹的路径
     :param new_log: 是否重新创建一个log，仅在同一次python启动但是需要记录多个log时使用(但是只能分阶段地用，即同一时间
-        只会有一个logger存在，设置new_log为True时，仅仅是开了一个新的logger，但同时前一个就关闭了。)
+        只会有一个logger存在，设置new_log为True时，仅仅是开了一个新的logger，但同时前一个就关闭了。)同一次启动中fit_id以及
+        git_id只会在第一次启动时获取，之后的新log只是使用第一次提交的fit_id与git_id
     """
     _logger.set_log_dir(log_dir, new_log)
 
