@@ -521,7 +521,7 @@
         }
         //获取criterion
         var criterion_selections = [];
-        if(method!=='avg'){
+        if(!(['avg', 'avg_std'].includes(method))){
             var $criterion_tbody_tr = $('#criterion_entry tbody tr');
             for(var index=0;index<$criterion_tbody_tr.length;index++){
                 var criterion_sel = $criterion_tbody_tr.eq(index).find('select').find('option:selected').val();

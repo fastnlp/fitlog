@@ -76,7 +76,11 @@ class LogFilter:
                         else:
                             con = type(value)(con)
                         con_expr = 'con' + operator + 'value'
-                        __filter = eval(con_expr)  # 满足条件说明为True
+                        __filter = False
+                        try:
+                            __filter = eval(con_expr)  # 满足条件说明为True
+                        except Exception as e:
+                            print(_colored_string(repr(e), 'red'))
                         _filter_flag = _filter_flag and __filter
                     _field_filter_flag = (not _filter_flag) and _field_filter_flag # 任何一个不删除就不删除了
                 if _field_filter_flag and self.and_filters: # 一个不满足且是and关系
