@@ -5,6 +5,7 @@ import uuid
 from flask import Flask, url_for, redirect
 from .chart_app import chart_page
 from .table_app import table_page
+from .summary_app import summary_page
 from .server.table_utils import save_all_data
 from .server.app_utils import get_usage_port
 from .server.data_container import all_data
@@ -27,6 +28,7 @@ app = Flask(__name__)
 
 app.register_blueprint(chart_page)
 app.register_blueprint(table_page)
+app.register_blueprint(summary_page)
 
 LEAST_REQUEST_TIMESTAMP = deque(maxlen=1)
 LEAST_REQUEST_TIMESTAMP.append(time.time())
@@ -76,7 +78,6 @@ def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
     all_data['root_log_dir'] = log_dir # will be used by chart_app
     server_wait_seconds = int(standby_hours*3600)
     all_data['log_config_name'] = log_config_name
-    log_reader.set_log_dir(log_dir)
     all_data['log_reader'] = log_reader
     if token is None:
         all_data['token'] = None

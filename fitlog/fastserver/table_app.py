@@ -12,7 +12,6 @@ from ..fastgit import committer
 from .server.utils import replace_nan_inf
 from .server.utils import check_uuid
 from .server.table_utils import save_all_data
-from .server.table_utils import replace_with_extra_data
 
 from werkzeug.utils import secure_filename
 from .server.server_config import _get_config_names
@@ -28,13 +27,12 @@ def get_table():
         log_dir = all_data['root_log_dir']
         log_config_name = all_data['log_config_name']
         log_reader = all_data['log_reader']
-        log_reader.set_log_dir(log_dir)
         all_data.update(prepare_data(log_reader, log_dir, log_config_name, all_data))
 
     first_time_access = False
     data = all_data['data'].copy() # all_data['data'] 只包含从硬盘的读取的log的信息
-    replace_with_extra_data(data, all_data['extra_data'], all_data['filter_condition'], all_data['deleted_rows'],
-                             all_data['settings']['Ignore_filter_condition_not_exist_log'])
+    # replace_with_extra_data(data, all_data['extra_data'], all_data['filter_condition'], all_data['deleted_rows'],
+    #                          all_data['settings']['Ignore_filter_condition_not_exist_log'])
     replace_nan_inf(data)
 
     return jsonify(column_order=all_data['column_order'], column_dict=all_data['column_dict'],
@@ -82,9 +80,6 @@ def delete_records():
     for id in ids:
         if id in all_data['data']:
             all_data['deleted_rows'][id] = 1
-        elif id in all_data['extra_data']:
-            # all_data['extra_data'].pop(id)
-            all_data['deleted_rows'][id] = 1
 
     return jsonify(status='success', msg='')
 
@@ -107,8 +102,7 @@ def erase_records():
                     shutil.rmtree(record_path)
             except Exception as e:
                 fail_ids.append(id)
-
-        elif id in all_data['extra_data']:
+        if id in all_data['extra_data']:
             all_data['extra_data'].pop(id)
 
     if len(fail_ids)!=0:
@@ -170,7 +164,7 @@ def save_config_name():
     res = check_uuid(all_data['uuid'], request.json['uuid'])
     if res!=None:
         return jsonify(res)
-    log_config_name = request.json['save_config_name']
+    log_config_name = request.json['save_config_name'].replace(' ', '_')
     log_config_name = secure_filename(log_config_name)
     if len(log_config_name)!=0:
         if all_data['log_config_name']!=log_config_name:
@@ -284,5 +278,29 @@ def table_change_config():
             return jsonify(status='success', msg='')
         else:
             return jsonify(status='fail', msg='There is no config named:{}.'.format(request.json['config_name']))
+    else:
+        return jsonify(status='fail', msg='There is no config_name in your request.')
+
+@table_page.route('/table/delete_config', methods=['POST'])
+def table_delete_config():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res != None:
+        return jsonify(res)
+    if 'config_name' in request.json:
+        if request.json['config_name']!=all_data['log_config_name']:
+            log_dir = all_data['root_log_dir']
+            path = os.path.join(log_dir, request.json['config_name'])
+            if os.path.isfile(path):
+                try:
+                    os.remove(path)
+                except Exception as e:
+                    print("Error occurs when delete config:{}.".format(request.json['config_name']))
+                    print(e)
+                    return jsonify(status='fail', msg='Error happens when delete.')
+                return jsonify(status='success')
+            else:
+                jsonify(status='success')
+        else:
+            return jsonify(status='fail', msg='Cannot delete config being used.')
     else:
         return jsonify(status='fail', msg='There is no config_name in your request.')

@@ -1,65 +1,4 @@
 
-$(function () {
-    //初始化setting选项
-    // var _settings = {};
-    // _settings['Ignore null value when filter'] = true;
-    // _settings['Wrap display'] = false;
-    // _settings['Pagination'] = true;
-    // _settings['Hide hidden columns when reorder'] = false;
-    // _settings['Offline'] = false;
-    // _settings['Save settings'] = true;
-    // _settings['Reorderable rows'] = false;
-    // _settings['No suffix when reset'] = true;
-    window.settings = {};
-
-    //0. 从后台获取必要的数据，然后用于创建Table
-    $.ajax({
-        url: '/table/table',
-        type: 'GET',
-        dataType: 'json',
-
-        data: {
-
-        },
-        success: function(value){
-            // 新加的column只能往后加，否则会出现hidden的时候顺序乱掉。
-            var column_dict = value['column_dict'];
-            var column_order = value['column_order'];
-            var settings = value['settings'];
-            var hidden_columns = value['hidden_columns'];
-            column_dict = processData(column_dict);
-
-            for(var setting in settings)
-            {
-                window.settings[setting] = settings[setting];
-            }
-            // refine columns
-            window.column_order = column_order;
-            window.column_dict = column_dict;
-            window.hidden_columns = hidden_columns;
-            window.table_data = value['data']; // 是一个json，key为id，value是一行的内容，为一个一层json对象
-            window.server_uuid = value['uuid'];
-            window.hidden_rows = value['hidden_rows'];
-            window.column_order_updated = false;
-            window.hidden_columns_updated = false;
-            window.unchanged_columns = value['unchanged_columns'];
-            window.save_config_name = value['log_config_name'];
-            initalizeTable();
-            // 如果unchanged_columns不为空，则使得button可见，否则不可见
-           if($.isEmptyObject(window.unchanged_columns)){
-               document.getElementById('consistent_cols').style.visibility = 'hidden';
-           }else{
-               document.getElementById('consistent_cols').style.visibility = 'visible';
-           }
-
-        },
-        error: function(error){
-            bootbox.alert("Some error happens when initialize table.");
-            console.log(error);
-        }
-     });
-
-});
 
 function add_operate_checkbox(columns)
 {
@@ -145,7 +84,7 @@ window.operateEvents = {
 
 function openPostWindow(url, params)
 {
-    // 打开新的chart页面
+    // 打开新的页面
     var form = document.createElement("form");
     form.setAttribute("method", "post");
     form.setAttribute("action", url);
@@ -160,11 +99,8 @@ function openPostWindow(url, params)
             form.appendChild(input);
         }
     }
-
     document.body.appendChild(form);
-
     form.submit();
-
     document.body.removeChild(form);
 }
 
@@ -175,7 +111,7 @@ function operateFormatter(value, row, index) {
       '<i class="glyphicon glyphicon-share-alt" style="padding:0px 2px 0px 1px"></i>',
       '</a>',
       '<a class="trend" href="javascript:void(0)" title="Thread">',
-      '<i class="glyphicon glyphicon-stats" style="padding:0px 1px 0px 2px"></i>',
+      '<i class="glyphicon glyphicon-tasks" style="padding:0px 1px 0px 2px"></i>',
       '</a>'
     ].join('')
 }
@@ -228,7 +164,7 @@ function initalizeTable(){
        document.getElementsByClassName('columns').item(0).appendChild(new_button);
        // 保存配置
        new_button = generate_a_button("btn btn-default", 'save', 'Save', save_filter_conditions,
-           '<i class="glyphicon glyphicon-floppy-save"></i>');
+           '<i class="glyphicon glyphicon-floppy-save   "></i>');
        document.getElementsByClassName('columns').item(0).appendChild(new_button);
        // 显示所有的config_name
        new_button = generate_a_button("btn btn-default", 'config', 'Configs', change_config,
@@ -236,7 +172,11 @@ function initalizeTable(){
        document.getElementsByClassName('columns').item(0).appendChild(new_button);
        //显示选中的row的statics
         new_button = generate_a_button("btn btn-default", 'statistics', 'Stats', show_statistics,
-            '<i class="glyphicon glyphicon-sort-by-attributes-alt"></i>');
+            '<i class="glyphicon glyphicon-stats"></i>');
+        document.getElementsByClassName('columns').item(0).appendChild(new_button);
+       //显示summary
+        new_button = generate_a_button('btn btn-default', 'summary', 'Summary', jump_to_summary,
+            '<i class="glyphicon glyphicon-usd"></i>');
         document.getElementsByClassName('columns').item(0).appendChild(new_button);
        // 在toggle新增一个poweroff的按钮
        new_button = generate_a_button("btn btn-default", 'Poweroff', 'PoweOff', ShutDownServer,
@@ -305,6 +245,27 @@ function show_statistics(){
         }
     }
 }
+
+function jump_to_summary() {
+    // 点击之后弹框跳转
+    var ids = getIdSelections();
+    if(ids.length>0){
+        var msg = "Generate summary on " + ids.length + " selected data?";
+        bootbox.confirm(msg, function (result) {
+            if(result){
+                openPostWindow('/summary', {'ids': ids});
+            }
+        })
+    }else{
+        var msg = "This will open a new summary page, go on?";
+        bootbox.confirm(msg, function (result) {
+            if(result){
+                window.open('/summary');
+            }
+        })
+    }
+}
+
 
 function AddRowModal() {
     // 点击add row之后弹出一个modal. 对应的确认处理在table.html页面

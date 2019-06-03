@@ -820,15 +820,6 @@
             var search = that.$toolbar.find('.search input');
             var hasValues = false;
             var timeoutId = 0;
-            // 清除所有的check
-            var checkedRows = this.getSelections();
-            if(checkedRows.length>0){
-              var checkedRowIds = [];
-              for(var index=0;index<checkedRows.length;index++){
-                checkedRowIds.push(checkedRows[index]['id']);
-              }
-              this.uncheckBy({'field':'id', 'values':checkedRowIds});
-            }
 
             $.each(that.options.valuesFilterControl, function (i, item) {
               hasValues = hasValues ? true : item.value !== '';

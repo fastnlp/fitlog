@@ -8,67 +8,66 @@ from collections import defaultdict
 from functools import reduce
 from .server_config import read_extra_data
 from .server_config import read_server_config
-from .utils import expand_dict
+from .utils import flatten_dict
 from .server_config import save_config
 from .server_config import save_extra_data
 import numbers
 from ...fastgit.committer import _colored_string
 import warnings
 
-def generate_columns(logs, hidden_columns=None, column_order=None, editable_columns=None,
-                     exclude_columns=None, filter_condition=None, ignore_unchanged_columns=True,
-                     str_max_length=20, round_to=6, ignore_not_exist=False):
+from .utils import LogFilter
+
+
+def get_unchanged_columns(logs):
+    pass
+
+
+def get_unselectable_columns(logs):
     """
 
-    :param logs: list of dict对象返回List形式的column数据.
-    :param hidden_columns: {}, can chooose parent columns, then all children will be hidden
+    :param logs:
+    :return:
+    """
+
+
+def replace_too_long_value(logs, str_max_length):
+    """
+
+    :param logs:
+    :param str_max_length:
+    :return:
+    """
+    pass
+
+
+def generate_columns(logs, hidden_columns=None, column_order=None, editable_columns=None,
+                     exclude_columns=None, ignore_unchanged_columns=True,
+                     str_max_length=20, round_to=6, num_extra_log=0,
+                     add_memo=True):
+    """
+
+    :param logs: list of dict. [{'id': xx, nested:xxx}]， 必须要包含一个'id' key
+    :param hidden_columns: {}, can choose parent columns, then all children will be hidden
     :param column_order: dict, column的顺序
     :param editable_columns: dict，那些column是可以编辑的
-    :param filter_condition: dict, 每个key的筛选条件
     :param ignore_unchanged_columns: 是否忽略不变的column
     :param int str_max_length: 长于这个的str会被以...替代
     :param round_to: int，保留多少位小数
-    :param ignore_not_exist: bool, 如果不存在filter_condition中的内容，则认为是不满足条件
+    :param num_extra_log:int, 多少条log是用户自己加入的。用于过滤unchanged_columns
+    :param add_memo: 是否对没有memo的log增加一个memo列，并且添加内容为"Click to edit.".
 
     return:
-        data: List[]数据
+        data: {}数据{'id1': {'id':id1, 'xx':xx}} flat的dict
         unchange_columns: dict
         column_order: dict, 前端显示的column_order
         hidden_columns: dict, 需要隐藏的column，具体到field的
-        column_dict: {}只有一级内容，根据prefix取出column内容，使用DFS对order_dict访问，然后将内容增加到columns中
+        column_dict: {}只有一级内容，根据prefix取出column内容，使用DFS对column_order访问，然后将内容增加到columns中
     """
     assert len(logs)!=0, "Empty list is not allowed."
 
     connector = '-'  # 不能使用“!"#$%&'()*+,./:;<=>?@[\]^`{|}~ ”
     unselectable_columns = {} # 这个dict中的prefix没有filter选项，(1) 每一行都不一样的column; (2) 只有一种value的column
-    if editable_columns is None:
-        editable_columns = {'memo': 1} # 在该dict的内容是editable的, 保证不会被删除
-    else:
-        assert isinstance(editable_columns, dict), "Only dict is allowed for editable_columns."
-        editable_columns['memo'] = 1
-    if exclude_columns is None:
-        exclude_columns = {}
-    else:
-        assert isinstance(exclude_columns, dict), "Only dict is allowed for exclude_columns."
-    if filter_condition is None:
-        filter_condition = {}
-    else:
-        assert isinstance(exclude_columns, dict), "Only dict is allowed for filter_condition."
-
-    assert isinstance(logs, list), "Only list type supported."
-    for _dict in logs:
-        assert isinstance(_dict, dict), "Only dict supported."
-        for key,value in _dict.items():
-            assert key == 'id', "`id` must be put in the first key."
-            break
-    if hidden_columns is not None:
-        assert isinstance(hidden_columns, dict), "Only dict type suppported."
-    else:
-        hidden_columns = {}
-    if column_order is not None:
-        assert isinstance(column_order, dict), "Only dict tyep supported."
-    else:
-        column_order = dict()
+    # (3) 长度超过一定长度的column
 
     def add_field(prefix, key, value, fields, connector, depth):
         if prefix != '':
@@ -91,45 +90,24 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
             fields[prefix] = value
         return max_depth + 1
 
-    data = []
+    # 获取展开后的log
     max_depth = 1
     field_values = defaultdict(list) # 每种key的不同value
-    exclude_log_ids = {}
+    data = []
     for ID, _dict in enumerate(logs):
         fields = {}
         for key, value in _dict.items():
             max_depth = max(add_field('', key, value, fields, connector, 0), max_depth)
-        for key, value in fields.items():
-            field_values[key].append(value)
-        # fields是一个一维的dict，内含expanded的key以及它的value
-        _filter = _filter_this_log_or_not(filter_condition, fields, ignore_not_exist)
-        if not _filter:
-            data.append(fields)
-        else:
-            exclude_log_ids[ID] = 1
-    # 删除不满足条件的filter，如果没有满足条件的，则filter失效
-    if len(exclude_log_ids)!=0:
-        print(_colored_string(f"Filter out `{len(exclude_log_ids)}` logs.", 'red'))
-    filtered_logs = [log for idx, log in enumerate(logs) if idx not in exclude_log_ids]
-    if len(filtered_logs)==0:
-        warnings.warn("No log meets the condition.")
-    else:
-        logs = filtered_logs
-
-    # 删掉的log需要排除
-    field_values = defaultdict(list) # 每种key的不同value
-    for ID, _dict in enumerate(logs):
-        fields = {}
-        for key, value in _dict.items():
-            max_depth = max(add_field('', key, value, fields, connector, 0), max_depth)
+        data.append(fields)
         for key, value in fields.items():
             field_values[key].append(value)
 
+    # 判断那些column没有变化过，
     unchange_columns = {}
     if ignore_unchanged_columns and len(logs)>1:
         must_include_columns = ['meta-fit_id', 'meta-git_id']
         for key, value in field_values.items():
-            if len(value)==len(logs):
+            if len(value)==len(logs)-num_extra_log:
                 value_set = set(value)
                 # 每次都是一样的结果, 但排除只有一个元素的value以及可修改的column
                 if len(value_set) == 1 and len(value)!=1 and key not in editable_columns:
@@ -145,26 +123,25 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
 
     for key, value in field_values.items():
         value_set = set(value)
-        if len(value_set) == len(value) or len(value_set)==1:
+        if len(value_set) == len(value)-num_extra_log or len(value_set)==1:
             unselectable_columns[key] = 1
+
+    # 增加一个默认可以edit的column
+    if add_memo:
+        for _dict in data:
+            if 'memo' not in _dict:
+                _dict['memo'] = 'Click to edit'
+
+    # 需要生成column_order, column_dict与隐藏的column
+    new_column_order = dict()
+    new_column_dict = {}
+    new_hidden_columns = {}
 
     column_dict = {}  # 这个dict用于存储结构，用于创建columns. 因为需要保证创建的顺序不能乱。 Nested dict
     reduce(merge, [column_dict] + logs)
     remove_exclude(column_dict, exclude_columns)
 
-    column_dict['memo'] = '-' # 这一步是为了使得memo默认在最后一行
-    for _dict in data:
-        if 'memo' not in _dict:
-            _dict['memo'] = 'Click to edit'
-
-    # 需要生成column_order
-    new_column_order = dict()
-    new_column_dict = {}
-
-    # generate_columns
-    new_hidden_columns = {}
     column_keys = [key for key in column_dict.keys()]
-
     first_column_keys = []
     for key, order_value in column_order.items(): # 先按照order_dict进行排列
         if key in column_dict:
@@ -194,7 +171,7 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
     return res
 
 def remove_exclude(column_dict, exclude_dict, prefix=''):
-    # 将exclude_dict中的field从nested的column_dict中移除
+    # 将exclude_dict(flattened的)中的field从nested的column_dict中移除
     keys = list(column_dict.keys())
     for key in keys:
         if prefix=='':
@@ -210,6 +187,7 @@ def remove_exclude(column_dict, exclude_dict, prefix=''):
 
 def add_columns(prefix, key, value, depth, max_depth, column_dict, order_value, connector, exclude_columns,
                 unselectable_columns, editable_columns, hidden_columns, new_hidden_columns, hide):
+    # 向column_dict中添加column的性质的dict; 并且生成new_hidden_columns(包含到最细的粒度); 返回值是column的顺序
     if prefix != '':
         prefix = prefix + connector + key
     else:
@@ -292,141 +270,6 @@ def merge(a, b, path=None, use_b=True):
     return a
 
 
-# TODO 需要加速一下
-def _filter_cmp_expression(condition, condition_key, value):
-    """
-
-    :param condition: 表达式，可以使用 <, >与&&
-    :param condition_key: 哪条条件
-    :param value: 需要判断是否满足表达式
-    :return: bool. 不满足返回True，满足返回False(说明不要filter掉)
-    """
-    try:
-        if '&&' in condition:  # 如果使用了and符号
-            exprs = condition.split('&&')
-        else:
-            exprs = [condition]
-        con = ''
-        for expr in exprs:
-            expr = expr.strip()  # 删去空格
-            if '<' in expr:
-                index = expr.index('<')
-                if 0<index<len(expr)-1:
-                    print(_colored_string(f"Corrupted filter_condition in `{condition_key}`, '<' can only be in the beginning"
-                                            "or in the end", 'red'))
-                    return False
-                else:
-                    if index == 0:
-                        con = expr[1:]
-                        operator = '<'
-                    else:
-                        con = expr[:-1]
-                        operator = '>'
-            elif '>' in expr:
-                index = expr.index('>')
-                if 0<index<len(expr)-1:
-                    print(_colored_string(f"Corrupted filter_condition in `{condition_key}`, '>' can only be in the beginning"
-                                            "or in the end", 'red'))
-                    return False
-                else:
-                    if index == 0:
-                        con = expr[1:]
-                        operator = '>'
-                    else:
-                        con = expr[:-1]
-                        operator = '<'
-            elif '!=' in expr:
-                index = expr.index('!=')
-                if index==0:
-                    con = expr[2:]
-                elif index==len(expr)-2:
-                    con = expr[:-1]
-                operator = '!='
-            elif '=' in expr:
-                index = expr.index('=')
-                if 0<index<len(expr)-1:
-                    print(_colored_string(f"Corrupted filter_condition in `{condition_key}`, '=' can only be in the beginning"
-                                            "or in the end", 'red'))
-                    return False
-                else:
-                    if index == 0:
-                        con = expr[1:]
-                    else:
-                        con = expr[:-1]
-                    operator = '=='
-            else:
-                print(_colored_string(f"Corrupted filter_condition in `{condition_key}`, cannot find filter condition.",
-                                      'red'))
-                return False
-            try:
-                if isinstance(value, bool):
-                    if con.lower()=='false':
-                        con = False
-                    else:
-                        con = True
-                else:
-                    con = type(value)(con)
-                con_expr = 'value'+operator+'con'
-                _filter = eval(con_expr) # 满足条件为True, 说明不能删掉
-                if not _filter:
-                    return True
-            except:
-                print(_colored_string(f"Corrupted filter_condition in `{condition_key}`. Cannot convert to type "
-                    f"{type(value)}.", 'red'))
-    except Exception as e:
-        print(e)
-        return False
-    return False
-
-
-def _filter_this_log_or_not(filter_condition, expanded_log, ignore_not_exist=False):
-    """
-    根据filter_condition判断是否过滤掉这个log。
-
-    :param filter_condition: 支持{"hyper-data_name": "pku"}或{"hyper-data_name": ["pku", "cityu"]}， list表示满足任何一个
-        条件即可
-    :param expanded_log: 一级dict，已经被expand的log
-    :param ignore_not_exist: 如果过滤条件不存在，就忽略吗？
-    :return: 如果满足过滤条件返回False(保留)，返回True表示这个log要filter掉。
-    """
-    _filter = False
-    and_filters = True # 不同的filter_condition之间为and的关系
-    if 'and_filters' in filter_condition:
-        and_filters = bool(filter_condition['and_filters'])
-    for f_k, f_v in filter_condition.items():
-        if f_k == 'and_filters':
-            continue
-        if isinstance(f_v, str):
-            f_v = [f_v]
-        if f_k in expanded_log:
-            _filter = True  # 默认删除
-            value = expanded_log[f_k]
-            for condition in f_v:
-                if isinstance(condition, str):
-                    # 考虑使用具备大小关系的过滤条件
-                    if '<' in condition or '>' in condition or '=' in condition: # 如果使用了特殊比较关系符号
-                        _filter = _filter_cmp_expression(condition, f_k, value)
-                    elif condition in str(value): # 如果是str，则不包含就认为是filter掉了
-                        _filter = False
-                elif isinstance(condition, numbers.Number): # 如果是数字，则对比是否相等
-                    if value==condition:
-                        _filter = False
-                if not _filter: # 同一个filter条件中为或的关系，满足其中一个条件就不用再验证了
-                    break
-            if and_filters and _filter:
-                return True   # 不同的filter为与关系，任何一个filter不满足，则排除该log。
-            elif and_filters is False and _filter is False:
-                return False  # 不同filter为或关系，任何一个filter满足，则包含该filter
-        elif ignore_not_exist:
-            if and_filters: # 因为是and的关系，所以只要一个条件不包含，则过滤掉
-                return True
-        else:
-            if not and_filters:  # 因为是or的关系，只要有一个条件不存在，则包含进来
-                return False
-
-    return _filter
-
-
 def prepare_incremental_data(logs, new_logs, field_columns, filter_condition=None, ignore_not_exist=False):
     """
 
@@ -442,14 +285,12 @@ def prepare_incremental_data(logs, new_logs, field_columns, filter_condition=Non
 
     # 1. 将new_logs的内容展平
     new_dict = {}
+    log_filter = LogFilter(filter_condition)
     for log in new_logs:
-        ex_dict = expand_dict('', log, connector='-')
-        if log['id'] not in logs: # 说明之前没有的, 需要考虑是否过滤掉
-            _filter = _filter_this_log_or_not(filter_condition, ex_dict, ignore_not_exist)
-            if _filter:
-                continue
-        # 只取出需要的key
-        new_dict[log['id']] = {key:ex_dict[key] for key in field_columns.keys() if key in ex_dict}
+        flat_dict = flatten_dict('', log, connector='-')
+        _filter = log_filter._filter_this_log_or_not(flat_dict, ignore_not_exist)
+        if not _filter:
+            new_dict[log['id']] = flat_dict
 
     # 2. 将logs中的内容进行替换，或增加.
     updated_logs = []
@@ -468,33 +309,61 @@ def prepare_incremental_data(logs, new_logs, field_columns, filter_condition=Non
 
     return new_logs, updated_logs
 
-
-def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备好需要的数据， 应该包含从log dir中读取数据
+def expand_dict(dicts, connector='-'):
     """
 
-    :param log_reader: 用于读取数据的Reader对象
-    :param log_dir: str, 哪里是存放所有log的大目录
-    :param log_config_path: 从哪里读取config
-    :param all_data: dict, 如果不为None则不会从硬盘读取config和extra_data
-
+    :param dicts: [dict1, dict2]
+        [{
+            'hyper-hidden_size':1
+            'id':xx
+        },{
+            'hyper-xxx-xxx':1,
+            'id':xx
+        }]
+    :param connector: str.
     :return:
+        [{
+            'hyper':{'hidden_size':1},
+            'id':xxx
+        }, {
+
+        }]
     """
-    print("Start preparing data.")
-    # 1. 从log读取数据
+    def _expand_dict(keys, value):
+        if len(keys)==1:
+            return {keys[0]:value}
+        else:
+            return {keys[0]:_expand_dict(keys[1:], value)}
+
+    logs = []
+    for _dict in dicts:
+        tmp = {}
+        for key, value in _dict.items():
+            tmp.update(_expand_dict(key.split(connector), value))
+        logs.append(tmp)
+    return logs
+
+
+def get_log_and_extra_based_on_config(log_reader, log_dir, log_config_name):
+    """
+    根据config文件读取log，并将extra里面的数据进行替换. 将重置log_reader的状态.
+
+    :param log_reader: LogReader
+    :param log_dir: str
+    :param log_config_name: str
+    :return: logs: [{}, {}];
+             configs: {}, 包含配置文件中的所有内容
+             extra_data:{}， 包含log_extra_data.txt的所有内容
+    """
     log_dir = os.path.abspath(log_dir)
     log_config_path = os.path.join(log_dir, log_config_name)
     log_config_path = os.path.abspath(log_config_path)
+    log_reader.set_log_dir(log_dir)
+    configs = read_server_config(log_config_path)
 
-    # 读取config文件
-    # 读取log_setting_path
-    if all_data is None:
-        all_data = {}
-    all_data.update(read_server_config(log_config_path))
+    deleted_log_ids = configs['deleted_rows']
 
-    deleted_rows = all_data['deleted_rows']
-
-    logs = log_reader.read_logs(deleted_rows)
-
+    logs = log_reader.read_logs(deleted_log_ids)
     if len(logs)==0:
         raise ValueError("No valid log found in {}.".format(log_dir))
 
@@ -503,8 +372,53 @@ def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备�
     extra_data = {}
     if os.path.exists(extra_data_path):
         extra_data = read_extra_data(extra_data_path)
-    all_data['extra_data'] = extra_data
 
+    # 将extra_data合并到log中
+    extra_log_dict = {key:value for key,value in zip(list(extra_data.keys()),
+                                                     expand_dict(list(extra_data.values()), connector='-'))}
+    all_logs = []
+    for log in logs:
+        if log['id'] in extra_log_dict:
+            extra_log = extra_log_dict[log['id']]
+            log = merge(log, extra_log, use_b=True)
+            all_logs.append(log)
+        else:
+            all_logs.append(log)
+    for key, value in extra_log_dict.items():
+        if 'id' in value and value['id'] not in deleted_log_ids: # 说明是用户自己手动加入的
+            all_logs.append(value)
+
+    # 根据过滤条件删除不需要的
+    filtered_logs = []
+    log_filter = LogFilter(filter_condition=configs['filter_condition'])
+    for log in all_logs:
+        flat_log = flatten_dict('', log)
+        if not log_filter._filter_this_log_or_not(flat_log=flat_log,
+                                                  ignore_not_exist=configs['settings']['Ignore_filter_condition_not_exist_log']):
+            filtered_logs.append(log)
+
+    return filtered_logs, configs, extra_data
+
+
+def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备好需要的数据， 应该包含从log dir中读取数据
+    """
+
+    :param log_reader: 用于读取数据的Reader对象
+    :param log_dir: str, 哪里是存放所有log的大目录
+    :param log_config_path: 从哪里读取config
+    :param all_data: dict
+
+    :return:
+    """
+    print("Start preparing data...")
+    # 1. 从log读取数据
+    logs, configs, extra_data = get_log_and_extra_based_on_config(log_reader, log_dir, log_config_name)
+
+    if all_data is None:
+        all_data = {}
+    if 'extra_data' not in all_data:
+        all_data['extra_data'] = extra_data
+    all_data.update(configs)
     # 2. 取出其他settings
     hidden_columns = all_data['hidden_columns']
     column_order = all_data['column_order']
@@ -514,13 +428,19 @@ def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备�
     str_max_length = all_data['basic_settings']['str_max_length']
     round_to = all_data['basic_settings']['round_to']
 
+    # 3. 获取从extra_log来的数量
+    num_extra_log = 0
+    for log_id, log in extra_data.items():
+        if 'id' in log:
+            if log['id'] not in all_data['deleted_rows']:
+                num_extra_log += 1
+
     new_all_data = generate_columns(logs=logs, hidden_columns=hidden_columns, column_order=column_order,
                                 editable_columns=editable_columns,
                                 exclude_columns=exclude_columns,
-                                filter_condition=all_data['filter_condition'],
                                 ignore_unchanged_columns=ignore_unchanged_columns,
                                 str_max_length=str_max_length, round_to=round_to,
-                                ignore_not_exist=all_data['settings']['Ignore_filter_condition_not_exist_log'])
+                                num_extra_log=num_extra_log)
     all_data.update(new_all_data)
 
     field_columns = {}
@@ -531,37 +451,6 @@ def prepare_data(log_reader, log_dir, log_config_name, all_data=None): # 准备�
 
     return all_data
 
-def replace_with_extra_data(data, extra_data, filter_condition=None, deleted_rows=None, ignore_not_exist=False):
-    """
-
-    :param data: {}, key是id，value是一阶json，包含了各个field的值
-    :param extra_data: {}, key是id，value是一阶json，包含了各个field的值
-    :param filter_condition: {}, 一级json。满足条件才加入(如果对应位置为空，也算满足条件)
-    :param deleted_rows:{}, 一级json。在里面的id不能出现在返回的data中
-    :param bool ignore_not_exist: 是否忽略不存在的filter_condition的key的log
-    :return: 对data进行inplace修改
-    """
-    # 将数据进行替换
-    extra_data = extra_data.copy()
-    if len(extra_data)!=0:
-        for d, value in data.items():
-            if d in extra_data:
-                tmp = extra_data.pop(d)
-                for k, v in tmp.items():
-                    value[k] = v
-    # 将新增到extra_data的内容加进去
-    if filter_condition is None:
-        filter_condition = {}
-    if deleted_rows is None:
-        deleted_rows = {}
-    if len(extra_data)>0: # 还有剩余的，说明是新加入的
-        for key, value in extra_data.items(): # key是log的id，value是这个log新加入的内容
-            if key in deleted_rows:
-                continue
-            _filter = _filter_this_log_or_not(filter_condition, value, ignore_not_exist)
-            if not _filter:
-                if 'id' in value:  # 只有有id的才是用户加入的row
-                    data[key] = value
 
 def save_all_data(all_data, log_dir, log_config_name, force_save=False):
     # 保存settings和extra文件, 会根据情况判断是否存储。

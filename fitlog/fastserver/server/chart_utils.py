@@ -1,6 +1,6 @@
 
 from ...fastlog.log_read import StandbyStepLogReader
-from .utils import expand_dict
+from .utils import flatten_dict
 
 from collections import defaultdict
 import re
@@ -45,8 +45,8 @@ class ChartStepLogHandler:
                         expand_v[_key] = v[_key]
                 real_v.pop('step', None)
                 real_v.pop('epoch', None)
-                _expand_v = expand_dict('', real_v)
-                for i_key, i_value in _expand_v.items():
+                _flat_v = flatten_dict('', real_v)
+                for i_key, i_value in _flat_v.items():
                     if isinstance(i_value, (float, int)):
                         if i_key not in path2path:
                             path2path = self._add_path2path(key, real_v)
@@ -86,8 +86,8 @@ class ChartStepLogHandler:
                             expand_v[_key] = v[_key]
                     real_v.pop('step', None)
                     real_v.pop('epoch', None)
-                    _expand_v = expand_dict('', real_v)
-                    for i_key, i_value in _expand_v.items():
+                    _flat_v = flatten_dict('', real_v)
+                    for i_key, i_value in _flat_v.items():
                         if isinstance(i_value, (float, int)):
                             # TODO 可能需要精简一下路径长度， 比如BMESMetric之类的东西
                             if i_key not in path2path:
@@ -220,4 +220,4 @@ if __name__ == '__main__':
     print(paths)
     print(_reverse_path(paths))
 
-    print(expand_dict('', a))
+    print(flatten_dict('', a))
