@@ -38,7 +38,7 @@ class LogReader:
     
     def read_logs(self, ignore_log_names: dict = None) -> List[dict]:
         """
-        从日志存放路径读取日志
+        从日志存放路径读取日志. 只会读取有更新的log
 
         :param ignore_log_names: 如果包含在这个里面，就不会读取该log
         :return: 如果有内容或者有更新的内容，则返回一个 list，里面每个元素都是nested的dict.
@@ -65,6 +65,23 @@ class LogReader:
                 if len(_dict) != 0:
                     logs.append({'id': _dir, **_dict})
                     self._line_counter[_dir] = file_stats
+        return logs
+
+    def read_certain_logs(self, log_dir_names):
+        """
+        给定log的名称，只读取对应的log
+        :param log_dir_names: list[str]
+        :return: [{}, {}], nested的log
+        """
+        assert self._log_dir is not None, "You have to set log_dir first."
+        logs = []
+        for _dir in log_dir_names:
+            dir_path = os.path.join(self._log_dir, _dir)
+            if is_dirname_log_record(dir_path):
+                _dict, file_stats = _read_save_log(dir_path, self._ignore_null_loss_or_metric,
+                                                   self._line_counter[_dir])
+                if len(_dict) != 0:
+                    logs.append({'id': _dir, **_dict})
         return logs
 
 
@@ -210,7 +227,7 @@ def is_dirname_log_record(dir_path: str) -> bool:
     """
     if not os.path.isdir(dir_path):
         return False
-    if len(re.findall(r'log_\d+_\d+$', dir_path)) != 0:
+    if len(re.findall(r'log_\d{8}_\d{6}$', dir_path)) != 0:
         filenames = ['meta.log']  # 至少要有meta.log表明这个是合法的log
         for filename in filenames:
             if not os.path.exists(os.path.join(dir_path, filename)):

@@ -70,6 +70,72 @@
 
 
     </style>
+    <script src="../static/js/table_page_utils.js"></script>
+    <script>
+        $(function () {
+            /*初始化setting选项
+                window.settings: json包含所有的设置选项
+                window.column_order: nested json, 包含的是column的顺序
+                window.column_dict: 2级json，key为header的名称，value是一个json包含这个header的设置. 用于设置header的，不包含
+                    不变的column。如果为底层header(与每一个row的值是对应，可以通过是否包含field判断)
+                window.hidden_columns: json, 包含被隐藏的column的名称。
+                window.table_data: 2级json，是一个json，key为id，value是一行的内容，为一个一层json对象
+                window.server_uuid: str, 当前这个页面的uuid
+                window.hidden_rows: json，当前隐藏的row
+                window.column_order_updated: bool, 当前是否更新了column_order,用于判断是否需要向服务器发送更新
+                window.hidden_columns_updated: bool, 是否更新了隐藏column，用于向服务器发送更新
+                window.unchanged_columns: json, 值永远都恒定的column。
+                window.save_config_name: str, 保存当前的setting到哪个文件。
+            */
+            window.settings = {};
+
+            //0. 从后台获取必要的数据，然后用于创建Table
+            $.ajax({
+                url: '/table/table',
+                type: 'GET',
+                dataType: 'json',
+
+                data: {
+
+                },
+                success: function(value){
+                    // 新加的column只能往后加，否则会出现hidden的时候顺序乱掉。
+                    var column_dict = value['column_dict'];
+                    var column_order = value['column_order'];
+                    var settings = value['settings'];
+                    var hidden_columns = value['hidden_columns'];
+                    column_dict = processData(column_dict);
+
+                    for(var setting in settings)
+                    {
+                        window.settings[setting] = settings[setting];
+                    }
+                    // refine columns
+                    window.column_order = column_order;
+                    window.column_dict = column_dict;
+                    window.hidden_columns = hidden_columns;
+                    window.table_data = value['data']; // 是一个json，key为id，value是一行的内容，为一个一层json对象
+                    window.server_uuid = value['uuid'];
+                    window.hidden_rows = value['hidden_rows'];
+                    window.column_order_updated = false;
+                    window.hidden_columns_updated = false;
+                    window.unchanged_columns = value['unchanged_columns'];
+                    window.save_config_name = value['log_config_name'];
+                    initalizeTable();
+                    // 如果unchanged_columns不为空，则使得button可见，否则不可见
+                   if($.isEmptyObject(window.unchanged_columns)){
+                       document.getElementById('consistent_cols').style.visibility = 'hidden';
+                   }else{
+                       document.getElementById('consistent_cols').style.visibility = 'visible';
+                   }
+                },
+                error: function(error){
+                    bootbox.alert("Some error happens when initialize table.");
+                    console.log(error);
+                }
+             });
+        });
+    </script>
 </head>
 <body>
 
@@ -86,6 +152,10 @@
         <button id="checkInvert" type="button" class="btn btn-default" style="margin-left: 5px;margin-right: 5px;
                 background: #dca7a7;">
             <i class="glyphicon glyphicon-retweet"></i> InvertCheck
+        </button>
+        <button id="clearCheck" type="button" class="btn btn-default" style="margin-left: 5px;margin-right: 5px;
+                background: #dca7a7;">
+            <i class="glyphicon glyphicon-remove-circle"></i> ClearCheck
         </button>
         <!--model button, choose columns-->
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#columns_box"
@@ -219,7 +289,8 @@
           </div>
           <div class="modal-footer" >
             <button type="button" class="btn btn-default" id="cancel_change_config">Cancel</button>
-            <button type="button" class="btn btn-primary" id="confirm_change_config">Confirm</button>
+            <button type="button" class="btn btn-default" id="delete_config">Delete</button>
+            <button type="button" class="btn btn-primary" id="confirm_change_config">Change</button>
           </div>
         </div>
       </div>
@@ -246,6 +317,7 @@
    var $cancel_add_row = $('#cancel_add_row');
    var $config_change_config = $('#confirm_change_config');
    var $cancel_change_config = $('#cancel_change_config');
+   var $delete_config = $('#delete_config');
    var $cancel_stats = $('#cancel_stats');
    var $confirm_stats = $('#confirm_stats');
 
@@ -335,6 +407,10 @@
    //setting确认
    $setting_confirm.click(function () {
        var config_name = document.getElementById('config_name_input');
+       if(!config_name.value.endsWith('.cfg')){
+           bootbox.alert("config name has to end with .cfg");
+           return
+       }
        if(config_name.value!==window.save_config_name){
            update_config_name(config_name.value);
        }
@@ -453,6 +529,41 @@
        $('#config_box').modal('hide');
    });
 
+   $delete_config.click(function () {
+       var config_name = $("input:radio:checked").val();
+       if(config_name===window.save_config_name){
+           bootbox.alert("Cannot delete the config being used.")
+       }else{
+           bootbox.confirm("This will delete this config, go on?", function (result) {
+               if(result){
+                   $.ajax({
+                        url: '/table/delete_config',
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                            uuid: window.server_uuid,
+                            config_name: config_name
+                        }),
+                        success: function(value){
+                            var status = value['status'];
+                            if(status==='success'){
+                                $("input:radio:checked").parent().parent().remove();
+                                $("input:radio[name='config'][value='"+ window.save_config_name +"']").click();
+                                success_prompt(config_name + ' has been deleted.');
+                            }else{
+                                bootbox.alert(value['msg']);
+                            }
+                        },
+                        error: function(error){
+                            bootbox.alert("Some error happens. Fail to change config file.");
+                        }
+                    })
+               }
+           })
+       }
+   });
+
    // 确认选择columns
    $confirm_columns.click(function () {
        var $nested = $("#choose_column_nested");
@@ -487,8 +598,7 @@
    $confirm_stats.click(function () {
        // 考虑把结果直接加入一行到结果中
       var row = {};
-      var id = 'stats_avg_' + generate_uuid();
-      row['id'] = id;
+      row['id'] = 'stats_avg_' + generate_uuid();
       var metric_names = getJsonKeys(window.row_stats['stats']); // metric_names就是metric的名称; 每个metric对应着自己的值
       for(var index=0;index<metric_names.length;index++){
           var value = window.row_stats['stats'][metric_names[index]];
@@ -630,7 +740,7 @@
     // 点击hide
     $hide.click(function () {
         var ids = getIdSelections();
-        $table.bootstrapTable('uncheckAll');
+        $table.bootstrapTable('uncheckBy', {'field':'id', 'values':ids});
         hide_row_by_ids(ids, $table);
 
         $delete.prop('disabled', true);
@@ -644,6 +754,19 @@
     //点击checkInvert
    $checkInvert.click(function () {
        $table.bootstrapTable('checkInvert');
+   });
+
+   //点击clear check
+   $('#clearCheck').click(function () {
+        var checkedRows = $table.bootstrapTable('getSelections');
+        if(checkedRows.length>0){
+          var checkedRowIds = [];
+          for(var index=0;index<checkedRows.length;index++){
+            checkedRowIds.push(checkedRows[index]['id']);
+          }
+          $table.bootstrapTable('uncheckBy', {'field':'id', 'values':checkedRowIds});
+        }
+        success_prompt("Clear all checks.", 1500);
    });
     
     //点击diplay

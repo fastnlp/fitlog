@@ -78,7 +78,6 @@ def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
     all_data['root_log_dir'] = log_dir # will be used by chart_app
     server_wait_seconds = int(standby_hours*3600)
     all_data['log_config_name'] = log_config_name
-    log_reader.set_log_dir(log_dir)
     all_data['log_reader'] = log_reader
     if token is None:
         all_data['token'] = None

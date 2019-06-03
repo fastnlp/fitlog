@@ -13,8 +13,11 @@ from operator import itemgetter
 from functools import partial
 import re
 from ..server.table_utils import merge as merge_use_b, expand_dict
+from .table_utils import expand_dict
+from .table_utils import generate_columns
 
 def check_uuid_summary(gold_uuid, _uuid):
+    return None # TODO delete
     if gold_uuid==_uuid:
         return None
     else:
@@ -22,24 +25,67 @@ def check_uuid_summary(gold_uuid, _uuid):
                 'msg': "Check the port, it seems like you are accessing the wrong port."}
 
 
-def read_summaries(root_log_dir:str):
+def read_summary(root_log_dir:str, summary_name):
     """
 
     :param root_log_dir: 存放logs的地方。
-    :return: [], 里面每个对象是一个dict， 包含了某个summary的所有内容
+    :param summary_name: str，summary的名称
+    :return: {}不包含summary_name
     """
-    summary_path = os.path.join(root_log_dir, 'summaries.txt')
-    summaries = {}
-    if os.path.exists(summary_path):
-        with open(summary_path, 'r', encoding='utf-8') as f:
-           for line in f:
-               if line.strip()!=0:
-                   try:
-                       summary = json.loads(line)
-                       summaries.update(summary)
-                   except:
-                       print(_colored_string("Error happened when reading summary.", 'red'))
-    return summaries
+    summary_fp = os.path.join(root_log_dir, 'summaries', summary_name + '.summary')
+    summary = {}
+    if os.path.exists(summary_fp):
+        with open(summary_fp, 'r', encoding='utf-8') as f:
+            summary = json.loads(f.readline())
+    return summary
+
+def _get_all_summuries(root_log_dir:str):
+    summary_dir = os.path.join(root_log_dir, 'summaries')
+    summary_names = []
+    if os.path.exists(summary_dir):
+        filenames = os.listdir(summary_dir)
+        for filename in filenames:
+            if filename.endswith('.summary'):
+                summary_names.append(os.path.splitext(filename)[0])
+    return summary_names
+
+def save_summary(root_log_dir, summary_name, summary):
+    """
+    保存summary到硬盘中
+
+    :param root_log_dir:
+    :param summary_name: str
+    :param summary:
+    :return:
+    """
+    summary_dir = os.path.join(root_log_dir, 'summaries')
+    try:
+        os.makedirs(summary_dir, exist_ok=True)
+        with open(os.path.join(summary_dir, summary_name + '.summary'), 'w', encoding='utf-8') as f:
+                f.write(json.dumps(summary))
+    except Exception as e:
+        print(_colored_string("Error happens when save summaries.", 'red'))
+        print(e)
+        return {'status':'fail', 'msg':'Fail to save your summaries.'}
+
+def delete_summary(root_log_dir, summary_name):
+    """
+    删除summary
+    :param root_log_dir:
+    :param summary_name:
+    :return:
+    """
+    summary_dir = os.path.join(root_log_dir, 'summaries')
+    try:
+        fp = os.path.join(summary_dir, summary_name + '.summary')
+        if os.path.exists(fp):
+            os.remove(fp)
+        return True
+    except Exception as e:
+        print(_colored_string("Error happens when delete summary {}.".format(summary_name), 'red'))
+        print(e)
+        return False
+
 
 def read_logs(log_name, root_log_dir, extra_data=None):
     # log_name可以为str(config_name), 或list[str]:每一项为一个log; root_log_dir是从哪里读取log
@@ -128,7 +174,7 @@ def groupBy(data, key):
     :param key: str，以哪个为key进行group
     :return: 可以看成[[key1, group1], [key2, group2]]
     """
-    data.sort(key=itemgetter(key))
+    data.sort(key=lambda x:str(x[key]))
     grouped_data = groupby(data, itemgetter(key)) # key + 迭代器。可以看成[[key1, group1], [key2, group2]]
     return grouped_data
 
@@ -174,23 +220,48 @@ def calculate_on_grouped_data(grouped_data, method):
         -> {'a': {'b' :{'f1':1.0}}}
 
     :param grouped_data: nested dict, 最里层为list[dict]
-    :param method: 在list[dict]进行操作，返回一个dict作为结果
-    :return:
+    :param method: 在list[dict]进行操作，返回两个dict作为结果; 第一个是结果, 第二个是从哪些log计算得来
+    :return: {} nested的group的数据结果, {} nested的group从哪里计算来的
     """
     data = {}
+    data_sources = {}
     if isinstance(grouped_data, list):
         return method(grouped_data)
     else:
         for key, value in grouped_data.items():
-            tmp = calculate_on_grouped_data(value, method)
-            if len(tmp)==0:
+            tmp1, tmp2 = calculate_on_grouped_data(value, method)
+            if len(tmp1)==0:
                 continue
             else:
-                data[key] = tmp
-    return data
+                data[key] = tmp1
+            if len(tmp2)==0:
+                continue
+            else:
+                data_sources[key] = tmp2
+    return data, data_sources
+
+
+def _summary_eq(summary1, summary2):
+    # 检查两个summary是否相等
+    checked_keys = ['vertical', 'horizontals', 'method', 'criteria', 'results', 'result_maps']
+    for key in checked_keys:
+        if key in summary1 and key in summary2:
+            if not summary1[key]==summary2[key]:
+                return False
+        elif key not in summary1 and key not in summary2:
+            continue
+        else:
+            if key in summary1:
+                if len(summary1[key])!=0:
+                    return False
+            if key in summary2:
+                if len(summary2[key])!=0:
+                    return False
+    return True
 
 def generate_summary_table(vertical, horizontals, method, criteria, results, result_maps, selected_data,
-                     root_log_dir):
+                     root_log_dir, extra_data):
+    # extra_data: [{一级}]
     logs = read_logs(selected_data, root_log_dir)
     if isinstance(logs, dict): # 发生了错误了
         return logs
@@ -314,10 +385,12 @@ def generate_summary_table(vertical, horizontals, method, criteria, results, res
     # 4. 获取结果
     try:
         grouped_results = {}
+        grouped_sources = {}
         for mapped_name in result_maps:
             partial_method = partial(method, result_on=mapped_name)
-            _dict = calculate_on_grouped_data(groups, partial_method)
+            _dict, _dict_source  = calculate_on_grouped_data(groups, partial_method)
             merge(grouped_results, _dict)
+            merge(grouped_sources, _dict_source)
     except Exception as e:
         print("Exception happens when calculate {}.".format(mapped_name))
         print(e)
@@ -326,6 +399,7 @@ def generate_summary_table(vertical, horizontals, method, criteria, results, res
 
     # 5. 使其分割为正确的一行一行的形式
     summary_results = []
+    summary_sources = {}
     column_order = {}
     if vertical:
         index = 0
@@ -335,22 +409,27 @@ def generate_summary_table(vertical, horizontals, method, criteria, results, res
         column_order['OrderKeys'] = ['id', field_name]
         for key, value in grouped_results.items():
             value[field_name] = key
-            value['id'] = index
+            value['id'] = str(index)
             summary_results.append(value)
+            summary_sources[str(index)] = flatten_dict('', grouped_sources[key])
             index += 1
+
     else:
-        grouped_results['id'] = 0
+        grouped_results['id'] = '0'
         summary_results = [grouped_results]
+        summary_sources['0'] = flatten_dict('', grouped_sources)
+
+    # 6. 加入extra_data
+    summary_results.extend(expand_dict(extra_data))
 
     results = generate_columns(summary_results, hidden_columns={'id':1}, column_order=column_order, editable_columns={},
                      exclude_columns={}, ignore_unchanged_columns=False,
                      str_max_length=20, round_to=6, num_extra_log=0,
                      add_memo=False)
     results['status'] = 'success'
+    results['summary_sources'] = summary_sources
     return results
 
-
-from .table_utils import generate_columns
 
 def avg_method(data, result_on):
     try:
@@ -360,10 +439,10 @@ def avg_method(data, result_on):
                 values.append(float(log[result_on]))
         if len(values)==0:
             value = {}
-            return value
+            return value, {}
         else:
             value = np.mean(values)
-            return {result_on: value}
+            return {result_on: value}, {result_on:[log['id'] for log in data]}
     except Exception as e:
         print(_colored_string("Exception occurred when calculate mean for {}.".format(result_on), 'red'))
         try:
@@ -381,10 +460,10 @@ def avg_std_method(data, result_on):
                 values.append(float(log[result_on]))
         if len(values)==0:
             value = {}
-            return value
+            return value, {}
         else:
             value = '{:.6f}({:.6f})'.format(np.mean(values), np.std(values))
-            return {result_on: value}
+            return {result_on: value}, {result_on:[log['id'] for log in data]}
     except Exception as e:
         print(_colored_string("Exception occurred when calculate mean for {}.".format(result_on), 'red'))
         try:
@@ -418,9 +497,9 @@ def max_method(data, base_on, result_on):
         else:
             max_log = {}
         if result_on in max_log:
-            return {result_on:max_log[result_on]}
+            return {result_on:max_log[result_on]}, {result_on: [log['id'] for log in valid_logs]}
         else:
-            return {}
+            return {}, {}
     except Exception as e:
         print(_colored_string("Exception occurred when calculate max for {}.".format(result_on), 'red'))
         print(e)
@@ -449,9 +528,9 @@ def min_method(data, base_on, result_on):
         else:
             min_log = {}
         if result_on in min_log:
-            return {result_on:min_log[result_on]}
+            return {result_on:min_log[result_on]}, {result_on: [log['id'] for log in valid_logs]}
         else:
-            return {}
+            return {}, {}
     except Exception as e:
         print(_colored_string("Exception occurred when calculate min for {}.".format(result_on), 'red'))
         print(e)

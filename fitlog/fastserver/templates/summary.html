@@ -10,38 +10,155 @@
 
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.js"></script>
-    <script src="/static/js/bootstrap-editable.js"></script>
     <script src="/static/js/bootstrap-table.js"></script>
     <script src="/static/js/bootbox.js"></script>
-    <script src="/static/js/bootstrap-table-editable.js"></script>
     <script src="/static/js/jquery.tablednd.js"></script>
     <script src="/static/js/bootstrap-table-reorder-rows.js"></script>
+    <script src="/static/js/Sortable.js"></script>
 
     <script src="/static/js/tableExport.js"></script>
     <script src="/static/js/bootstrap-table-export.js"></script>
     <script src="/static/js/clone.js"></script>
     <script src="/static/js/utils.js"></script>
+    <script src="/static/js/table_page_utils.js"></script>
 
+    <script src="/static/js/summary_table.js"></script>
+    <script src="/static/js/table.js"></script>
     <title>Summary</title>
+
+    <style>
+        .criterion-component {
+            display: none;
+        }
+        .result-map-component{
+            display: none;
+        }
+
+    </style>
+    <script>
+        // 初始化
+        var log_names_json = JSON.parse('{{log_names|tojson}}'); // 当有选择的logs时
+        window.log_names = Object.keys(log_names_json);
+        window.server_uuid = '{{server_uuid}}'; // server的uuid
+        window.CURRENT_SUMMARY_NAME = 'Create New Summary';
+        window.settings = JSON.parse('{{settings|tojson}}');
+        function fillInChooseSummaryConfigModal(configs, summary_names){
+            // 修改为从后台获取summary与config
+            $.ajax({
+                url: '/summary/summary_config',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                    uuid: window.server_uuid
+                }),
+                success: function(value){
+                    if(value['status']==='success'){
+                        summary_names = value['summary_names'];
+                        configs = value['config_names'];
+                        if(window.log_names.length>0){
+                            for(var key in configs){
+                                configs[key] = 0
+                            }
+                            configs['Using selected ' + window.log_names.length + ' logs'] = 1;
+                        }
+                        var config_div = $('#choose_config_div');
+                        var summary_div = $('#choose_summary_div');
+                        config_div.append('<h4>Select data</h4>');
+                        append_single_choices(configs, config_div, 'config_name_checkbox', 'config_raido');
+                        summary_div.append('<h4>Select summary</h4>');
+                        if(window.CURRENT_SUMMARY_NAME in summary_names){
+                            for(var key in summary_names){
+                                summary_names[key] = 0;
+                            }
+                            summary_names[window.CURRENT_SUMMARY_NAME] = 1;
+                        }else{
+                            summary_names['Create New Summary'] = 1
+                        }
+                        append_single_choices(summary_names, summary_div, 'summary_name_checkbox', 'summary_radio');
+                        $('#choose_summary_config_modal').modal('show');
+                    }else{
+                        bootbox.alert("Fail to create a summary. " + value['msg']);
+                    }
+
+                },
+                error: function(error){
+                    bootbox.alert("Fail to start to create a summary, please check the connection with server.")
+                }
+             });
+        }
+        $(function () {
+            fillInChooseSummaryConfigModal();
+        });
+
+    </script>
+
 </head>
 <body>
 
-    <div>
-        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#sortModal_table"
-                style="margin-left: 5px;margin-right: 5px" id="consistent_cols">
-          <i class="glyphicon glyphicon-th-list"></i> Con. cols.
+    <h3 id="h3_title" style="text-align: center">Click Summary to generate a summary</h3>
+
+    <!--buttons-->
+    <div id="toolbar" class="btn-group" style="margin-left: 20px">
+        <button id="choose_summary_config_button" type="button" class="btn btn-success" style="margin-left: 5px;margin-right: 5px">
+            <i class="glyphicon glyphicon-th-list"></i> Summary
+        </button>
+        <!--model button, choose columns-->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#columns_box"
+                style="margin-left: 5px;margin-right: 5px" id="choose_columns">
+          <i class="glyphicon glyphicon-th icon-th"></i> Columns
+        </button>
+        <!--Delete summary-->
+        <button id="delete_summary" class="btn btn-danger" style="margin-right: 5px">
+            <i class="glyphicon glyphicon-remove"></i> Del. Sum.
         </button>
     </div>
 
-    <div class="modal fade" id="sortModal_table" tabindex="-1" role="dialog" aria-labelledby="sortModal_tableLabel"
-         aria-hidden="false" style="font-size: 16px;position: absolute">
-        <div class="modal-dialog">
+    <div  style="padding-left:15px; padding-right:15px">
+        <table id="tb_summary"></table>
+    </div>
+
+    <!--对summary和data进行选择-->
+    <div class="modal fade" id="choose_summary_config_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Select summary and logs</h4>
+          </div>
+          <div class="modal-body" id="choose_config_div"> <!--这个是选择使用什么数据做统计的，如果有-->
+
+          </div>
+          <hr style="border-width:1px;border-top-color:#888181;margin: 0">
+          <div class="modal-body" id="choose_summary_div"> <!--这个是选择summary的，如果有-->
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" id="cancel_summary_config_button">Cancel</button>
+            <button type="button" class="btn btn-primary" id="next_summary_config_button">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="summary_modal" tabindex="-1" role="dialog" aria-labelledby="sortModal_tableLabel"
+         aria-hidden="false" style="font-size: 16px;position: absolute;overflow:scroll;">
+        <div class="modal-dialog" id="summary_modal_dialogue">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-                    <h4 class="modal-title" id="sortModal_tableLabel">New summary</h4> </div>
+                    <h4 class="modal-title" id="summary_modal_title">New summary</h4>
+                </div>
                 <div class="modal-body">
                     <div class="bootstrap-table">
+                        <div class="fixed-table-toolbar">
+                            <div class="bars">
+                                <div id="axis_toolbar">
+                                    <button id="add_axis" type="button" class="btn btn-default"><i class="glyphicon glyphicon-plus"></i> Add Horizontal Axis</button>
+                                    <button id="delete_axis" type="button" class="btn btn-default" disabled="disabled"><i class="glyphicon glyphicon-minus"></i> Delete Horizontal Axis</button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="fixed-table-container">
                             <table id="axis" class="table">
                                 <thead>
@@ -56,24 +173,16 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Horizontal</td>
+                                        <td>Vertical</td>
                                         <td>
-                                            <select class="form-control multi-sort-name" id="vertical-select">
-                                                <option value="name" selected="selected">Name</option>
-                                                <option value="stargazers_count">Stars</option>
-                                                <option value="forks_count">Forks</option>
-                                                <option value="description">Description</option>
+                                            <select class="form-control multi-sort-name" id="axis-select-0">
                                             </select>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Vertical</td>
+                                        <td>Horizontal</td>
                                         <td>
-                                            <select class="form-control multi-sort-name" id="horizontal-select">
-                                                <option value="name" selected="selected">Name</option>
-                                                <option value="stargazers_count">Stars</option>
-                                                <option value="forks_count">Forks</option>
-                                                <option value="description">Description</option>
+                                            <select class="form-control multi-sort-name" id="axis-select-1">
                                             </select>
                                         </td>
                                     </tr>
@@ -93,9 +202,10 @@
                                 <tbody>
                                     <tr>
                                         <td>
-                                            <select class="form-control multi-sort-name" id="method-select">
-                                                <option disabled selected value> -- select an method -- </option>
-                                                <option value="avg">Avg.</option>
+                                            <select class="form-control multi-sort-name" id="method-select"
+                                                    onchange="changeMethodSelect()">
+                                                <option value="avg" selected>Avg.</option>
+                                                <option value="avg_std">Avg.(std.)</option>
                                                 <option value="max">Max.</option>
                                                 <option value="min">Min.</option>
                                             </select>
@@ -104,8 +214,8 @@
                                 </tbody>
                             </table>
                         </div>
-                        <hr style="border-width:3px;border-top-color:#888181"> <!--选择以谁为准-->
-                        <div class="fixed-table-toolbar">
+                        <hr style="border-width:3px;border-top-color:#888181" class="criterion-component"> <!--选择以谁为准-->
+                        <div class="fixed-table-toolbar criterion-component">
                             <div class="bars">
                                 <div id="criterion_toolbar">
                                     <button id="add_criterion" type="button" class="btn btn-default"><i class="glyphicon glyphicon-plus"></i> Add Criterion</button>
@@ -113,7 +223,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="fixed-table-container">
+                        <div class="fixed-table-container criterion-component">
                             <table id="criterion_entry" class="table">
                                 <thead>
                                     <tr>
@@ -126,11 +236,6 @@
                                     <tr>
                                         <td>
                                             <select class="form-control multi-sort-name" id="criterion_entry-select-1">
-                                                <option disabled selected value> -- select an column -- </option>
-                                                <option value="name">Name</option>
-                                                <option value="stargazers_count">Stars</option>
-                                                <option value="forks_count">Forks</option>
-                                                <option value="description">Description</option>
                                             </select>
                                         </td>
                                     </tr>
@@ -160,19 +265,14 @@
                                         <td>
                                             <select class="form-control multi-sort-name" id="result_entry-select-1"
                                                     onchange="changeResultSelect('result_entry-select-1')">
-                                                <option disabled selected value> -- select an column -- </option>
-                                                <option value="name">Name</option>
-                                                <option value="stars">Stars</option>
-                                                <option value="forks_count">Forks</option>
-                                                <option value="description">Description</option>
                                             </select>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                       <hr style="border-width:3px;border-top-color:#888181">  <!--将不同的key做映射-->
-                        <div class="fixed-table-container">
+                       <hr style="border-width:3px;border-top-color:#888181" class="result-map-component">  <!--将不同的key做映射-->
+                        <div class="fixed-table-container result-map-component" >
                             <table id="result_map" class="table">
                                 <thead>
                                     <tr>
@@ -198,14 +298,449 @@
         </div>
     </div>
 
+    <!--Add a row-->
+    <div class="modal fade" id="row_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Add a row</h4>
+          </div>
+          <div class="modal-body" id="add_row_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" id="cancel_add_row">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_add_row">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--columns modal-->
+    <div class="modal fade" id="columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Columns(uncheck to hide, drag to reorder)</h4>
+          </div>
+          <div class="modal-body" id="columns_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel_columns">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_columns">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
 </body>
 <script>
+
     var $add_criterion = $('#add_criterion');
     var $delete_criterion = $('#delete_criterion');
     var $add_result = $('#add_result');
     var $delete_result = $('#delete_result');
+    var $add_axis = $('#add_axis');
+    var $delete_axis = $('#delete_axis');
+    var $confirm_summary = $('#confirm_summary');
+    var $cancel_summary = $('#cancel_summary');
+    var $confirm_add_row = $('#confirm_add_row');
+    var $cancel_add_row = $('#cancel_add_row');
+    var $choose_columns = $('#choose_columns');
+    var $confirm_columns = $('#confirm_columns');
+    var $table = $('#tb_summary');
 
+    $choose_columns.prop('disabled', true);
+
+    function isArray(value){
+        if (typeof Array.isArray === "function") {
+            return Array.isArray(value);
+        }else{
+            return Object.prototype.toString.call(value) === "[object Array]";
+        }
+    }
+    
+    function onGetSummarySelectionsSuccess(axises, metrics){
+        var selected_summary = $("input[id='summary_name_checkbox']:checked").val();
+        if(selected_summary==='Create New Summary'){
+            // 1. 生成new summary的modal
+            $('#summary_modal').modal('show');
+            window.TMP_CURRENT_SUMMARY_NAME = 'Create New Summary';
+            $('#summary_modal_title').html('New summary');
+            var axis_select1 = $('#axis-select-0');
+            var axis_select2 = $('#axis-select-1');
+            var result_select = $('#result_entry-select-1');
+            axis_select1.empty();
+            axis_select2.empty();
+            result_select.empty();
+            addOptionsToSelect(axis_select1, axises);
+            addOptionsToSelect(axis_select2, axises);
+            addOptionsToSelect(result_select, metrics);
+        }else{
+            // 1.获取summary的json数据
+            $.ajax({
+                url: '/summary/summary_json',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                    uuid: server_uuid,
+                    summary_name: selected_summary
+                }),
+                success: function(value){
+                    var status = value['status'];
+                    if(status==='success'){
+                        var summary = value['summary'];
+                        if(Object.keys(summary).length===0){
+                            bootbox.alert("Fail to find content for " + selected_summary +".");
+                            return
+                        }
+                        // 2.对比window.AXISES, metrics
+                        var horizontals = summary['horizontals'];
+                        var criteria = summary['criteria'];
+                        var results = summary['results'];
+                        if(summary['vertical']!==undefined && summary['vertical']!=='')
+                            if(!axises.includes(summary['vertical'])){
+                                bootbox.alert(summary['vertical'] + " is not found in selected data.");
+                                return
+                            }
+                        if(horizontals!==undefined && horizontals.length>0){
+                            for(var index=0;index<horizontals.length;index++){
+                                if(!axises.includes(horizontals[index])){
+                                    bootbox.alert(horizontals[index] + " is not found in selected data.");
+                                    return
+                                }
+                            }
+                        }
+                        if(criteria!==undefined && criteria.length>0){
+                            for(var index=0;index<criteria.length;index++){
+                                if(!metrics.includes(criteria[index])){
+                                    bootbox.alert(criteria[index] + " is not found in selected data.");
+                                    return
+                                }
+                            }
+                        }
+                        if(results!==undefined && results.length>0){
+                            for(var index=0;index<results.length;index++){
+                                if(!metrics.includes(results[index])){
+                                    bootbox.alert(results[index] + " is not found in selected data.");
+                                    return
+                                }
+                            }
+                        }
+                        $('#summary_modal').modal('show');
+                        window.TMP_CURRENT_SUMMARY_NAME = selected_summary;
+                        var axis_select1 = $('#axis-select-0');
+                        var axis_select2 = $('#axis-select-1');
+                        var result_select = $('#result_entry-select-1');
+                        axis_select1.empty();
+                        axis_select2.empty();
+                        result_select.empty();
+                        // 设置name
+                        $('#summary_modal_title').html(selected_summary);
+                        // 设置axis
+                        addOptionsToSelect(axis_select1, axises, summary['vertical']);
+                        addOptionsToSelect(axis_select2, axises, horizontals[0]);
+                        if(summary['horizontals']!==''||summary['horizontals']!==undefined || summary['horizontals'].length>0){
+                            for(var index=1;index<summary['horizontals'].length;index++){
+                                // 增加一个选项
+                                $add_axis.click();
+                                $('#axis-select-' + (index+1)).val(horizontals[index]);
+                            }
+                        }
+                        // 设置method
+                        $('#method-select').val(summary['method']);
+                        // 设置criterion
+                        if(summary['method']!=='avg' && summary['method']!=='avg_std'){
+                            addOptionsToSelect($('#criterion_entry-select-1'), metrics, criteria[0]);
+                            for(var index=1;index<criteria.length;index++){
+                                $add_criterion.click();
+                                $('#criterion_entry-select-' + (index+1)).val(criteria[index]);
+                            }
+                            $('.criterion-component').each(function () {
+                               $(this).css('display', 'block');
+                            });
+                        }
+                        // 设置results
+                        var result_maps = summary['result_maps'];
+                        addOptionsToSelect(result_select, metrics, results[0]);
+                        changeResultSelect('result_entry-select-1', result_maps[0]);
+                        for(var index=1;index<results.length;index++){
+                            $add_result.click();
+                            $('#result_entry-select-' + (index+1)).val(results[index]);
+                            changeResultSelect('result_entry-select-' + (index+1), result_maps[index])
+                        }
+                    }else{
+                        bootbox.alert(value['msg']);
+                    }
+                },
+                error: function(error){
+                    bootbox.alert("Some error happens. Fail to get summary: " + selected_summary);
+                }
+            });
+        }
+    }
+
+    $confirm_summary.click(function () {
+        // 获取axis
+        var $axis_tbody_tr = $('#axis tbody tr');
+        var ver_selection = $axis_tbody_tr.eq(0).find('select').find('option:selected').val(); // 默认值为''
+        var hor_selection = $axis_tbody_tr.eq(1).find('select').find('option:selected').val();
+        if(ver_selection===hor_selection){
+            bootbox.alert("Vertical and Horizontal cannot equal each other.");
+            return;
+        }
+        var axis_selections = {};
+        var hor_selections = [];
+        if(hor_selection!==''){
+            axis_selections[hor_selection] = 1;
+            hor_selections.push(hor_selection);
+        }
+        if(ver_selection!==''){
+            axis_selections[ver_selection] = 1;
+        }
+
+        for(var index=2;index<$axis_tbody_tr.length;index++){
+            hor_selection = $axis_tbody_tr.eq(index).find('select').find('option:selected').val();
+            if(hor_selection in axis_selections){
+                bootbox.alert(hor_selection + ' is duplicate in Axis.');
+                return;
+            }
+            hor_selections.push(hor_selection);
+        }
+        // 获取method
+        var method = document.getElementById('method-select').value; // max, min, avg, avg_std
+        if(method==='' || method===undefined){
+            bootbox.alert("Method has empty choice.");
+            return
+        }
+        //获取criterion
+        var criterion_selections = [];
+        if(method!=='avg'){
+            var $criterion_tbody_tr = $('#criterion_entry tbody tr');
+            for(var index=0;index<$criterion_tbody_tr.length;index++){
+                var criterion_sel = $criterion_tbody_tr.eq(index).find('select').find('option:selected').val();
+                if(criterion_sel==='' || criterion_sel===undefined){
+                    bootbox.alert("Criterion Columns has empty choice.");
+                    return
+                }
+                if(criterion_selections.includes(criterion_sel)){
+                    bootbox.alert(criterion_sel + ' is duplicate in Criterion Columns.');
+                    return;
+                }
+                criterion_selections.push(criterion_sel);
+            }
+        }
+        // 获取result
+        var $result_tbody_tr = $('#result_entry tbody tr');
+        var results = [];
+        for(var index=0;index<$result_tbody_tr.length;index++){
+            var result = $result_tbody_tr.eq(index).find('select').find('option:selected').val();
+            if(result==='' || result===undefined){
+                bootbox.alert("Result Columns has empty choice.");
+                return
+            }
+            if(results.includes(result)){
+                bootbox.alert(result + ' is duplicate in Result Columns.');
+                return;
+            }
+            results.push(result);
+        }
+
+        // 获取map
+        var $result_map_tbody_tr = $('#result_map tbody tr');
+        var result_maps = [];
+        for(var index=0;index<$result_map_tbody_tr.length;index++){
+            var result_map = $result_map_tbody_tr.eq(index).find('input').val();
+            if(result_map==='' || result_map===undefined){
+                bootbox.alert("Mapped name has empty value.");
+                return
+            }
+            result_maps.push(result_map);
+        }
+
+        // 向后台发送请求。
+        $.ajax({
+            url: '/summary/new_summary',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify({
+                uuid: window.server_uuid,
+                vertical: ver_selection,
+                horizontals: hor_selections,
+                method: method,
+                criteria: criterion_selections,
+                results: results,
+                result_maps: result_maps,
+                selected_data: window.TMP_SELECTED_DATA,
+                summary_name:window.TMP_CURRENT_SUMMARY_NAME
+            }),
+            success: function(value){
+                var status = value['status'];
+                if(status==='success'){
+                    setUpAfterGetTableData(value);
+                   // clear modal
+                    $('#summary_modal').modal('hide');
+                    $('#choose_summary_config_modal').modal('hide');
+                    // 将summary保存下来
+                    var new_summary = {};
+                    new_summary['vertical'] = ver_selection;
+                    new_summary['horizontals'] = hor_selections;
+                    new_summary['method'] = method;
+                    new_summary['criteria'] = criterion_selections;
+                    new_summary['results'] = results;
+                    new_summary['result_maps'] = result_maps;
+                    window.CURRENT_SUMMARY = new_summary;
+                    window.AXISES = window.TMP_AXISES;
+                    window.METRICS = window.TMP_METRICS;
+                    window.SELECTED_DATA = window.TMP_SELECTED_DATA;
+                    window.CURRENT_SUMMARY_NAME = window.TMP_CURRENT_SUMMARY_NAME;
+                    delete window.TMP_AXISES;
+                    delete window.TMP_METRICS;
+                    delete window.TMP_SELECTED_DATA;
+                    delete window.TMP_CURRENT_SUMMARY_NAME;
+                } else{
+                    bootbox.alert("The following error occurred in server." + value['msg']);
+                }
+            },
+            error: function(error){
+                bootbox.alert("Some error happens. Fail to generate summary.");
+            }
+        })
+    });
+
+    $cancel_summary.click(function () {
+       $('#summary_modal').modal('hide');
+    });
+
+    function setUpAfterGetTableData(value){
+        // 当从后端正确生成对应的Table结果后，调用该方法进行后面的设置
+        var column_dict = value['column_dict'];
+        var column_order = value['column_order'];
+        var hidden_columns = value['hidden_columns'];
+        column_dict = processSummaryData(column_dict);
+        window.column_order = column_order;
+        window.column_dict = column_dict;
+        window.hidden_columns = hidden_columns;
+        window.summary_sources = value['summary_sources']; // 记录当前结果从哪些log获取到的
+        window.table_data = value['data']; // 是一个json，key为id，value是一行的内容，为一个一层json对象
+        initTable();
+        if(isArray(window.TMP_SELECTED_DATA)){
+            $('#h3_title').html("Summary on " +
+                window.TMP_SELECTED_DATA.length + ' selected logs.')
+        }else{
+            $('#h3_title').html("Summary on config `" +
+                window.TMP_SELECTED_DATA + '`.')
+        }
+        $choose_columns.prop('disabled', false);
+    }
+
+    function addOptionsToSelect(select_ele, selections, selected_value){
+        // 补充一个select到selected_value
+        if(selected_value===undefined || selected_value===''||!(selections.includes(selected_value)))
+            var html = "<option selected value=''>  -- choose what to select -- </option>";
+        else
+            var html = "<option value=''>  -- choose what to select -- </option>";
+        for(var index=0;index<selections.length;index++){
+            var tmp = '';
+            if(selected_value===selections[index])
+                tmp += 'selected';
+            html += '<option ' + tmp + ' value="' + selections[index] + '">' + selections[index] + '</option>';
+        }
+        select_ele.append(html);
+    }
+
+    function getSummarySelections(log_names, config_name, server_uuid){
+        // 通过logs或者config_name获取合法的selection选项
+        if(log_names!=='' && log_names.length>0)
+        {
+            $.ajax({
+                url: '/summary/selections',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                    uuid: server_uuid,
+                    log_names: log_names
+                }),
+                success: function(value){
+                    var status = value['status'];
+                    if(status==='success'){
+                        window.TMP_AXISES = value['axises'];
+                        window.TMP_METRICS = value['metrics'];
+                        window.TMP_SELECTED_DATA = log_names;
+                        onGetSummarySelectionsSuccess(value['axises'], value['metrics'])
+                    }else{
+                        bootbox.alert(value['msg']);
+                    }
+                },
+                error: function(error){
+                    bootbox.alert("Some error happens.");
+                }
+            })
+        }else if(config_name!=='') {
+            $.ajax({
+                url: '/summary/selections',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                    uuid: server_uuid,
+                    config_name: config_name
+                }),
+                success: function (value) {
+                    var status = value['status'];
+                    if (status === 'success') {
+                        window.TMP_AXISES = value['axises'];
+                        window.TMP_METRICS = value['metrics'];
+                        window.TMP_SELECTED_DATA = config_name;
+                        onGetSummarySelectionsSuccess(value['axises'], value['metrics'])
+                    } else {
+                        bootbox.alert(value['msg']);
+                    }
+                },
+                error: function (error) {
+                    bootbox.alert("Some error happens.");
+                }
+            })
+        }else{
+            bootbox.alert("Error happens in getting selection data.");
+        }
+    }
+
+    // 点击next之后
+    $('#next_summary_config_button').click(function () {
+        // 1. 是否为创建
+        var selected_config = $("input[id='config_name_checkbox']:checked").val();
+        // 1. 先根据数据获取vertical, horizontal(来源于hyper, other)以及metrics(来源于metrics)
+        var res;
+        if(selected_config.startsWith('Using selected ')){ // 使用之前跳转过来的selected的log
+            res = getSummarySelections(window.log_names, '', window.server_uuid);
+        }else{ // 使用某个config
+            res = getSummarySelections('', selected_config, window.server_uuid);
+        }
+    });
+
+    $('#cancel_summary_config_button').click(function () {
+        $('#choose_summary_config_modal').modal('hide');
+    });
+
+    $('#choose_summary_config_modal').on('hide.bs.modal', function (e) {
+       $('#choose_config_div').empty();
+       $('#choose_summary_div').empty();
+   });
+
+    // 点击summary的时候
+    $('#choose_summary_config_button').click(function () {
+        // 修改为获取summary与config？
+        fillInChooseSummaryConfigModal();
+    });
 
     // 给定table对象，返回有多少行。
     function getTableRowNumber($tableEle){
@@ -213,7 +748,7 @@
     }
 
     function add_one_select_row(selections, table_id_str, delete_button){
-        // 根据selections给，table_id中加一行，并正确设置delete_button的状态
+        // 根据selections，table_id中加一行，并正确设置delete_button的状态
         var table_tbody_name = '#' + table_id_str + ' tbody';
         var select_id = table_id_str + '-select-' + ($('#' + table_id_str).find('tbody tr').length+1);
         var onchange_fun_str;
@@ -223,26 +758,62 @@
         $(table_tbody_name).append(generate_one_tr_select_row(selections, select_id, onchange_fun_str));
         delete_button.attr('disabled', false);
     }
-    function delete_last_row(table_id_str, delete_button){
+    function delete_last_row(table_id_str, delete_button, left_row_num){
+        if(left_row_num===undefined)
+            left_row_num = 1;
         var $table_id = $('#' + table_id_str);
-        if($table_id.find('tbody tr').length>1){
+        if($table_id.find('tbody tr').length>left_row_num){
             $('#' + table_id_str + ' tr:last').remove();
-            if($table_id.find('tbody tr').length===1){
+            if($table_id.find('tbody tr').length===left_row_num){
                 if(delete_button!==undefined)
                     delete_button.attr('disabled', true);
             }
         }
     }
 
+    function addAxisTr(selections, select_id, name){
+        //生成<tr><td>name</td><td>select_ele</td></tr>. selections是选项. select_id是生成的select的id
+        var select_ele = generate_select(selections, select_id);
+        select_ele = '<tr><td>' + name + '</td><td>' + select_ele + '</td></tr>';
+        return select_ele;
+    }
+
+    // 增加一个horizontal的行
+    $add_axis.click(function () {
+        var numResults = getTableRowNumber($('#axis'));
+        var selected_index = $('#axis tbody tr').eq(numResults-1).find('select').prop('selectedIndex');
+        if(selected_index===0){
+            bootbox.alert("You have to select the last Horizontal before adding a new one.")
+        }else{
+            var table_id_str = 'axis';
+            var table_tbody_name = 'axis tbody';
+            var select_id = table_id_str + '-select-' + ($('#' + table_id_str).find('tbody tr').length);
+            var select_ele = addAxisTr(window.TMP_AXISES, select_id,'Horizontal-' + (numResults-1));
+            $('#' + table_tbody_name).append(select_ele);
+            $delete_axis.attr('disabled', false);
+        }
+    });
+
+    // 删除一个horizontal的行
+    $delete_axis.click(function () {
+        delete_last_row('axis', $delete_axis, 2);
+    });
+
     // 增加一个criterion
     $add_criterion.click(function () {
-        var selections = ['demo1', 'demo2'];
-        add_one_select_row(selections, 'criterion_entry', $delete_criterion);
+        // 需要保证前面的已经勾选
+        var numResults = getTableRowNumber($('#criterion_entry'));
+        var selected_index = $('#criterion_entry tbody tr').eq(numResults-1).find('select').prop('selectedIndex');
+        if(selected_index===0){
+            bootbox.alert("You have to select the last criterion before adding a new one.")
+        }else{
+            add_one_select_row(window.TMP_METRICS, 'criterion_entry', $delete_criterion);
+        }
     });
 
     // 删除最后的一个criterion
     $delete_criterion.click(function () {
-        delete_last_row('criterion_entry', $delete_criterion);
+        delete_last_row('criterion_entry', $delete_criterion, 1);
     });
 
     // 增加一个result
@@ -253,16 +824,16 @@
         if(selected_index===0){
             bootbox.alert("You have to select the last result before adding a new one.")
         }else{
-            var selections = ['demo1', 'demo2'];
-            add_one_select_row(selections, 'result_entry', $delete_result);
+            add_one_select_row(window.TMP_METRICS, 'result_entry', $delete_result);
         }
     });
 
     // 删除一个result
     $delete_result.click(function () {
-        delete_last_row('result_entry', $delete_result);
+        delete_last_row('result_entry', $delete_result, 1);
         // 删除对应的map
-        delete_last_row('result_map', undefined);
+        if($('#result_entry tbody tr').length<$('#result_map tbody tr').length)
+            delete_last_row('result_map', undefined, 1);
     });
 
     function generate_one_tr_select_row(selections, select_id, onchange_fun_str){
@@ -280,7 +851,7 @@
             onchange_fun_str = ''
         }
         var html = "<select class='form-control multi-sort-name' id='" + select_id +"' " + onchange_fun_str + ">"  +
-            "<option disabled selected value>  -- select an method -- </option>";
+            "<option disabled selected value=''>  -- choose what to select -- </option>";
         for(var index=0;index<selections.length;index++){
             html += '<option value="' + selections[index] + '">' + selections[index] + '</option>'
         }
@@ -289,9 +860,17 @@
     }
 
     // 当result的select发生变化时触发。
-    function changeResultSelect(selectId) {
+    function changeResultSelect(selectId, input_value) {
         // selectId, 是哪个select对象在调用
+        $('.result-map-component').each(function () {
+           if($(this).css('display')==='none')
+               $(this).css('display', 'block');
+        });
+
         var value = document.getElementById(selectId).value;
+        if(input_value===undefined){
+            input_value = value;
+        }
         // 查看该map是否已经存在
         var parts = selectId.split('-');
         var index = parts[parts.length-1];
@@ -301,16 +880,235 @@
             // 插入一个map到result_map
             var html = "<tr>\n" +
                 "           <td>" + value + "</td>\n" +
-                "           <td><input value=" + value + " /></td>\n" +
+                "           <td><input value=" + input_value + " /></td>\n" +
                 "       </tr>";
             var table_tbody_name = '#result_map tbody';
             $(table_tbody_name).append(html);
         }else{ //说明已经有了对应的map，直接修改即可
             var $mapEle = $('#result_map tbody tr').eq(index-1).find('td');
             $mapEle.eq(0).html(value);
-            $mapEle.eq(1).find('input').attr('value', value);
+            $mapEle.eq(1).find('input').attr('value', input_value);
         }
     }
+    // 当Method的选择发生变化时
+    function changeMethodSelect() {
+        // 获取当前选项
+        var value = document.getElementById('method-select').value;
+        var criterion_entry = $('#criterion_entry-select-1');
+        var table_ele = $('#criterion_entry');
+        if(value==='avg' || value==='avg_std'){
+            criterion_entry.empty();
+            while(table_ele.find('tbody tr').length>1){
+                delete_last_row('criterion_entry', undefined, 1);
+            }
+            $('.criterion-component').each(function () {
+                $(this).css('display', 'none');
+            });
+
+        }else{
+            $('.criterion-component').each(function () { // 使用jquery控制元素
+                if($(this).css('display')==='none')
+                    $(this).css('display', 'block');
+            });
+            // 如果之前有内容了，就不要加入了
+            var selected = criterion_entry.find('option:selected').text();
+            if(selected==='' || selected===undefined)
+                addOptionsToSelect(criterion_entry, window.TMP_METRICS);
+        }
+    }
+
+    $("#summary_modal").on('hide.bs.modal', function (e) {
+        // 删除result_map
+        while($('#result_map tbody tr').length>0)
+            delete_last_row('result_map', undefined, 0);
+        $('.result-map-component').each(function () {
+           if($(this).css('display')==='block')
+               $(this).css('display', 'none');
+        });
+        // 删除多余的result
+        while($('#result_entry tbody tr').length>1)
+            delete_last_row('result_entry', $delete_result, 1);
+        // 将method设置到avg
+        $('#method-select').val('avg');
+        // 删除多余的criterion
+        while($('#criterion_entry tbody tr').length>1)
+            delete_last_row('criterion_entry', $delete_criterion, 1);
+        $('#criterion_entry-select-1').empty();
+        $('.criterion-component').each(function () {
+                $(this).css('display', 'none');
+        });
+        // 删除多余的horizontal
+        while($('#axis tbody tr').length>2)
+            delete_last_row('axis', $delete_axis, 2);
+    });
+
+   // add a row确认
+   $confirm_add_row.click(function () {
+       // 获取所有的input
+       var inputs = document.getElementsByName('input_row');
+       var row = {};
+       var index;
+       for(index=0;index<inputs.length;index++){
+           var input = inputs[index];
+           if(input.value!==undefined && input.value!=='' ){
+               if(input.id==='id'){
+                   row[input.id] = input.value.replace('/\s/g', '_') + '_' + generate_uuid();
+               }else{
+                   row[input.id] = input.value;
+               }
+           }
+       }
+       // check id是否为空
+       if(!('id' in row)){
+           bootbox.alert("`id` cannot be empty.");
+       }else{
+           // 不能是已经有的id
+           if(row['id'] in window.table_data){
+               bootbox.alert("Duplicated `id`.")
+           }else{
+               if(Object.keys(row).length===1){
+                   bootbox.alert("Only has `id` is not allowed.")
+               }else{
+                   add_a_row(row, false);
+                   $("#row_box").modal('hide');
+               }
+           }
+       }
+   });
+
+   $cancel_add_row.click(function () {
+       $("#row_box").modal('hide');
+   });
+   $("#row_box").on('hide.bs.modal', function (e) {
+       $("#add_row_dialogue").empty();
+   });
+
+    //点击reorder columns. TODO 根据表格的情况使这个button不能被选中
+    $choose_columns.click(function () {
+       generate_sortable_columns(window.column_order, window.column_dict, window.hidden_columns,
+           $("#columns_dialogue"));
+       var nestedSortables = [].slice.call(document.querySelectorAll('.nested-sortable'));
+
+       col_sortables = [];
+       for (var i = 0; i < nestedSortables.length; i++) {
+            col_sortables.push(new Sortable(nestedSortables[i], {
+                group: {
+                    'name': nestedSortables[i].getAttribute('id'),
+                    'pull':false,
+                    'put':false},
+                animation: 150,
+                fallbackOnBody:true,
+                swapThreshold:0.65,
+                dataIdAttr: 'title'
+            }));
+        }
+       //检查是否所有的checkbox都已经正确运行了
+        check_checkbox_valid($("#choose_column_nested"));
+
+        // 触发column的点击
+       $('input').change(function () {
+          var $cb = $(this);
+          if($cb[0].getAttribute('id')==='choose_column_checkbox') {
+              var $group_item = $cb.closest('.list-group-item');
+              var state = $cb.prop('checked');
+              change_children_state($group_item, state);
+              change_parent_state($group_item, state);
+          }
+       });
+    });
+   // 确认选择columns
+   $confirm_columns.click(function () {
+       var $nested = $("#choose_column_nested");
+       var new_column_order = get_new_column_order($nested, window.column_order);
+       var new_hidden_columns = window.hidden_columns;
+       get_new_hidden_columns($nested, new_hidden_columns, '');
+
+       $("#columns_box").modal('hide');
+       // 更新columns
+       if(window.column_order_updated) {
+           window.column_order = new_column_order;
+       }
+       if(window.hidden_columns_updated){
+           window.hidden_columns = new_hidden_columns;
+       }
+
+       if(window.column_order_updated || window.hidden_columns_updated)
+           initTable();
+       window.column_order_updated = false;
+       window.hidden_columns_updated = false;
+
+       for(var i=0;i<col_sortables.length;i++)
+       {
+           var sortable = col_sortables.pop();
+           sortable.destroy();
+       }
+
+   });
+    $("#columns_box").on('hide.bs.modal', function (e) {
+       $("#columns_dialogue").empty();
+    });
+    
+    // 删除summary
+    $('#delete_summary').click(function () {
+        $.ajax({
+            url: '/summary/summary_config',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify({
+                uuid: window.server_uuid
+            }),
+            success: function (value) {
+                if(value['status']==='success'){
+                    var summary_names = Object.keys(value['summary_names']);
+                    if(summary_names.length===1){
+                        bootbox.alert("There is no summary.");
+                    }else{
+                        var inputOptions = [];
+                        summary_names.forEach(function(summary_name) {
+                            if(summary_name!=='Create New Summary')
+                                inputOptions.push({text:summary_name, value:summary_name})
+                        });
+                        bootbox.prompt({
+                            title: "Choose summary to delete",
+                            inputType: 'checkbox',
+                            inputOptions: inputOptions,
+                            callback: function (result) {
+                                if(result===null)
+                                    return;
+                                if(result.length>0)
+                                    $.ajax({
+                                        url: '/summary/delete_summary',
+                                        type: 'POST',
+                                        dataType: 'json',
+                                        contentType: 'application/json;charset=UTF-8',
+                                        data: JSON.stringify({
+                                            uuid: window.server_uuid,
+                                            summary_names: result
+                                        }),
+                                        success: function (value) {
+                                            if(value['status']==='success')
+                                                success_prompt("Delete summary successfully.");
+                                            else
+                                                bootbox.alert("Fail to delete summary. " +value['msg']);
+                                        },
+                                        error: function () {
+                                            bootbox.alert("Fail to delete summary, check your connection with the server.")
+                                        }
+                                    })
+                            }
+                        });
+                    }
+                }else{
+                    bootbox.alert("Fail to delete, error from the server")
+                }
+            },
+            error: function (value) {
+                bootbox.alert("Check your connection with the server.")
+            }
+        });
+
+    })
 
 </script>
 </html>

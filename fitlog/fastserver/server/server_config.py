@@ -24,12 +24,12 @@ def read_server_config(config_path):
         # check configparser, 没有的话用默认值覆盖填写
         check_config(config)
 
-    all_data = {}
+    configs = {}
     # 读取settings
     settings = {}
     get_dict_from_config(config, 'frontend_settings', settings, 'bool')
     settings = {key.capitalize():value for key, value in settings.items()}
-    all_data['settings'] = settings
+    configs['settings'] = settings
 
     # 读取display_settings
     basic_settings = {}
@@ -38,42 +38,42 @@ def read_server_config(config_path):
         basic_settings[key] = int(basic_settings[key])
     for key in ['ignore_unchanged_columns']:
         basic_settings[key] = basic_settings[key]=='True'
-    all_data['basic_settings'] = basic_settings
+    configs['basic_settings'] = basic_settings
 
 
     # 读取data_settings
     hidden_logs = read_list_from_config(config, 'data_settings', 'hidden_logs', ',')
-    all_data['hidden_rows'] = {log:1 for log in hidden_logs}
+    configs['hidden_rows'] = {log:1 for log in hidden_logs}
     deleted_rows = read_list_from_config(config, 'data_settings', 'deleted_logs', ',')
-    all_data['deleted_rows'] = {log: 1 for log in deleted_rows}
+    configs['deleted_rows'] = {log: 1 for log in deleted_rows}
     if len(config.get('data_settings', 'filter_condition'))!=0:
-        all_data['filter_condition'] = json.loads(config.get('data_settings', 'filter_condition'))
-        for key in list(all_data['filter_condition'].keys()):
+        configs['filter_condition'] = json.loads(config.get('data_settings', 'filter_condition'))
+        for key in list(configs['filter_condition'].keys()):
             delete = False
-            if not isinstance(all_data['filter_condition'][key], (str, list, numbers.Number)):
+            if not isinstance(configs['filter_condition'][key], (str, list, numbers.Number)):
                 print(_colored_string("Unsupported type found in filter_condition in `{}`.".format(key), 'red'))
                 delete = True
-            if isinstance(all_data['filter_condition'][key], list):
-                for value in all_data['filter_condition'][key]:
+            if isinstance(configs['filter_condition'][key], list):
+                for value in configs['filter_condition'][key]:
                     if not isinstance(value, (str, numbers.Number)):
                         print(_colored_string("Unsupported type found in filter_condition in `{}`.".format(key), 'red'))
                         delete = True
             if delete:
-                all_data['filter_condition'].pop(key)
+                configs['filter_condition'].pop(key)
     else:
-        all_data['filter_condition'] = {}
+        configs['filter_condition'] = {}
 
     # 读取column_settings
     hidden_columns = read_list_from_config(config, 'column_settings', 'hidden_columns', ',')
-    all_data['hidden_columns'] = {column:1 for column in hidden_columns}
+    configs['hidden_columns'] = {column:1 for column in hidden_columns}
 
     # 读取exclude columns
     exclude_columns = read_list_from_config(config, 'column_settings', 'exclude_columns', ',')
-    all_data['exclude_columns'] = {column:1 for column in exclude_columns}
+    configs['exclude_columns'] = {column:1 for column in exclude_columns}
 
     # 读取editable_columns
     editable_columns = read_list_from_config(config, 'column_settings', 'editable_columns', ',')
-    all_data['editable_columns'] = {column:1 for column in editable_columns}
+    configs['editable_columns'] = {column:1 for column in editable_columns}
 
     # 读取column_order
     column_order = config.get('column_settings', 'column_order')
@@ -81,10 +81,10 @@ def read_server_config(config_path):
         column_order = json.loads(column_order)
     else:
         column_order = {}
-    all_data['column_order'] = column_order
+    configs['column_order'] = column_order
 
     # 保存config对象, 因为需要保留下注释
-    all_data['config'] = config
+    configs['config'] = config
 
     _dict = {}
     chart_exclude_columns = read_list_from_config(config, 'chart_settings', 'chart_exclude_columns', ',')
@@ -92,9 +92,9 @@ def read_server_config(config_path):
     _dict['max_points'] = config.getint('chart_settings', 'max_points')
     _dict['update_every'] = config.getint('chart_settings', 'update_every')
     _dict['max_no_updates'] = config.getint('chart_settings', 'max_no_updates')
-    all_data['chart_settings'] = _dict
+    configs['chart_settings'] = _dict
 
-    return all_data
+    return configs
 
 def save_config(all_data, config_path):
     config = all_data['config']

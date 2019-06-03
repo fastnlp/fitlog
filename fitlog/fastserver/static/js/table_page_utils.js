@@ -24,9 +24,9 @@ function get_bg_color(depth, max_depth) {
 function generate_sortable_columns(column_order, column_dict, hidden_columns, ele) {
     /*
     column_order: json对象，是每一级的顺序，可以通过OrderKeys元素保证顺序
-    column_dict: json对象，key是path，value是column的item
-    hidden_columns: json对象, 如果某个path在里面，则直接该内容是隐藏的
-    ele: 将内容append到哪里
+    column_dict: json对象，2级json，key是path，value是column的item
+    hidden_columns: json对象, 如果某个path在里面，则该内容是隐藏的
+    ele: 将内容append到哪里, 一般是某个modal的内部元素。
      */
 
     var max_depth = get_max_col_ord_depth(column_order);
@@ -250,13 +250,13 @@ function get_new_hidden_columns(sortable_item, new_hidden_columns, prefix) {
 
 
 // 以下的几个函数用于生成增加row的modal
-
-function add_a_row(row){
+function add_a_row(row, update_to_server){
     //row: {'id':, 'key1': value}
     // 增加到table中
     $table.bootstrapTable('prepend', row);
     // 保存到服务器
-    update_new_row(row);
+    if(update_to_server || update_to_server===undefined)
+        update_new_row(row);
     window.table_data[row['id']] = row;
 }
 
@@ -360,6 +360,7 @@ function generate_add_input(title, path, id) {
 }
 
 // 将当前设置保存到文件; 如果有filter条件，一并保存，如果有filter条件将触发刷新页面。
+// TODO 修改为弹窗
 function save_filter_conditions(){
     // 获取当前filter条件
     var filter_divs = document.getElementsByClassName('filter-control');
@@ -384,7 +385,28 @@ function save_filter_conditions(){
         if($table.bootstrapTable('getData', false).length===0){
             bootbox.alert("There is no data qualify your condition.")
         }else{
-            update_filter_condition(condition, false);
+            bootbox.prompt({
+                title:"Whether to save filter conditions.",
+                inputType:'radio',
+                inputOptions:[
+                    {
+                        text:'True',
+                        value: 'true',
+                    },{
+                        text:'False',
+                        value: 'false',
+                    }
+                ],
+                callback:function (result) {
+                    console.log(result);
+                    if(result==='true'){
+                        update_filter_condition(condition, false);
+                    }else if(result==='false'){
+                        update_filter_condition(condition, true);
+                    }
+                }
+            });
+
         }
     }else{
          update_filter_condition(condition, true);
@@ -423,7 +445,7 @@ function change_config(){
                             var dialogue = $("#change_config_dialogue");
                             dialogue.empty();
                             $('#config_box').modal('show');
-                            generate_single_choose_config_modal(configs, dialogue)
+                            append_single_choices(configs, dialogue, 'config_name_checkbox', 'config')
                         }
                     }else{
                         bootbox.alert("The current config name:" + window.save_config_name  +" cannot be found in server," +
@@ -439,16 +461,16 @@ function change_config(){
     })
 }
 
-function generate_single_choose_config_modal(configs, ele){
-    // 给定一个configs的json文件，被选中为1. 将生成的html append到ele
+function append_single_choices(configs, ele, input_id, input_name){
+    // 给定一个configs的json文件，被选中为1. 将生成的html append到ele. ele通过$('#id')获取
     var html = '';
     for(var config_name in configs){
-        html += generate_radio_config_item(config_name, configs[config_name]);
+        html += generate_radio_item(config_name, configs[config_name], input_id, input_name);
     }
     ele.append(html);
 }
 
-function generate_radio_config_item(config_name, checked) {
+function generate_radio_item(config_name, checked, input_id, input_name) {
     // 给定config_name是否checked，返回对应的html
     if(checked)
         checked = 'checked';
@@ -457,8 +479,8 @@ function generate_radio_config_item(config_name, checked) {
 
     var html = "              <div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
         "                      <label class=\"toggle\" style=\"margin-bottom: 0\">\n" +
-        "                        <input class=\"toggle__input\" type=\"radio\" id='config_name_checkbox' " +
-        " name='config' value='" + config_name + "'"  + checked + " style='position:static;margin:0;display:none'>\n" +
+        "                        <input class=\"toggle__input\" type=\"radio\" id='" + input_id + "' " +
+        " name='" + input_name +"' value='" + config_name + "'"  + checked + " style='position:static;margin:0;display:none'>\n" +
         "                        <span class=\"toggle__label\" style='padding: 0 0 0 24px'>\n" +
         "                          <span class=\"toggle__text\">" + config_name + "</span>\n" +
         "                        </span>\n" +
