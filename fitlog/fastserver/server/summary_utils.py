@@ -490,7 +490,8 @@ def max_method(data, base_on, result_on):
                     valid_logs.append(log)
                     break
         if len(valid_logs)>1:
-            max_log = max(*valid_logs, key=itemgetter('SortedKey'))
+            valid_logs.sort(key=itemgetter('SortedKey'), reverse=True)
+            max_log = valid_logs[0]
         elif len(valid_logs)==1:
             max_log = valid_logs[0]
         else:
@@ -521,7 +522,8 @@ def min_method(data, base_on, result_on):
                     valid_logs.append(log)
                     break
         if len(valid_logs)>1:
-            min_log = min(*valid_logs, key=itemgetter('SortedKey'))
+            valid_logs.sort(key=itemgetter('SortedKey'))
+            min_log = valid_logs[0]
         elif len(valid_logs)==1:
             min_log = valid_logs[0]
         else:
