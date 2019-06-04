@@ -17,29 +17,6 @@ import warnings
 
 from .utils import LogFilter
 
-
-def get_unchanged_columns(logs):
-    pass
-
-
-def get_unselectable_columns(logs):
-    """
-
-    :param logs:
-    :return:
-    """
-
-
-def replace_too_long_value(logs, str_max_length):
-    """
-
-    :param logs:
-    :param str_max_length:
-    :return:
-    """
-    pass
-
-
 def generate_columns(logs, hidden_columns=None, column_order=None, editable_columns=None,
                      exclude_columns=None, ignore_unchanged_columns=True,
                      str_max_length=20, round_to=6, num_extra_log=0,
@@ -107,7 +84,7 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
     if ignore_unchanged_columns and len(logs)>1:
         must_include_columns = ['meta-fit_id', 'meta-git_id']
         for key, value in field_values.items():
-            if len(value)==len(logs)-num_extra_log:
+            if len(value) >= len(logs)-num_extra_log:
                 value_set = set(value)
                 # 每次都是一样的结果, 但排除只有一个元素的value以及可修改的column
                 if len(value_set) == 1 and len(value)!=1 and key not in editable_columns:
@@ -123,7 +100,7 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
 
     for key, value in field_values.items():
         value_set = set(value)
-        if len(value_set) == len(value)-num_extra_log or len(value_set)==1:
+        if len(value_set) >= len(value)-num_extra_log or len(value_set)==1:
             unselectable_columns[key] = 1
 
     # 增加一个默认可以edit的column
