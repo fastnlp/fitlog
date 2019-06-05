@@ -355,12 +355,12 @@ class Committer:
         logs = [_arguments_flag, "Run ", " ".join(sys.argv), "\n"]
         logs += [_system_flag]
         sleep_cnt = 0
-        while os.path.isfile(self.work_dir + "/.git_backup") or os.path.isfile(self.work_dir + "/.gitignore_backup"):
+        while os.path.isdir(self.work_dir + "/.git_backup") or os.path.isfile(self.work_dir + "/.gitignore_backup"):
             time.sleep(1)
             sleep_cnt += 1
             if sleep_cnt == 10:
-                raise TimeoutError("One auto-commit must run after another. Please wait for a moment."
-                                   "\nThis can be easily solved, please refer to our documents.")
+                raise TimeoutError("One auto-commit must run after another. Please run again a few seconds later."
+                                   "\nIf you fail several times, please refer to our documents.")
             # TODO add the link
         logs += self._switch_to_fast_git(self.work_dir)
         commit_files = self._get_watched_files()
