@@ -41,7 +41,7 @@ class Info(dict):
 
 def _colored_string(string: str, color: str or int) -> str:
     """在终端中显示一串有颜色的文字
-    
+
     :param string: 在终端中显示的文字
     :param color: 文字的颜色
     :return:
@@ -64,7 +64,7 @@ class Committer:
     """
     用于自动 commit 的类，fastgit子模块使用此类实现单例模式。实例化后的对象会记录工作目录，配置文件路径等信息。
     对外只暴露有用的接口，内部处理函数的文档请在代码中查看。
-    
+
     """
     
     def __init__(self):
@@ -77,7 +77,7 @@ class Committer:
     
     def _find_config_file(self, run_file_path: str = None, cli: bool = True) -> str:
         """
-        
+
         :param run_file_path: 执行 commit 操作文件的目录
         :param cli: 是否在命令行输出信息
         :return: 返回workdir，同时在 self.config_file_path 中存储配置文件路径
@@ -115,7 +115,7 @@ class Committer:
     
     def _read_config(self):
         """在获取配置文件路径后，读取其中的配置。采取保守策略，遇到错误自动跳过。
-        
+
         :return:
         """
         config = configparser.ConfigParser()
@@ -137,7 +137,7 @@ class Committer:
     
     def _get_watched_files(self) -> List[str]:
         """在获取监管文件的规则后，获取具体的文件列表
-        
+
         :return: 即将被 commit 的文件的列表
         """
         rules = self.watched_rules
@@ -160,7 +160,7 @@ class Committer:
     @staticmethod
     def _switch_to_fast_git(work_dir: str) -> List[str]:
         """将工作目录从通常的 git 模式切换成 fastgit 模式
-        
+
         :param work_dir: 工作目录的绝对路径
         :return: 返回系统输出的情况，用于出现错误时的调试
         """
@@ -177,7 +177,7 @@ class Committer:
     @staticmethod
     def _switch_to_standard_git(work_dir: str) -> List[str]:
         """将工作目录从 fastgit 模式切换成通常的 git 模式
-        
+
         :param work_dir: 工作目录的绝对路径
         :return: 返回系统输出的情况，用于出现错误时的调试
         """
@@ -193,7 +193,7 @@ class Committer:
     @staticmethod
     def _check_directory(work_dir: str, cli: bool = True) -> bool:
         """检查指定目录是否已经存在 fitlog 项目
-        
+
         :param work_dir: 工作目录的绝对路径
         :param cli: 是否在命令行输出信息
         :return: 返回是否存在 fitlog 项目
@@ -206,7 +206,7 @@ class Committer:
     
     def _commit_files(self, watched_files: List[str], commit_message: str) -> List[str]:
         """利用当前 git（如果运行正常，应该是 fastgit 模式）进行一次 commit
-        
+
         :param watched_files: 即将被 commit 的文件的列表
         :param commit_message: commit的message
         :return: 返回系统输出的情况，用于出现错误时的调试
@@ -221,7 +221,7 @@ class Committer:
     
     def _save_log(self, logs: List[str]):
         """ 将要存储的信息存储到默认的 fitlog
-        
+
         :param logs: 要存储的信息
         :return:
         """
@@ -230,7 +230,7 @@ class Committer:
     
     def _get_commits(self, cli: bool = False) -> Info:
         """从项目目录下的记录获取 fastgit 的所有 commit-id
-        
+
         :param cli:
         :return: 返回带状态码的信息。如果成功，信息为 fastgit 的所有 commit-id 的数组
         """
@@ -253,7 +253,7 @@ class Committer:
     
     def _get_last_commit(self, cli: bool = False) -> Info:
         """从项目目录下的记录获取 fastgit 的上一次 commit-id
-        
+
         :param cli:
         :return: 返回带状态码的信息。如果成功，信息为 fastgit 的上一次 commit-id
         """
@@ -269,7 +269,7 @@ class Committer:
     
     def _revert(self, commit_id: str, path: str = None, cli: bool = False, id_suffix: bool = False) -> Info:
         """回退 fastgit 的一个目标版本到指定放置路径
-        
+
         :param commit_id: 回退版本的 commit-id
         :param path: 回退版本的指定放置路径
         :param cli:
@@ -334,7 +334,7 @@ class Committer:
     # 对用户暴露的接口
     def commit(self, file: str, commit_message: str = None) -> Info:
         """用户用该方法进行 commit
-        
+
         :param file: 执行文件路径，期望传入用户程序中的 __file__
         :param commit_message: 自动 commit 的 commit-message
         :return: 返回带状态码的信息。如果成功，信息为 commit-id
@@ -373,21 +373,21 @@ class Committer:
     # 对包内组件暴露的接口
     def fitlog_last_commit(self) -> Commit:
         """返回 self.last_commit 中记录的上一次的commit
-        
+
         :return: Commit是一个元组，第一个参数为 commit-id，第二个参数为 commit-message
         """
         return self.last_commit
     
     def fitlog_commits(self) -> List[Commit]:
         """返回 self.commits 中记录的所有的commit
-        
+
         :return: 返回一个 Commit 类型的数组
         """
         return self.commits
     
     def get_config(self, run_file_path: str = None) -> Info:
         """通过执行文件的路径获取配置信息
-        
+
         :param run_file_path: 执行文件的路径
         :return: 返回带状态码的信息。如果成功，信息为工作目录的路径
         """
@@ -399,7 +399,7 @@ class Committer:
     
     def fitlog_revert(self, commit_id: str, run_file_path: str = None, id_suffix: bool = False) -> Info:
         """fitlog 调用此接口进行版本回退
-        
+
         :param commit_id: 需要回退版本的 commit-id
         :param run_file_path: 执行文件的路径 TODO:检查这个变量是否需要
         :param id_suffix: 回退版本的放置文件夹是否包含 commit-id 做为后缀
@@ -418,19 +418,21 @@ class Committer:
         :param work_dir: 工作目录的路径
         :return: 返回带状态码的信息。如果成功，信息为一个 Commit 类型的 commit 信息
         """
+        if work_dir is None:
+            work_dir = '.'
         work_dir = os.path.abspath(work_dir)
         try:
-            # 忽略错误信息
-            lines = subprocess.Popen("cd %s && git log --oneline" % work_dir, shell=True,
-                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.readlines()
-            if len(lines) != 0:
-                line = lines[0].decode('utf-8')
-                git_id = line[:line.index(' ')]
-                git_msg = line[line.index(' ') + 1:].strip()
-            else:
-                git_id = None
-                git_msg = None
-            return Info(0, Commit(git_id, git_msg))
+            master = work_dir + "/.git/logs/refs/heads/master"
+            with open(master, "r") as fin:
+                lines = fin.readlines()
+            cuts = lines[-1].strip().split()
+            msg = "\t"
+            for each in cuts:
+                if msg[0] != "\t":
+                    msg += each + " "
+                if each.startswith("commit"):
+                    msg = " "
+            return Info(0, Commit(cuts[1], msg.strip()))
         except FileNotFoundError:
             return Info(1, "Error: Some error occurs")
     
@@ -441,29 +443,28 @@ class Committer:
         :param work_dir: 工作目录的路径
         :return: 返回带状态码的信息。如果成功，信息为一个 Commit 类型的 commit 信息
         """
+        if work_dir is None:
+            work_dir = '.'
         work_dir = os.path.abspath(work_dir)
         try:
-            Committer._switch_to_fast_git(work_dir)
-            # 忽略错误信息
-            lines = subprocess.Popen("cd %s && git log --oneline" % work_dir, shell=True,
-                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.readlines()
-            if len(lines) != 0:
-                line = lines[0].decode('utf-8')
-                git_id = line[:line.index(' ')]
-                git_msg = line[line.index(' ') + 1:].strip()
-            else:
-                git_id = None
-                git_msg = None
-            
-            Committer._switch_to_standard_git(work_dir)
-            return Info(0, Commit(git_id, git_msg))
+            master = work_dir + "/.fitlog/logs/refs/heads/master"
+            with open(master, "r") as fin:
+                lines = fin.readlines()
+            cuts = lines[-1].strip().split()
+            msg = "\t"
+            for each in cuts:
+                if msg[0] != "\t":
+                    msg += each + " "
+                if each.startswith("commit"):
+                    msg = " "
+            return Info(0, Commit(cuts[1], msg.strip()))
         except FileNotFoundError:
             return Info(1, "Error: Some error occurs")
     
     # 命令行操作所需的组件
     def revert_to_directory(self, commit_id: str, path: str, id_suffix: bool):
         """命令行用来回退 fastgit 的一个目标版本到指定放置路径
-        
+
         :param commit_id: 回退版本的 commit-id
         :param path: 回退版本的指定放置路径
         :param id_suffix: 回退版本的放置文件夹是否包含 commit-id 做为后缀
@@ -473,7 +474,7 @@ class Committer:
     
     def init_project(self, pj_name: str, version: str = "normal", hide: bool = False, git: bool = True) -> int:
         """命令行用来初始化一个 fitlog 项目
-        
+
         :param pj_name: 项目名称`
         :param version: 项目初始化文件夹的版本，目前只有 normal 这一种
         :param hide: 是否隐藏 .fitconfig 文件到 .fitlog 文件夹中
@@ -531,7 +532,7 @@ class Committer:
     
     def short_logs(self, show_now: bool = False, last_num: int = None):
         """在命令行用来查看 fastgit 的自带 logs
-        
+
         :param show_now: 是否显示当前版本在 logs 中的位置
         :param last_num: 显示最近的 {last_num} 条记录
         :return:
