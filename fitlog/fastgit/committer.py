@@ -300,11 +300,11 @@ class Committer:
                 return Info(1, 'Error: Can not find the commit %s' % commit_id)
             else:
                 if path is None:
-                    path = work_dir + "-revert"
+                    path = work_dir + "_revert"
                 else:
                     path = os.path.abspath(path)
                 if self.revert_with_commit_id or id_suffix:
-                    path += "-" + commit_id[:6]
+                    path += "_" + commit_id[:6]
                 
                 if os.path.abspath(path).startswith(work_dir + '/'):
                     if cli:
@@ -319,7 +319,6 @@ class Committer:
                         return Info(1, "Error: Some error occurs in cp")
                 self._switch_to_fast_git(path)
                 ret_code = os.system("cd %s && git reset --hard %s" % (path, commit_id))
-                self._switch_to_standard_git(path)
                 if ret_code != 0:
                     if cli:
                         print(_colored_string("Some error occurs in git reset", "red"))
