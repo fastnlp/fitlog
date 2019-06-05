@@ -3,7 +3,7 @@ import sys
 import configparser
 from datetime import datetime
 from fnmatch import fnmatch
-import subprocess
+import time
 from typing import List, Union
 
 _commit_flag = '-------commit-------\n'
@@ -354,6 +354,14 @@ class Committer:
             return Info(1, "Error: no file matches the rules")
         logs = [_arguments_flag, "Run ", " ".join(sys.argv), "\n"]
         logs += [_system_flag]
+        sleep_cnt = 0
+        while os.path.isfile(self.work_dir + "/.git_backup") or os.path.isfile(self.work_dir + "/.gitignore_backup"):
+            time.sleep(1)
+            sleep_cnt += 1
+            if sleep_cnt == 10:
+                raise TimeoutError("One auto-commit must run after another. Please wait for a moment."
+                                   "\nThis can be easily solved, please refer to our documents.")
+            # TODO add the link
         logs += self._switch_to_fast_git(self.work_dir)
         commit_files = self._get_watched_files()
         msg = self._commit_files(commit_files, commit_message)
