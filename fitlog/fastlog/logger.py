@@ -122,7 +122,7 @@ class Logger:
         设定log 文件夹的路径，在进行其它操作前必须先指定日志路径
 
         :param log_dir: log 文件夹的路径
-        :param new_log: 是否开始新的一条log记录
+        :param new_log: 是否开始新的一条log记录. 一般用于同一次实验需要记录多个数据集的performance
         :return:
         """
         if new_log:
@@ -223,18 +223,17 @@ class Logger:
         """
         logger自动调用此方法添加meta信息
         """
-        if not hasattr(self, 'fit_id'): # 获取过了
-            self.fit_id = None
+        if self.fit_id is None: # 没有获取过
             self.fit_msg = None
             if committer.last_commit is not None:
                 self.fit_id = committer.last_commit[0]
                 self.fit_msg = committer.last_commit[1]
-            self.git_id = None
-            self.git_msg = None
-            res = committer.git_last_commit(self._log_dir)
-            if res['status'] == 0:
-                self.git_id = res['msg'][0]
-                self.git_msg = res['msg'][1]
+            if self.git_id is None:
+                self.git_msg = None
+                res = committer.git_last_commit(self._log_dir)
+                if res['status'] == 0:
+                    self.git_id = res['msg'][0]
+                    self.git_msg = res['msg'][1]
 
         _dict = {}
         for value, name in zip([self.fit_id, self.git_id, self.fit_msg, self.git_msg],

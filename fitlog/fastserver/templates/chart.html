@@ -137,9 +137,9 @@
         height: document.body.clientHeight*0.40,
         padding: [20, 210, 30, 50],
       });
-      if(data.length>max_steps){
-          data = data.slice(-max_steps);
-      }
+      // if(data.length>max_steps){
+      //     data = data.slice(-max_steps);
+      // }
       chart.source(data, {
         step: {
           range: [0, 1]
