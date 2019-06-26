@@ -42,7 +42,6 @@ def _replace_nan_inf(d):
             d[k] = "NaN"
 
 def check_uuid(gold_uuid, _uuid):
-    return None # TODO delete
     if gold_uuid==_uuid:
         return None
     else:

@@ -45,7 +45,6 @@ def chart():
     replace_nan_inf(points)
 
     return render_template('chart.html', log_dir=log_dir, data=points, chart_uuid=_uuid,
-                           max_steps=max_points,
                            server_uuid=all_data['uuid'],
                            update_every=update_every_second*1000,
                            max_no_updates=all_data['chart_settings']['max_no_updates'],
@@ -74,7 +73,8 @@ def chart_new_step():
     else:
         points['finish'] = True
 
-    replace_nan_inf(points)
+    replace_nan_inf(points)  # points内部是{'loss':[{}, {}, {}],
+    #                                       'metric':[{}, {}]}
 
     return jsonify(steps=points)
 
