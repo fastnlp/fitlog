@@ -430,7 +430,14 @@ class Committer:
             work_dir = '.'
         work_dir = os.path.abspath(work_dir)
         try:
-            master = work_dir + "/.git/logs/refs/heads/master"
+            max_step = 10
+            step = 0
+            while not os.path.isdir(os.path.join(work_dir, '.git')):
+                work_dir = os.path.join(work_dir, '..')
+                if step>max_step or work_dir==os.path.abspath(os.sep):
+                    break
+                step += 1
+            master = os.path.join(work_dir, *"/.git/logs/refs/heads/master".split('/'))
             with open(master, "r") as fin:
                 lines = fin.readlines()
             cuts = lines[-1].strip().split()

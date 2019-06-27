@@ -4,6 +4,8 @@ from .utils import flatten_dict
 
 from collections import defaultdict
 import re
+import random
+from itertools import chain
 
 class ChartStepLogHandler:
     def __init__(self, save_log_dir, uuid, round_to=6, max_steps=400, wait_seconds=60,
@@ -192,24 +194,18 @@ def _refine_path(paths):
 def _refine_logs(logs, max_points, round_to=6):
     if len(logs)<max_points:
         return logs
-    log_per_bin = len(logs)//max_points
-    left_log_num = len(logs) - len(logs)//max_points*max_points
-    new_logs = []
-    for i in range(min(max_points, len(logs))):
-        _dict = defaultdict(list)
-        start_idx = max(i*log_per_bin, i)
-        for j in range(log_per_bin):
-            k = start_idx + j
-            log = logs[k]
-            _dict['value'].append(log['value'])
-        if left_log_num>-1:
-            log = logs[start_idx + log_per_bin]
-            _dict['value'].append(log['value'])
-            left_log_num -= 1
-        _dict['value'] = round(sum(_dict['value'])/len(_dict['value']), round_to)
-        _dict['step'] = int(log_per_bin/2 + start_idx)
-        _dict['name'] = log['name']
-        new_logs.append(_dict)
+
+    groups = defaultdict(list)
+    for log in logs:
+        groups[log['name']].append(log)
+
+    for group_name in list(groups.keys()):
+        group = groups[group_name]
+        if len(group)>max_points:
+            group = [log for log in group if random.random<len(group)/max_points]
+            groups[group_name] = group
+    new_logs = list(chain(*groups.values()))
+
     return new_logs
 
 
