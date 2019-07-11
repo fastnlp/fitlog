@@ -77,6 +77,7 @@ def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
     os.chdir(os.path.dirname(os.path.abspath(__file__))) # 可能需要把运行路径移动到这里
     all_data['root_log_dir'] = log_dir # will be used by chart_app
     server_wait_seconds = int(standby_hours*3600)
+    print("This server will automatically shutdown if no api access for {} hours.".format(standby_hours))
     all_data['log_config_name'] = log_config_name
     all_data['log_reader'] = log_reader
     if token is None:

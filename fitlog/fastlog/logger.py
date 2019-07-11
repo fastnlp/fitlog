@@ -54,6 +54,21 @@ def _check_log_dir(func):
     
     return wrapper
 
+def _check_git_id(func):
+    """
+    获取当前的文件的git id，如果之后再获取，可能已经是另外的git了
+
+    :param func:
+    :return:
+    """
+    def wrapper(*args, **kwargs):
+        if args[0].initialized == False and args[0].git_id is None:
+            res = committer.git_last_commit(args[0]._log_dir)
+            if res['status'] == 0:
+                args[0].git_id = res['msg'][0]
+                args[0].git_msg = res['msg'][1]
+        return func(*args, **kwargs)
+    return wrapper
 
 class Logger:
     """
@@ -67,7 +82,9 @@ class Logger:
         self._cache = []
         self._debug = False
         self.fit_id = None
+        self.fit_msg = None
         self.git_id = None
+        self.git_msg = None
         
         self._log_dir = None
     
@@ -80,6 +97,7 @@ class Logger:
         self._debug = True
     
     @_check_debug
+    @_check_git_id
     def commit(self, file: str, fit_msg: str = None):
         """
         调用 committer.commit 进行自动 commit
@@ -91,17 +109,15 @@ class Logger:
         msg = committer.commit(file=file, commit_message=fit_msg)
         if msg['status'] == 0:  # 成功了
             config = committer.config
-            self.fit_id = msg['msg']
+            self.fit_id = committer.last_commit[0]
+            self.fit_msg = committer.last_commit[1]
             self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')
             self.default_log_dir = os.path.join(committer.work_dir, config.get('log_settings', 'default_log_dir'))
-            # 获取git的id
-            res = committer.git_last_commit(self._log_dir)
-            if res['status'] == 0:
-                self.git_id = res['msg'][0]
         else:
             raise RuntimeError("It seems like you are not running under a folder governed by fitlog.\n" + msg['msg'])
     
     @_check_debug
+    @_check_git_id
     def set_save_on_first_metric_or_loss(self, flag: bool = True):
         """
         是否只在 metric操作后创建 log 文件
@@ -117,12 +133,13 @@ class Logger:
         self.save_on_first_metric_or_loss = flag
     
     @_check_debug
+    @_check_git_id
     def set_log_dir(self, log_dir: str, new_log: bool=False):
         """
         设定log 文件夹的路径，在进行其它操作前必须先指定日志路径
 
         :param log_dir: log 文件夹的路径
-        :param new_log: 是否开始新的一条log记录
+        :param new_log: 是否开始新的一条log记录. 一般用于同一次实验需要记录多个数据集的performance
         :return:
         """
         if new_log:
@@ -219,22 +236,15 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
+    @_check_git_id
     def __add_meta(self):
         """
         logger自动调用此方法添加meta信息
         """
-        if not hasattr(self, 'fit_id'): # 获取过了
-            self.fit_id = None
-            self.fit_msg = None
+        if self.fit_id is None: # 没有获取过
             if committer.last_commit is not None:
                 self.fit_id = committer.last_commit[0]
                 self.fit_msg = committer.last_commit[1]
-            self.git_id = None
-            self.git_msg = None
-            res = committer.git_last_commit(self._log_dir)
-            if res['status'] == 0:
-                self.git_id = res['msg'][0]
-                self.git_msg = res['msg'][1]
 
         _dict = {}
         for value, name in zip([self.fit_id, self.git_id, self.fit_msg, self.git_msg],
@@ -267,6 +277,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
+    @_check_git_id
     def add_best_metric(self, value: Union[int, str, float, dict], name: str = None):
         """
         用于添加最好的 metric 。用此方法添加的值，会被显示在 metric 这一列中。
@@ -285,6 +296,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
+    @_check_git_id
     def add_metric(self, value: Union[int, str, float, dict], step: int, name: str = None, epoch: int = None):
         """
         用于添加 metric 。用此方法添加的值，会被记录在 metric 这一列中
@@ -308,6 +320,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
+    @_check_git_id
     def add_loss(self, value: Union[int, str, float, dict], step: int, name: str = None, epoch: int = None):
         """
         用于添加 loss。用此方法添加的值，会被记录在 loss 这一列中
@@ -331,6 +344,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
+    @_check_git_id
     def add_hyper(self, value: Union[int, str, float, dict, argparse.Namespace, ConfigParser], name=None):
         """
         用于添加超参数。用此方法添加到值，会被放置在 hyper 这一列中
@@ -352,6 +366,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
+    @_check_git_id
     def add_other(self, value: Union[int, str, float, dict], name: str = None):
         """
         用于添加其它参数
@@ -369,6 +384,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
+    @_check_git_id
     def add_hyper_in_file(self, file_path: str):
         """
         从文件读取参数。如demo.py所示，两行"#######hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
@@ -434,6 +450,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
+    @_check_git_id
     def add_progress(self, total_steps: int = None):
         """
         用于前端显示当前进度条。传入总的step数量
