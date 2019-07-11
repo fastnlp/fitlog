@@ -84,7 +84,7 @@ def summary_selections():
         if 'config_name' in request.json:
             logs = read_logs(request.json['config_name'], all_data['root_log_dir'])
         elif 'log_names' in request.json:
-            logs = read_logs(request.json['log_names'], all_data['root_log_dir'])
+            logs = read_logs(request.json['log_names'], all_data['root_log_dir'], all_data['extra_data'])
         else:
             raise ValueError("Corrupted request.")
         if isinstance(logs, dict):
@@ -117,7 +117,7 @@ def new_summary():
         result_maps = request.json['result_maps']
         selected_data = request.json['selected_data']
         summary_name = request.json['summary_name']
-        extra_data = []
+        extra_summary = []
         summary_names = _get_all_summuries(all_data['root_log_dir'])
         if summary_name in summary_names:
             request_summary = {'vertical': vertical,
@@ -128,11 +128,11 @@ def new_summary():
                                'result_maps':result_maps}
             summary = read_summary(all_data['root_log_dir'], summary_name)
             if _summary_eq(request_summary, summary):
-                extra_data = summary.pop('extra_data', [])
+                extra_summary = summary.pop('extra_data', {})
         # {'data': data, 'unchanged_columns':unchange_columns, 'column_order': new_column_order, 'column_dict':new_column_dict,
         #            'hidden_columns': new_hidden_columns, 'status':}
         return jsonify(generate_summary_table(vertical, horizontals, method, criteria, results, result_maps, selected_data,
-                     all_data['root_log_dir'], extra_data))
+                     all_data['root_log_dir'], all_data['extra_data'], extra_summary))
 
     except Exception as e:
         print(e)

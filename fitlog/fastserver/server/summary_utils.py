@@ -15,13 +15,14 @@ import re
 from ..server.table_utils import merge as merge_use_b, expand_dict
 from .table_utils import expand_dict
 from .table_utils import generate_columns
+from copy import deepcopy
 
 def check_uuid_summary(gold_uuid, _uuid):
     if gold_uuid==_uuid:
         return None
     else:
         return {'status': 'fail',
-                'msg': "Check the port, it seems like you are accessing the wrong port."}
+                'msg': "It seems like your page is out-of-date, please refresh."}
 
 
 def read_summary(root_log_dir:str, summary_name):
@@ -102,8 +103,10 @@ def read_logs(log_name, root_log_dir, extra_data=None):
         logs = log_reader.read_certain_logs(log_names)
         if len(logs) != len(log_names):
             not_found_log = set(log_names) - set([log['id'] for log in logs])
-            print(_colored_string("The following logs are not found {}.".format(
-                        list(not_found_log)), 'blue'))
+            for log in not_found_log:
+                if log not in extra_data:
+                    print(_colored_string("The following logs are not found {}.".format(
+                                list(not_found_log)), 'blue'))
         # 将extra_data合并到log中
         if extra_data==None:
             extra_data = {}
@@ -118,15 +121,15 @@ def read_logs(log_name, root_log_dir, extra_data=None):
             else:
                 all_logs.append(log)
         for key, value in extra_log_dict.items():
-            if 'id' in value:  # 说明是用户自己手动加入的
+            if 'id' in value and key in log_name:  # 说明是用户自己手动加入的
                 all_logs.append(value)
         logs = all_logs
     else:
         return {'status':'fail', 'msg':"Unknown data source."}
-    filtered_logs = []
-    for log in logs:  # 排除用户自己加入的数据
-        if re.match('^log_\d{8}_\d{6}$', log['id']):
-            filtered_logs.append(log)
+    filtered_logs = logs
+    # for log in logs:  # 排除用户自己加入的数据
+    #     if re.match('^log_\d{8}_\d{6}$', log['id']):
+    #         filtered_logs.append(log)
     return filtered_logs
 
 def get_summary_selection_from_logs(logs):
@@ -259,9 +262,9 @@ def _summary_eq(summary1, summary2):
     return True
 
 def generate_summary_table(vertical, horizontals, method, criteria, results, result_maps, selected_data,
-                     root_log_dir, extra_data):
+                     root_log_dir, extra_data, extra_summary):
     # extra_data: [{一级}]
-    logs = read_logs(selected_data, root_log_dir)
+    logs = read_logs(selected_data, root_log_dir, extra_data)
     if isinstance(logs, dict): # 发生了错误了
         return logs
 
@@ -306,27 +309,28 @@ def generate_summary_table(vertical, horizontals, method, criteria, results, res
     no_criterion_log = []
     for index, log in enumerate(flat_logs):
         catch = False  # 替换过一次
-        for result, mapped_name in result_map_dict.items():
+        # todo 如果max的key与result是一致的话，会出现问题
+        copy_log = deepcopy(log)
+        for result, mapped_name in result_map_dict.items():  #result是需要取出的值，mapped_name是映射为的name
             if result in log:
-                if result==mapped_name:
-                    catch = True
-                    continue
-                if mapped_name in log:
-                    duplicate_maps.append((mapped_name, log['id']))
-                else:
-                    log[mapped_name] = log[result]  # 进行映射
-                    log.pop(result)
+                if result!=mapped_name:
+                    if mapped_name in log:  # 映射为了log中已经有的值
+                        duplicate_maps.append((mapped_name, log['id']))
+                    else:
+                        log[mapped_name] = log[result]  # 进行映射
+                        # log.pop(result)  # 为什么要pop出来？
                 catch = True
         at_least_on_criterion = len(criteria)==0
         for criterion in criteria:
-            if criterion in log:
+            if criterion in copy_log:
                 at_least_on_criterion = True
         if not catch:
             no_result_log.append(index)
         if not at_least_on_criterion:
             no_criterion_log.append(index)
     if len(duplicate_maps)!=0:
-        return {'status':'fail', 'msg':"Duplicate mapped name:{}.".format(duplicate_maps)}
+        return {'status':'fail', 'msg':"Conflict mapped name, there already exist these names in the log."
+                                       " Please change the following mapped names.".format(duplicate_maps)}
 
     if no_result_log:
         print(_colored_string("Ignore {} logs, since they have no result entry.".format(len(no_result_log)), 'red'))
@@ -418,8 +422,8 @@ def generate_summary_table(vertical, horizontals, method, criteria, results, res
         summary_results = [grouped_results]
         summary_sources['0'] = flatten_dict('', grouped_sources)
 
-    # 6. 加入extra_data
-    summary_results.extend(expand_dict(extra_data))
+    # 6. 加入extra_summary, 如果有的话
+    summary_results.extend(expand_dict(extra_summary))
 
     results = generate_columns(summary_results, hidden_columns={'id':1}, column_order=column_order, editable_columns={},
                      exclude_columns={}, ignore_unchanged_columns=False,
@@ -486,7 +490,7 @@ def max_method(data, base_on, result_on):
         for log in data:
             for key in base_on:
                 if key in log:
-                    log['SortedKey'] = log[key]
+                    log['SortedKey'] = float(log[key])
                     valid_logs.append(log)
                     break
         if len(valid_logs)>1:
@@ -518,7 +522,7 @@ def min_method(data, base_on, result_on):
         for log in data:
             for key in base_on:
                 if key in log:
-                    log['SortedKey'] = log[key]
+                    log['SortedKey'] = float(log[key])
                     valid_logs.append(log)
                     break
         if len(valid_logs)>1:
