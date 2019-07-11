@@ -202,7 +202,8 @@ def _refine_logs(logs, max_points, round_to=6):
     for group_name in list(groups.keys()):
         group = groups[group_name]
         if len(group)>max_points:
-            group = [log for log in group if random.random<len(group)/max_points]
+            downsample_ratio = max_points/len(group)
+            group = [log for log in group if random.random()<downsample_ratio]
             groups[group_name] = group
     new_logs = list(chain(*groups.values()))
 
