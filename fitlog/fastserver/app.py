@@ -97,7 +97,7 @@ def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
         print(_colored_string("You specify token:{}, remember to add this token when access your table.".format(all_data['token']),
                               color='red'))
     all_data['port'] = port
-    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+    app.run(host='127.0.0.1', port=port, debug=False, threaded=True)
 
     # TODO 输出访问的ip地址
     print("Shutting down server...")

@@ -116,6 +116,8 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
 
     column_dict = {}  # 这个dict用于存储结构，用于创建columns. 因为需要保证创建的顺序不能乱。 Nested dict
     reduce(merge, [column_dict] + logs)
+    if add_memo:
+        column_dict['memo'] = 1
     remove_exclude(column_dict, exclude_columns)
 
     column_keys = [key for key in column_dict.keys()]
