@@ -19,8 +19,7 @@ from .utils import LogFilter
 
 def generate_columns(logs, hidden_columns=None, column_order=None, editable_columns=None,
                      exclude_columns=None, ignore_unchanged_columns=True,
-                     str_max_length=20, round_to=6, num_extra_log=0,
-                     add_memo=True):
+                     str_max_length=20, round_to=6, num_extra_log=0):
     """
 
     :param logs: list of dict. [{'id': xx, nested:xxx}]， 必须要包含一个'id' key
@@ -31,7 +30,6 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
     :param int str_max_length: 长于这个的str会被以...替代
     :param round_to: int，保留多少位小数
     :param num_extra_log:int, 多少条log是用户自己加入的。用于过滤unchanged_columns
-    :param add_memo: 是否对没有memo的log增加一个memo列，并且添加内容为"Click to edit.".
 
     return:
         data: {}数据{'id1': {'id':id1, 'xx':xx}} flat的dict
@@ -104,10 +102,10 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
             unselectable_columns[key] = 1
 
     # 增加一个默认可以edit的column
-    if add_memo:
-        for _dict in data:
-            if 'memo' not in _dict:
-                _dict['memo'] = 'Click to edit'
+    for _dict in data:
+        for key in editable_columns.keys():
+            if key not in _dict:
+                _dict[key] = 'Click to edit'
 
     # 需要生成column_order, column_dict与隐藏的column
     new_column_order = dict()
@@ -116,8 +114,9 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
 
     column_dict = {}  # 这个dict用于存储结构，用于创建columns. 因为需要保证创建的顺序不能乱。 Nested dict
     reduce(merge, [column_dict] + logs)
-    if add_memo:
-        column_dict['memo'] = 1
+    if len(editable_columns)>0:
+        _dict = expand_dict([editable_columns], connector='-')[0]
+        merge(column_dict, _dict, use_b=False)
     remove_exclude(column_dict, exclude_columns)
 
     column_keys = [key for key in column_dict.keys()]

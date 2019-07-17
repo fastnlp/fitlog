@@ -427,8 +427,7 @@ def generate_summary_table(vertical, horizontals, method, criteria, results, res
 
     results = generate_columns(summary_results, hidden_columns={'id':1}, column_order=column_order, editable_columns={},
                      exclude_columns={}, ignore_unchanged_columns=False,
-                     str_max_length=20, round_to=6, num_extra_log=0,
-                     add_memo=False)
+                     str_max_length=20, round_to=6, num_extra_log=0)
     results['status'] = 'success'
     results['summary_sources'] = summary_sources
     return results
