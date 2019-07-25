@@ -1,6 +1,6 @@
 """
 Usage:
-    fitlog log <log-dir> [--log-config-name=L] [--port=P] [--standby-hours=S] [--token=T]
+    fitlog log <log-dir> [--log-config-name=L] [--port=P] [--standby-hours=S] [--token=T] [--ip=I]
 
 Arguments:
     log-dir                 Where to find logs.
@@ -11,6 +11,7 @@ Options:
     -p=P --port             Which port to start to looking for usable port.[default: 5000]
     -s=S --standby-hours    How long to wait before the server . [default: 48]
     -t=T --token            If this is used, your have to specify the token when accessing. Default no token.
+    -i=I --ip               Which ip to bind to. Default is 127.0.0.1
 """
 from docopt import docopt
 import os
@@ -27,6 +28,7 @@ def log_cmd(argv=None):
     start_port = int(args['--port'])
     log_config_name = args['--log-config-name']
     standby_hours = int(args['--standby-hours'])
+    ip = args['--ip']
     token = args['--token']
     if token is False:
         token = None
@@ -47,7 +49,7 @@ def log_cmd(argv=None):
     if os.path.dirname(log_config_name) != '':
         raise ValueError("log_config_name can only be a filename.")
     
-    start_app(log_dir, log_config_name, start_port, standby_hours, token)
+    start_app(log_dir, log_config_name, start_port, standby_hours, ip, token)
 
 
 if __name__ == '__main__':

@@ -73,7 +73,7 @@ def get_table_ico():
 def get_chart_ico():
     return send_from_directory(os.path.join('.', 'static', 'img'), 'chart.ico')
 
-def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
+def start_app(log_dir, log_config_name, start_port, standby_hours, ip='0.0.0.0', token=None):
     os.chdir(os.path.dirname(os.path.abspath(__file__))) # 可能需要把运行路径移动到这里
     all_data['root_log_dir'] = log_dir # will be used by chart_app
     server_wait_seconds = int(standby_hours*3600)
@@ -97,7 +97,7 @@ def start_app(log_dir, log_config_name, start_port, standby_hours, token=None):
         print(_colored_string("You specify token:{}, remember to add this token when access your table.".format(all_data['token']),
                               color='red'))
     all_data['port'] = port
-    app.run(host='127.0.0.1', port=port, debug=False, threaded=True)
+    app.run(host=ip, port=port, debug=False, threaded=True)
 
     # TODO 输出访问的ip地址
     print("Shutting down server...")
