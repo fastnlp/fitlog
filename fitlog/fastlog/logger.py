@@ -206,12 +206,12 @@ class Logger:
                     self._save_log_dir = os.path.join(self._log_dir, 'log_' + now)
                 os.mkdir(self._save_log_dir)
             # prepare logger
-            self.meta_logger = logging.getLogger('meta')
-            self.hyper_logger = logging.getLogger('hyper')
-            self.metric_logger = logging.getLogger('metric')
-            self.other_logger = logging.getLogger('other')
-            self.loss_logger = logging.getLogger('loss')
-            self.progress_logger = logging.getLogger('progress')
+            self.meta_logger = logging.getLogger('fitlog_meta')
+            self.hyper_logger = logging.getLogger('fitlog_hyper')
+            self.metric_logger = logging.getLogger('fitlog_metric')
+            self.other_logger = logging.getLogger('fitlog_other')
+            self.loss_logger = logging.getLogger('fitlog_loss')
+            self.progress_logger = logging.getLogger('fitlog_progress')
             
             formatter = logging.Formatter('%(message)s')  # 只保存记录的时间与记录的内容
             meta_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'meta.log'), encoding='utf-8')
