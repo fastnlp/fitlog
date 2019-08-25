@@ -369,9 +369,10 @@ class Committer:
             logs += msg
             if msg:
                 print(_colored_string('Auto commit by fitlog', 'blue'))
-        except:
+        except BaseException as e:
             print(_colored_string('Some error occurs during committing.', 'red'))
-            logs += ["Some error occurs during committing."]
+            self._switch_to_standard_git(self.work_dir)
+            raise e
         logs += self._switch_to_standard_git(self.work_dir)
         commit_id = self._get_last_commit()['msg']
         self.last_commit = Commit(commit_id, commit_message)
