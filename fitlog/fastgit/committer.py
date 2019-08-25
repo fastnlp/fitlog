@@ -363,11 +363,15 @@ class Committer:
                                    "\nIf you fail several times, please refer to our documents.")
             # TODO add the link
         logs += self._switch_to_fast_git(self.work_dir)
-        commit_files = self._get_watched_files()
-        msg = self._commit_files(commit_files, commit_message)
-        logs += msg
-        if msg:
-            print(_colored_string('Auto commit by fitlog', 'blue'))
+        try:
+            commit_files = self._get_watched_files()
+            msg = self._commit_files(commit_files, commit_message)
+            logs += msg
+            if msg:
+                print(_colored_string('Auto commit by fitlog', 'blue'))
+        except:
+            print(_colored_string('Some error occurs during committing.', 'red'))
+            logs += ["Some error occurs during committing."]
         logs += self._switch_to_standard_git(self.work_dir)
         commit_id = self._get_last_commit()['msg']
         self.last_commit = Commit(commit_id, commit_message)
