@@ -2,6 +2,7 @@
 
 
 from flask import render_template
+import traceback
 
 from flask import request, jsonify
 from flask import Blueprint
@@ -18,6 +19,7 @@ from ..fastgit.committer import _colored_string
 from .server.summary_utils import save_summary
 from werkzeug.utils import secure_filename
 from .server.summary_utils import  delete_summary
+from .server.utils import stringify_dict_key
 
 summary_page = Blueprint('summary_page', __name__, template_folder='templates')
 
@@ -131,12 +133,26 @@ def new_summary():
                 extra_summary = summary.pop('extra_data', {})
         # {'data': data, 'unchanged_columns':unchange_columns, 'column_order': new_column_order, 'column_dict':new_column_dict,
         #            'hidden_columns': new_hidden_columns, 'status':}
-        return jsonify(generate_summary_table(vertical, horizontals, method, criteria, results, result_maps, selected_data,
-                     all_data['root_log_dir'], all_data['extra_data'], extra_summary))
+        summary_table = generate_summary_table(vertical, horizontals, method, criteria, results, result_maps, selected_data,
+                     all_data['root_log_dir'], all_data['extra_data'], extra_summary)
+
+        # 为了修复不能以bool为key的bug
+        summary_table = stringify_dict_key(summary_table)
+        def change_order_keys_to_str(_dict):
+            for key, value in _dict.copy().items():
+                if key == 'OrderKeys':
+                    value = list(map(str, value))
+                    _dict[key] = value
+                if isinstance(value, dict):
+                    change_order_keys_to_str(value)
+        change_order_keys_to_str(summary_table)
+
+        return jsonify(summary_table)
 
     except Exception as e:
         print(e)
-        return jsonify(status='fail', msg="Unknown error from the server.")
+        traceback.print_exc()
+        return jsonify(status='fail', msg="Please refer to your server for exception reason.")
 
 @summary_page.route('/summary/save_summary', methods=['POST'])
 def save_summary_api():

@@ -46,9 +46,9 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
 
     def add_field(prefix, key, value, fields, connector, depth):
         if prefix != '':
-            prefix = prefix + connector + key
+            prefix = prefix + connector + str(key)
         else:
-            prefix = key
+            prefix = str(key)
         if prefix in exclude_columns: # 排除的话就不要了
             return 0
         max_depth = depth
@@ -153,9 +153,9 @@ def remove_exclude(column_dict, exclude_dict, prefix=''):
     keys = list(column_dict.keys())
     for key in keys:
         if prefix=='':
-            new_prefix = key
+            new_prefix = str(key)
         else:
-            new_prefix = prefix + '-' + key
+            new_prefix = prefix + '-' + str(key)
         if new_prefix in exclude_dict:
             column_dict.pop(key)
         else:
@@ -167,9 +167,9 @@ def add_columns(prefix, key, value, depth, max_depth, column_dict, order_value, 
                 unselectable_columns, editable_columns, hidden_columns, new_hidden_columns, hide):
     # 向column_dict中添加column的性质的dict; 并且生成new_hidden_columns(包含到最细的粒度); 返回值是column的顺序
     if prefix != '':
-        prefix = prefix + connector + key
+        prefix = prefix + connector + str(key)
     else:
-        prefix = key
+        prefix = str(key)
     if prefix in exclude_columns:
         return 0, None
     if not hide:

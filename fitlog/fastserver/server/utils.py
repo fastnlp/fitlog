@@ -7,14 +7,28 @@ def flatten_dict(prefix, _dict, connector='-'):
     new_dict = {}
     for key, value in _dict.items():
         if prefix != '':
-            new_prefix = prefix + connector + key
+            new_prefix = prefix + connector + str(key)
         else:
-            new_prefix = key
+            new_prefix = str(key)
         if isinstance(value, dict):
             new_dict.update(flatten_dict(new_prefix, value, connector))
         else:
             new_dict[new_prefix] = value
     return new_dict
+
+def stringify_dict_key(_dict):
+    """
+    保证_dict中所有key为str类型
+    :param _dict:
+    :return:
+    """
+    for key, value in _dict.copy().items():
+        if isinstance(value, dict):
+            value = stringify_dict_key(value)
+        if not isinstance(key, str):
+            del _dict[key]
+            _dict[str(key)] = value
+    return _dict
 
 def replace_nan_inf(data):
     # data: List[dict]
