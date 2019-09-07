@@ -436,7 +436,9 @@ def save_all_data(all_data, log_dir, log_config_name, force_save=False):
         log_config_path = os.path.join(log_dir, log_config_name)
         save_config(all_data, config_path=log_config_path)
         # save editable columns
+        extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
         if len(all_data['extra_data']) != 0:
-            extra_data_path = os.path.join(log_dir, 'log_extra_data.txt')
             save_extra_data(extra_data_path, all_data['extra_data']) # extra_data是一个dict。key为id，value为内容
+        else:
+            os.remove(extra_data_path)
         print("Settings are saved to {}.".format(log_config_path))
