@@ -251,7 +251,9 @@
           </div>
           <div class="modal-footer" >
             <button type="button" class="btn btn-default" id="cancel_stats">Cancel</button>
-            <button type="button" class="btn btn-primary" id="confirm_stats">Add a row</button>
+            <button type="button" class="btn btn-primary" id="confirm_stats">Add avg row</button>
+             <button type="button" class="btn btn-primary" id="confirm_max_stats">Add max row</button>
+             <button type="button" class="btn btn-primary" id="confirm_min_stats">Add min row</button>
           </div>
         </div>
       </div>
@@ -595,24 +597,43 @@
        }
    });
 
-   $confirm_stats.click(function () {
-       // 考虑把结果直接加入一行到结果中
+   function add_calculate_stats_to_table(method){
       var row = {};
       row['id'] = 'stats_avg_' + generate_uuid();
       var metric_names = getJsonKeys(window.row_stats['stats']); // metric_names就是metric的名称; 每个metric对应着自己的值
       for(var index=0;index<metric_names.length;index++){
           var value = window.row_stats['stats'][metric_names[index]];
-          if(!('avg' in value)){
-              bootbox.alert("Average value is not found for " + metric_names[index] + '.');
+          if(!(method in value)){
+              bootbox.alert(method + " value is not found for " + metric_names[index] + '.');
+              $('#stats_box').modal('hide');
+              return;
           }else
-            row[metric_names[index]] = value['avg'];
+            row[metric_names[index]] = value[method];
       }
+      for(var key in window.row_stats['invariant_values']){
+          var value = window.row_stats['invariant_values'][key];
+          row[key] = value;
+      }
+
       // add a memo to specify components
-      row['memo'] = 'Combined from ' + window.row_stats['ids'].join(', ');
+      row['memo'] = method + ' from ' + window.row_stats['ids'].join(', ');
+      window.row_stats = null;
       add_a_row(row);
 
       $('#stats_box').modal('hide');
+   }
+
+   $confirm_stats.click(function () {
+       add_calculate_stats_to_table('avg')
    });
+   $('#confirm_max_stats').click(function(){
+       add_calculate_stats_to_table('max')
+   });
+   $('#confirm_min_stats').click(function(){
+       add_calculate_stats_to_table('min')
+   });
+
+   <!--TODO 新增max和min-->
 
    $cancel_stats.click(function () {
       $('#stats_box').modal('hide');

@@ -208,8 +208,9 @@ function show_statistics(){
         }
         // 获取所有的值
         var metrics = {};
+        var log;
         for(var index=0;index<logs.length;index++){
-            var log = logs[index];
+            log = logs[index];
             for(var key in log){
                 if(key.startsWith('metric')){
                     if(key==='metric-epoch' || key==='metric-step'){
@@ -230,15 +231,37 @@ function show_statistics(){
                 return;
             }
         }
+        // 判断是否有哪一行是所有的都一样的
+        var log_values = {};
+        for(var index=0;index<logs.length;index++){
+            log = logs[index];
+            for(var key in log){
+                if(!(key in log_values)){
+                    log_values[key] = [log[key]];
+                }else{
+                    log_values[key].push(log[key]);
+                }
+            }
+        }
+        var values;
+        var value_set;
+        var invariant_values = {};
+        for(var key in log_values){
+            values = log_values[key];
+            value_set = new Set(values);
+            if(values.length===ids.length && value_set.size===1){
+                invariant_values[key] = values[0];
+            }
+        }
 
         // 前端页面显示需要展示的值
         var formatted_metrics = calculate_stats(metrics);
         if(getJsonKeys(formatted_metrics).length>0){
             //
-            window.row_stats = {'ids': ids, 'stats':formatted_metrics};
+            window.row_stats = {'ids': ids, 'stats':formatted_metrics, 'invariant_values': invariant_values};
             var html = generate_metric_stats_table(formatted_metrics);
              $('#stats_dialogue').append(html).append('<p>Calculate from <span style="color: red;font-weight: bold;">' +
-                 ids.length + '</span> logs.</p>');
+                 ids.length + '</span> logs(metric-wise max/min).</p>');
             $('#stats_box').modal('show');
         }else{
             bootbox.alert("No valid value found.")

@@ -38,9 +38,6 @@ def summary_index():
     return render_template('summary.html',  server_uuid=all_data['uuid'], log_names=ids,
                            settings={key.replace('_', ' '):value for key, value in all_data['settings'].items()})
 
-# TODO 0.允许list的跳转 1.保存summary; 2. 删除summary(删除config) 3. 允许在summary中增加一行. 4. refresh更新summary.
-#   5. 点击可以显示是怎么计算出来的
-
 # 获取可选的config与summary与所有的summaries
 @summary_page.route('/summary/summary_config', methods=['POST'])
 def summaries_configs():

@@ -574,7 +574,7 @@ function calculate_stats(metrics){
         var mean = data.reduce(sum)/data.length;
         result['avg'] = mean.toFixed(6);
         var deviations = data.map(function(x){return x-mean;});
-        //TODO 需要考虑报道处以N还是除以N-1的版本 https://blog.csdn.net/xidiancoder/article/details/71341345
+        //需要考虑报道处以N还是除以N-1的版本 https://blog.csdn.net/xidiancoder/article/details/71341345
         result['std(/N-1)'] = Math.sqrt(deviations.map(square).reduce(sum)/(data.length-1)).toFixed(6);
         result['std(/N)'] = Math.sqrt(deviations.map(square).reduce(sum)/(data.length)).toFixed(6);
         results[key] = result;
