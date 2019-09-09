@@ -440,5 +440,6 @@ def save_all_data(all_data, log_dir, log_config_name, force_save=False):
         if len(all_data['extra_data']) != 0:
             save_extra_data(extra_data_path, all_data['extra_data']) # extra_data是一个dict。key为id，value为内容
         else:
-            os.remove(extra_data_path)
+            if os.path.exists(extra_data_path):
+                os.remove(extra_data_path)
         print("Settings are saved to {}.".format(log_config_path))
