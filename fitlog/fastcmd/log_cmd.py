@@ -11,7 +11,7 @@ Options:
     -p=P --port             Which port to start to looking for usable port.[default: 5000]
     -s=S --standby-hours    How long to wait before the server . [default: 48]
     -t=T --token            If this is used, your have to specify the token when accessing. Default no token.
-    -i=I --ip               Which ip to bind to. Default is 127.0.0.1
+    -i=I --ip               Which ip to bind to. Default is 0.0.0.0
 """
 from docopt import docopt
 import os
