@@ -565,7 +565,7 @@ def _parse_value(value: Union[int, str, float, dict], name: str, parent_name: st
         assert isinstance(name, str), "name can only be `str` type, not {}.".format(name)
     _dict = {}
     
-    if isinstance(value, (int, float, str)):
+    if isinstance(value, (int, float, str)) or value is None:
         if name == None:
             raise RuntimeError("When value is {}, you must pass `name`.".format(type(value)))
         if parent_name != None:
