@@ -4,6 +4,14 @@ from numbers import Number
 from ...fastgit.committer import _colored_string
 
 def flatten_dict(prefix, _dict, connector='-'):
+    """
+    给定一个dict, 将其展平，比如{"a":{"v": 1}} -> {"a-v":1}
+
+    :param prefix:
+    :param _dict:
+    :param connector:
+    :return:
+    """
     new_dict = {}
     for key, value in _dict.items():
         if prefix != '':

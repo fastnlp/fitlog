@@ -11,7 +11,7 @@ from ..server.table_utils import get_log_and_extra_based_on_config
 from itertools import groupby
 from operator import itemgetter
 from functools import partial
-import re
+import traceback
 from ..server.table_utils import merge as merge_use_b, expand_dict
 from .table_utils import expand_dict
 from .table_utils import generate_columns
@@ -396,7 +396,7 @@ def generate_summary_table(vertical, horizontals, method, criteria, results, res
             merge(grouped_sources, _dict_source)
     except Exception as e:
         print("Exception happens when calculate {}.".format(mapped_name))
-        print(e)
+        traceback.print_exc()
         return {'status':'fail', 'msg':"When calculate {}, the following error occurred:{}.".format(mapped_name,
                                                                                                     repr(e))}
 

@@ -261,7 +261,7 @@ def is_log_record_finish(save_log_dir: str) -> bool:
 
 class StandbyStepLogReader(threading.Thread):
     """
-    用于多线程读取日志的类
+    用于多线程读取日志的类. 配合画图使用的。
     
     :param save_log_dir: 日志存放的目录
     :param uuid: 用于唯一识别 Reader 的 uuid
