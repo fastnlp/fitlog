@@ -594,11 +594,7 @@ def _check_dict_value(_dict: dict, prefix: str = ''):
     keys = list(_dict.keys())
     for key in keys:
         value = _dict[key]
-        if isinstance(value, (np.str, str)) or isinstance(value, numbers.Number):
-            continue
-        elif isinstance(value, dict):
-            _check_dict_value(value, prefix=prefix + ':' + key)
-        elif 'torch.Tensor' in str(type(value)):
+        if isinstance(value, (np.str, str)) or isinstance(value, numbers.Number) or value is None:
             try:
                 value = value.item()
                 _dict[key] = value
