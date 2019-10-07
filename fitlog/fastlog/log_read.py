@@ -127,12 +127,12 @@ def _read_save_log(_save_log_dir: str, ignore_null_loss_or_metric: bool = True, 
         if os.path.exists(os.path.join(_save_log_dir, 'metric.log')) and \
             not os.path.exists(os.path.join(_save_log_dir, 'best_metric.log')):  # 可能是之前的版本生成的, 适配一下
             best_line = ''
-            with open(os.path.join(_save_log_dir, 'metric.log'), 'r', encoding='utf-8') as f:
+            with open(os.path.join(_save_log_dir, 'metric.log'), 'r', encoding='utf-8') as f, \
+                open(os.path.join(_save_log_dir, 'best_metric.log'), 'w', encoding='utf-8') as f2:
                 for line in f:
                     if not line.startswith('S'):  # 是best_metric
                         best_line = line
-            with open(os.path.join(_save_log_dir, 'best_metric.log'), 'w', encoding='utf-8') as f:
-                f.write(best_line)
+                        f2.write(best_line)
 
         empty = _is_file_empty('best_metric.log') and _is_file_empty('loss.log')
         
