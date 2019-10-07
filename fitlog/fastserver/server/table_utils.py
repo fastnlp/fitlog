@@ -22,9 +22,10 @@ def generate_columns(logs, hidden_columns=None, column_order=None, editable_colu
                      str_max_length=20, round_to=6, num_extra_log=0):
     """
 
-    :param logs: list of dict. [{'id': xx, nested:xxx}]， 必须要包含一个'id' key
-    :param hidden_columns: {}, can choose parent columns, then all children will be hidden
+    :param logs: list of dict. [{'id': xx, 'meta':{'status': 'finish'}, "hyper": {'lr':... }}}]， 必须要包含一个'id' key
+    :param hidden_columns: {}, can choose parent columns, then all children will be hidden. 一级dict
     :param column_order: dict, column的顺序
+    :param exclude_columns: dict, 一级dict
     :param editable_columns: dict，那些column是可以编辑的
     :param ignore_unchanged_columns: 是否忽略不变的column
     :param int str_max_length: 长于这个的str会被以...替代
@@ -317,7 +318,7 @@ def expand_dict(dicts, connector='-'):
     for _dict in dicts:
         tmp = {}
         for key, value in _dict.items():
-            tmp.update(_expand_dict(key.split(connector), value))
+            merge(tmp, _expand_dict(key.split(connector), value), use_b=True)
         logs.append(tmp)
     return logs
 

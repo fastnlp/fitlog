@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lines</title>
+    <link rel="shortcut icon" href="/table.ico" >
+    <link href="/static/css/bootstrap.css" rel="stylesheet" />
+    <link href="/static/css/bootstrap-table.css" rel="stylesheet" />
+    <link href="/static/css/table.css" rel="stylesheet"/>
+
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+    <script src="/static/js/bootstrap-table.js"></script>
+    <script src="/static/js/bootbox.js"></script>
+    <script src="/static/js/jquery.tablednd.js"></script>
+    <script src="/static/js/Sortable.js"></script>
+
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/table_page_utils.js"></script>
+    <script src="/static/js/super-param-visualizer.js"></script>
+
+    <script>
+        var column_order = JSON.parse('{{column_order|tojson}}'); // {"meta":{"fit_id": xxx, ...}, "metric": {...}, "OrderKeys:["meta", "metric"]"}
+        var column_dict = JSON.parse('{{column_dict|tojson}}'); // 二级nested的dict
+        var hidden_columns = JSON.parse('{{hidden_columns|tojson}}'); // 一级dict
+        var data = JSON.parse('{{data|tojson}}'); // {'log_2019_xx': {'id': xx, "hyper-lr":xxx, "metric-xxx-xxx":xx}}
+
+        window.column_dict = column_dict;
+        window.column_order = column_order;
+        window.hidden_columns = hidden_columns;
+        window.settings = {'Hide hidden columns when reorder':false};
+
+        function refine_logs(data, columns) {
+            // 根据columns的内容，从data中准备二维数组
+            var arr = [];
+            for(var id in data){
+                var log = data[id];
+                var _arr = [];
+                for(var i=0;i<columns.length;i++){
+                    _arr.push(log[columns[i]]);
+                }
+                arr.push(_arr);
+            }
+            return arr;
+        }
+
+        function get_visible_columns(column_order, hidden_columns){
+            // 生成[hyper-lr, hyper-xxx类似的值], 返回的是需要设置为柱子的column
+            var all_columns = flat_column_order(column_order);
+            var left_columns = [];
+            for(var i=0;i<all_columns.length;i++){
+                if(!(all_columns[i] in hidden_columns)){
+                    left_columns.push(all_columns[i])
+                }
+            }
+            return left_columns
+        }
+
+        function flat_column_order(column_order, prefix){
+            // 将column_order中的值按顺序吐出来
+            if(prefix===undefined){
+                prefix = '';
+            }
+            var arr = [];
+            var keys = column_order['OrderKeys'];
+            for(var i=0;i<keys.length;i++){
+                var value = column_order[keys[i]];
+                if(value==='EndOfOrder'){
+                    arr.push(prefix + keys[i]);
+                }else{
+                    arr.push.apply(arr, flat_column_order(value, prefix + keys[i] + '-'))
+                }
+            }
+            return arr;
+        }
+
+        function show_modal_to_choose_columns() {
+               generate_sortable_columns(window.column_order, window.column_dict, window.hidden_columns,
+                   $("#columns_dialogue"));
+               var nestedSortables = [].slice.call(document.querySelectorAll('.nested-sortable'));
+
+               col_sortables = [];
+               for (var i = 0; i < nestedSortables.length; i++) {
+                    col_sortables.push(new Sortable(nestedSortables[i], {
+                        group: {
+                            'name': nestedSortables[i].getAttribute('id'),
+                            'pull':false,
+                            'put':false},
+                        animation: 150,
+                        fallbackOnBody:true,
+                        swapThreshold:0.65,
+                        dataIdAttr: 'title'
+                    }));
+                }
+               //检查是否所有的checkbox都已经正确运行了
+                check_checkbox_valid($("#choose_column_nested"));
+
+                // 触发column的点击
+               $('input').change(function () {
+                  var $cb = $(this);
+                  if($cb[0].getAttribute('id')==='choose_column_checkbox') {
+                      var $group_item = $cb.closest('.list-group-item');
+                      var state = $cb.prop('checked');
+                      change_children_state($group_item, state);
+                      change_parent_state($group_item, state);
+                  }
+               });
+            }
+
+        $(function () {
+            show_lines();
+        });
+
+    </script>
+</head>
+<body>
+
+    <div id="superParamVisual"></div>
+    <div id="log" style="margin-left: 24px"></div>
+
+    <div class="modal fade" id="columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Columns(uncheck to hide, drag to reorder)</h4>
+          </div>
+          <div class="modal-body" id="columns_dialogue">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel_columns">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_columns">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--buttons-->
+    <div id="toolbar" class="btn-group" style="margin-left: 20px">
+        <!--model button, choose columns-->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#columns_box"
+                style="margin-left: 5px;margin-right: 5px" id="choose_columns">
+          <i class="glyphicon glyphicon-th icon-th"></i> Columns
+        </button>
+    </div>
+
+</body>
+<script>
+
+    const superParamVisual = new SuperParamVisual("#superParamVisual");
+    const updateLog = () => {
+        const info = superParamVisual.getInfo();
+        document.getElementById("log").innerText = "Number of chosen lines：" + info.datasInRange.length;
+    };
+    superParamVisual.setOnSliderChangeListener((sliderIndex, sliderStatus) => {
+        updateLog();
+    });
+
+    var $choose_columns = $('#choose_columns');
+    var $confirm_columns = $('#confirm_columns');
+
+    function show_lines(){
+           var left_columns = get_visible_columns(window.column_order, window.hidden_columns);
+           if(left_columns.length<2){
+               bootbox.alert("You have to choose at two lines.");
+               return false;
+           }else{
+               var arr = refine_logs(data, left_columns);
+           }
+           // TODO 加上canvas
+           superParamVisual.update({'data':arr, 'columns':left_columns}).then(() => {
+                updateLog();
+            });
+           return true;
+    }
+
+    //点击reorder columns.
+    $choose_columns.click(show_modal_to_choose_columns);
+   // 确认选择columns
+   $confirm_columns.click(function () {
+       var $nested = $("#choose_column_nested");
+       var new_column_order = get_new_column_order($nested, window.column_order);
+       var new_hidden_columns = window.hidden_columns;
+       get_new_hidden_columns($nested, new_hidden_columns, '');
+
+       // 更新columns
+       if(window.column_order_updated) {
+           window.column_order = new_column_order;
+       }
+       if(window.hidden_columns_updated){
+           window.hidden_columns = new_hidden_columns;
+       }
+
+       if(window.column_order_updated || window.hidden_columns_updated){
+           if(!show_lines()){
+               return;
+           }
+       }
+
+       $("#columns_box").modal('hide');
+
+       for(var i=0;i<col_sortables.length;i++)
+       {
+           var sortable = col_sortables.pop();
+           sortable.destroy();
+       }
+
+    });
+    $("#columns_box").on('hide.bs.modal', function (e) {
+       $("#columns_dialogue").empty();
+    });
+
+
+
+</script>
+</html>

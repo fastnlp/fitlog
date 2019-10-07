@@ -269,7 +269,44 @@ function show_statistics(){
     }
 }
 
+
 function jump_to_summary() {
+    // 决定需要跳转到line还是table
+    bootbox.prompt({
+        'title': "Which kind of summary?",
+        "message": "<p>Please select an option below:</p>",
+        "inputType":"radio",
+        "inputOptions": [
+            {
+                'text': "line",
+                "value": "1"
+            },
+            {
+                "text": 'table',
+                "value": "2"
+            }
+        ],
+        callback:function (result) {
+            if(result==='1'){
+                jump_to_summary_line()
+            }else{
+                jump_to_summary_table()
+            }
+        }
+    })
+}
+
+
+function jump_to_summary_line() {
+    var ids = getIdSelections();
+    if(ids.length>1){
+        openPostWindow('/line', {'ids': ids});
+    }else{
+        bootbox.alert("You have to choose at least two log.")
+    }
+}
+
+function jump_to_summary_table() {
     // 点击之后弹框跳转
     var ids = getIdSelections();
     if(ids.length>0){

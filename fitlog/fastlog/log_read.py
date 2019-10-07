@@ -9,7 +9,7 @@ import time
 
 class LogReader:
     """
-    用于读取日志的类
+    用于读取日志的类, 用于配合Table使用
     """
     
     def __init__(self):
@@ -105,32 +105,40 @@ def _read_save_log(_save_log_dir: str, ignore_null_loss_or_metric: bool = True, 
                      'metric.log': [, ]} # 只包含有更新的文件的内容
     """
     try:
-        filenames = ['meta.log', 'hyper.log', 'metric.log', 'other.log']
+        filenames = ['meta.log', 'hyper.log', 'best_metric.log', 'other.log']
         if file_stats is None:
             file_stats = {}
         for filename in filenames:
             if filename not in file_stats:
                 file_stats[filename] = [-1, -1]
-        empty = True
         _dict = {}
-        metric_filepath = os.path.join(_save_log_dir, 'metric.log')
-        if os.path.exists(metric_filepath):
-            with open(metric_filepath, 'r', encoding='utf-8') as f:
+
+        def _is_file_empty(fn):
+            empty = True
+            fp = os.path.join(_save_log_dir, fn)
+            if os.path.exists(fp):
+                with open(fp, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if len(line.strip()) != 0:
+                            empty = False
+                            break
+            return empty
+
+        if os.path.exists(os.path.join(_save_log_dir, 'metric.log')) and \
+            not os.path.exists(os.path.join(_save_log_dir, 'best_metric.log')):  # 可能是之前的版本生成的, 适配一下
+            best_line = ''
+            with open(os.path.join(_save_log_dir, 'metric.log'), 'r', encoding='utf-8') as f:
                 for line in f:
-                    if len(line.strip()) != 0:
-                        empty = False
-                        break
-        loss_filepath = os.path.join(_save_log_dir, 'loss.log')
-        if os.path.exists(loss_filepath):
-            with open(loss_filepath, 'r', encoding='utf-8') as f:
-                for line in f:
-                    if len(line.strip()) != 0:
-                        empty = False
-                        break
+                    if not line.startswith('S'):  # 是best_metric
+                        best_line = line
+            with open(os.path.join(_save_log_dir, 'best_metric.log'), 'w', encoding='utf-8') as f:
+                f.write(best_line)
+
+        empty = _is_file_empty('best_metric.log') and _is_file_empty('loss.log')
         
         if empty and ignore_null_loss_or_metric:
             return _dict, file_stats
-        
+
         for filename in filenames:
             filepath = os.path.join(_save_log_dir, filename)
             last_modified_time = os.path.getmtime(filepath)
@@ -165,7 +173,7 @@ def is_log_dir_has_step(_save_log_dir: str) -> bool:
                 continue
             with open(filepath, 'r', encoding='utf-8') as f:
                 for line in f:
-                    if line.startswith('Step:'):
+                    if line.startswith('S'):
                         return True
     except Exception as e:
         print("Exception raised when read {}".format(os.path.abspath(filepath)))
@@ -175,7 +183,7 @@ def is_log_dir_has_step(_save_log_dir: str) -> bool:
 
 def _read_nonstep_log_file(filepath: str, start_line: int = 0) -> (dict, int):
     """
-    给定一个filepath, 读取里面非Step: 开头的line，没一行为json，使用后面的内容覆盖前面的内容
+    给定一个filepath, 读取里面非Step: 开头的line，每一行为json，使用后面的内容覆盖前面的内容
     
     :param filepath: 读取文件的路径
     :param start_line: 从哪一行开始读取
@@ -187,7 +195,7 @@ def _read_nonstep_log_file(filepath: str, start_line: int = 0) -> (dict, int):
         for index, line in enumerate(f):
             if index < start_line:
                 continue
-            if not line.startswith('Step:'):  # 读取非step的内容
+            if not line.startswith('S'):  # 读取非step的内容
                 line = line.strip()
                 try:
                     b = json.loads(line)
@@ -357,7 +365,7 @@ class StandbyStepLogReader(threading.Thread):
                     if not line.endswith('\n'):  # 结尾不是回车，说明没有读完
                         pass
                     else:
-                        if line.startswith('Step:'):
+                        if line.startswith('S'):
                             step = int(line[line.index(':') + 1:line.index('\t')])
                             if range_min <= step <= range_max:
                                 line = line[line.index('\t') + 1:].strip()
@@ -412,7 +420,7 @@ class StandbyStepLogReader(threading.Thread):
                     if not line.endswith('\n'):  # 结尾不是回车，说明没有读完
                         self.unfinish_lines[filename] = line
                     else:
-                        if line.startswith('Step:'):
+                        if line.startswith('S'):
                             line = line[line.index('\t') + 1:].strip()
                             try:
                                 _dict = json.loads(line)

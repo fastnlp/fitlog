@@ -182,7 +182,7 @@ class Logger:
                 delattr(self, attr_name)
 
         for logger_name in ['meta_logger', 'hyper_logger', 'metric_logger', 'other_logger', 'progress_logger',
-                          'loss_logger']:
+                          'loss_logger', "best_metric_logger"]:
             if hasattr(self, logger_name):
                 logger = getattr(self, logger_name)
                 handlers = logger.handlers[:]
@@ -212,22 +212,25 @@ class Logger:
             self.other_logger = logging.getLogger('fitlog_other')
             self.loss_logger = logging.getLogger('fitlog_loss')
             self.progress_logger = logging.getLogger('fitlog_progress')
+            self.best_metric_logger = logging.getLogger('fitlog_best_metric')
             
             formatter = logging.Formatter('%(message)s')  # 只保存记录的时间与记录的内容
             meta_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'meta.log'), encoding='utf-8')
             hyper_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'hyper.log'), encoding='utf-8')
             metric_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'metric.log'), encoding='utf-8')
+            best_metric_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'best_metric.log'), encoding='utf-8')
             loss_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'loss.log'), encoding='utf-8')
             other_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'other.log'), encoding='utf-8')
             progress_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'progress.log'), encoding='utf-8')
             
-            for handler in [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler, progress_handler]:
+            for handler in [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler, progress_handler,
+                            best_metric_handler]:
                 handler.setFormatter(formatter)
             
             for _logger, _handler in zip([self.meta_logger, self.hyper_logger, self.metric_logger, self.other_logger,
-                                          self.loss_logger, self.progress_logger],
+                                          self.loss_logger, self.progress_logger, self.best_metric_logger],
                                          [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler,
-                                          progress_handler]):
+                                          progress_handler, best_metric_handler]):
                 _handler.setLevel(logging.INFO)
                 _logger.setLevel(logging.INFO)
                 _logger.addHandler(_handler)
@@ -292,7 +295,7 @@ class Logger:
         """
         _dict = _parse_value(value, name=name, parent_name='metric')
         
-        self._write_to_logger(json.dumps(_dict), 'metric_logger')
+        self._write_to_logger(json.dumps(_dict), 'best_metric_logger')
     
     @_check_debug
     @_check_log_dir
@@ -521,7 +524,7 @@ class Logger:
         """
         assert isinstance(logger_name, str) and isinstance(_str, str)
         if self.save_on_first_metric_or_loss:
-            if logger_name == 'metric_logger' or logger_name == 'loss_logger':
+            if logger_name in ('metric_logger', 'best_metric_logger', 'loss_logger'):
                 self._create_log_files()
                 self._save()  # 将之前的内容存下来
         if hasattr(self, logger_name):
