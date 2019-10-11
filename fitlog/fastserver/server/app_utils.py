@@ -54,7 +54,7 @@ class ServerWatcher(threading.Thread):
         print("This server is going to shut down.")
         try:
             if not self._stop_flag:  # 不是手动关闭的
-                req = urequest.Request('http://localhost:5000/kill', headers={}, data=''.encode('utf-8'))
+                req = urequest.Request('http://127.0.0.1:5000/kill', headers={}, data=''.encode('utf-8'))
                 page = urequest.urlopen(req).read().decode('utf-8')
         except Exception as e:
             print(e)

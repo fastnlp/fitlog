@@ -289,7 +289,7 @@ function jump_to_summary() {
         callback:function (result) {
             if(result==='1'){
                 jump_to_summary_line()
-            }else{
+            }else if (result==='2'){
                 jump_to_summary_table()
             }
         }
