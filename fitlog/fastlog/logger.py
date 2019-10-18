@@ -529,7 +529,7 @@ class Logger:
                 self._save()  # 将之前的内容存下来
         if hasattr(self, logger_name):
             logger = getattr(self, logger_name)
-            logger.info(_str.replace('\n', ' ').replace('-', '_'))
+            logger.info(re.sub('(?<!\de)-', '_', _str.replace('\n', ' ')))
         else:  # 如果还没有初始化就先cache下来
             self._cache.append([_str, logger_name])
 
