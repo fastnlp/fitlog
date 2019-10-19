@@ -126,7 +126,6 @@ def _read_save_log(_save_log_dir: str, ignore_null_loss_or_metric: bool = True, 
 
         if os.path.exists(os.path.join(_save_log_dir, 'metric.log')) and \
             not os.path.exists(os.path.join(_save_log_dir, 'best_metric.log')):  # 可能是之前的版本生成的, 适配一下
-            best_line = ''
             with open(os.path.join(_save_log_dir, 'metric.log'), 'r', encoding='utf-8') as f, \
                 open(os.path.join(_save_log_dir, 'best_metric.log'), 'w', encoding='utf-8') as f2:
                 for line in f:
@@ -450,7 +449,8 @@ class StandbyStepLogReader(threading.Thread):
         return updates
     
     def _close_file_handler(self):
-        for key, handler in self._file_handlers.items():
+        for key in list(self._file_handlers.keys()):
+            handler = self._file_handlers[key]
             handler.close()
         self._file_handlers.clear()
     
