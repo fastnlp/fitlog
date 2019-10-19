@@ -63,7 +63,7 @@ def _check_git_id(func):
     """
     def wrapper(*args, **kwargs):
         if args[0].initialized == False and args[0].git_id is None:
-            res = committer.git_last_commit(args[0]._log_dir)
+            res = committer.git_last_commit_info(args[0]._log_dir)
             if res['status'] == 0:
                 args[0].git_id = res['msg'][0]
                 args[0].git_msg = res['msg'][1]

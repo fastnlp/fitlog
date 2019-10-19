@@ -23,7 +23,7 @@ def get_commit_id(file):
     :return: Git 的上次记录的 commit-id 的前七位；错误时返回 `error`
     """
     work_dir = _committer._find_config_file(file)
-    res = Committer.git_last_commit(work_dir)
+    res = Committer.git_last_commit_info(work_dir)
     if res['status'] == 0:
         return res['msg'][0]
     else:
@@ -40,7 +40,7 @@ def get_fit_id(file):
     :return: Fitlog 的上次自动记录的 commit-id 的前七位；错误时返回 `error`
     """
     work_dir = _committer._find_config_file(file)
-    res = Committer.fit_last_commit(work_dir)
+    res = Committer.fit_last_commit_info(work_dir)
     if res['status'] == 0:
         return res['msg'][0]
     else:
