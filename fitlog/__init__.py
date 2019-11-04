@@ -227,6 +227,26 @@ def add_progress(total_steps: int = None):
     """
     _logger.add_progress(total_steps)
 
+
+def add_to_line(line:str):
+    """
+    将str记录到文件中，前端可以从网页跳转打开文件。每次记录是append到之前的记录之后的。
+
+    :param line: 字符串类型的数据，将直接写到文件中
+    :return:
+    """
+    _logger.add_to_file(line)
+
+
+def create_log_dir():
+    """
+    默认是生成第一个loss或者metric的时候才会在设置的log文件夹下创建一个新的文件夹，如果需要在代码运行时就创建该文件夹，可以通过
+        调用该接口。
+
+    :return:
+    """
+    _logger.create_log_dir()
+
 # TODO 好像不work
 # def set_rng_seed(rng_seed:int = None, random:bool = True, numpy:bool = True,
 #                      pytorch:bool=True, deterministic:bool=True):

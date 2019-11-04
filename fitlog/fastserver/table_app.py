@@ -4,7 +4,8 @@ from flask import request, jsonify
 from flask import Blueprint
 import os
 import shutil
-
+import traceback
+from flask import make_response, send_file
 from .server.table_utils import prepare_data, prepare_incremental_data
 
 from .server.data_container import all_data
@@ -19,6 +20,8 @@ from .server.server_config import _get_config_names
 table_page = Blueprint("table_page", __name__, template_folder='templates')
 
 first_time_access = True
+FILE_NAME = 'file.log'
+
 
 @table_page.route('/table/table')
 def get_table():
@@ -43,6 +46,7 @@ def get_table():
                    hidden_rows=list(all_data['hidden_rows'].keys()),
                    unchanged_columns=all_data['unchanged_columns'],
                    log_config_name=all_data['log_config_name'])
+
 
 @table_page.route('/table/refresh', methods=['POST'])
 def refresh_table():
@@ -71,6 +75,7 @@ def refresh_table():
     except:
         return jsonify(status='fail', msg="Unknown error from server.")
 
+
 @table_page.route('/table/delete_records', methods=['POST'])
 def delete_records():
     res = check_uuid(all_data['uuid'], request.json['uuid'])
@@ -82,6 +87,7 @@ def delete_records():
             all_data['deleted_rows'][id] = 1
 
     return jsonify(status='success', msg='')
+
 
 @table_page.route('/table/erase_records', methods=['POST'])
 def erase_records():
@@ -295,7 +301,7 @@ def table_delete_config():
                     os.remove(path)
                 except Exception as e:
                     print("Error occurs when delete config:{}.".format(request.json['config_name']))
-                    print(e)
+                    traceback.print_exc()
                     return jsonify(status='fail', msg='Error happens when delete.')
                 return jsonify(status='success')
             else:
@@ -304,3 +310,38 @@ def table_delete_config():
             return jsonify(status='fail', msg='Cannot delete config being used.')
     else:
         return jsonify(status='fail', msg='There is no config_name in your request.')
+
+
+@table_page.route('/table/is_file_exist', methods=['POST'])
+def is_file_exist():
+    res = check_uuid(all_data['uuid'], request.json['uuid'])
+    if res is not None:
+        return jsonify(res)
+    if 'id' in request.json:
+        try:
+            id = request.json['id']
+            log_dir = all_data['root_log_dir']
+            path = os.path.join(log_dir, id, FILE_NAME)
+            if not os.path.exists(path):
+                return jsonify(status='fail', msg='There is no record file for {}.'.format(id))
+            else:
+                return jsonify(status='success', filename=FILE_NAME)
+        except BaseException as e:
+            traceback.print_exc()
+            return jsonify(status='fail', msg='Following exception occurs:{}'.format(e))
+    else:
+        return jsonify(status='fail', msg='There is no id in your request.')
+
+
+@table_page.route('/table/get_file', methods=['POST'])
+def get_file():
+    res = check_uuid(all_data['uuid'], request.values['uuid'])
+    if res is not None:
+        return jsonify(res)
+    if 'id' in request.values and 'filename' in request.values:
+        id = request.values['id']
+        log_dir = all_data['root_log_dir']
+        filename = request.values['filename']
+        return make_response(send_file(os.path.join(log_dir, id, filename)))
+    else:
+        return jsonify(status='fail', msg="The request lacks id or filename.")

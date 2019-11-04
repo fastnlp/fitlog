@@ -78,7 +78,31 @@ window.operateEvents = {
                     bootbox.alert("Some error happens. You may disconnect from the server.");
                 }
         })
-    }
+    },
+    'click .file': function (e, value, row, index) {
+          $.ajax({
+                url: '/table/is_file_exist',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                     uuid: window.server_uuid,
+                     id: row['id'],
+                }),
+                success: function(value){
+                    var status = value['status'];
+                    if(status==='success'){
+                        openPostWindow('/table/get_file', {'id': row['id'], 'filename': value['filename'],
+                            "uuid": window.server_uuid});
+                    } else{
+                        bootbox.alert(value['msg']);
+                    }
+                },
+                error: function(error){
+                    bootbox.alert("Some error happens. You may disconnect from the server.");
+                }
+        })
+    },
 };
 
 
@@ -107,12 +131,17 @@ function openPostWindow(url, params)
 
 function operateFormatter(value, row, index) {
     return [
+       '<div style="display:inline-block; float: none; width: 70px">',
       '<a class="reset" href="javascript:void(0)" title="Reset">',
       '<i class="glyphicon glyphicon-share-alt" style="padding:0px 2px 0px 1px"></i>',
       '</a>',
       '<a class="trend" href="javascript:void(0)" title="Thread">',
-      '<i class="glyphicon glyphicon-tasks" style="padding:0px 1px 0px 2px"></i>',
-      '</a>'
+      '<i class="glyphicon glyphicon-tasks" style="padding:0px 1px 0px 1px"></i>',
+      '</a>',
+      '<a class="file" href="javascript:void(0)" title="File">',
+      '<i class="glyphicon glyphicon-list-alt" style="padding:0px 1px 0px 2px"></i>',
+      '</a>',
+       "</div>"
     ].join('')
 }
 

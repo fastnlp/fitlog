@@ -54,21 +54,6 @@ def _check_log_dir(func):
     
     return wrapper
 
-def _check_git_id(func):
-    """
-    获取当前的文件的git id，如果之后再获取，可能已经是另外的git了
-
-    :param func:
-    :return:
-    """
-    def wrapper(*args, **kwargs):
-        if args[0].initialized == False and args[0].git_id is None:
-            res = committer.git_last_commit_info(args[0]._log_dir)
-            if res['status'] == 0:
-                args[0].git_id = res['msg'][0]
-                args[0].git_msg = res['msg'][1]
-        return func(*args, **kwargs)
-    return wrapper
 
 class Logger:
     """
@@ -86,7 +71,8 @@ class Logger:
         self.git_id = None
         self.git_msg = None
         
-        self._log_dir = None
+        self._log_dir = None  # 这是哪个大的log文件, 比如logs/
+        self._save_log_dir = None  # 存在哪个文件内的，比如log_20191020_193021/。如果
     
     def debug(self):
         """
@@ -97,7 +83,6 @@ class Logger:
         self._debug = True
     
     @_check_debug
-    @_check_git_id
     def commit(self, file: str, fit_msg: str = None):
         """
         调用 committer.commit 进行自动 commit
@@ -111,29 +96,25 @@ class Logger:
             config = committer.config
             self.fit_id = committer.last_commit[0]
             self.fit_msg = committer.last_commit[1]
-            self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')
             self.default_log_dir = os.path.join(committer.work_dir, config.get('log_settings', 'default_log_dir'))
+            self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')
+            if not self.save_on_first_metric_or_loss:
+                self.create_log_dir()
         else:
             raise RuntimeError("It seems like you are not running under a folder governed by fitlog.\n" + msg['msg'])
     
     @_check_debug
-    @_check_git_id
-    def set_save_on_first_metric_or_loss(self, flag: bool = True):
+    @_check_log_dir
+    def create_log_dir(self):
         """
-        是否只在 metric操作后创建 log 文件
-        
-            1 如果为False, 只要有任何add_*方法都会创建log文件，但大多数时候这都是不必要的。
-            
-            2 如果为True, 只有在第一次存入metric或者loss时才会真正创建log。
-        
-        :param flag:
+        默认是生成第一个loss或者metric的时候才会在设置的log文件夹下创建一个新的文件夹，如果需要在代码运行时就创建该文件夹，可以通过
+            调用该接口。
+
         :return:
         """
-        assert isinstance(flag, bool)
-        self.save_on_first_metric_or_loss = flag
+        self._create_log_files()
     
     @_check_debug
-    @_check_git_id
     def set_log_dir(self, log_dir: str, new_log: bool=False):
         """
         设定log 文件夹的路径，在进行其它操作前必须先指定日志路径
@@ -168,6 +149,17 @@ class Logger:
             raise PermissionError("write is not allowed in `{}`. Check your permission.".format(log_dir))
         
         self.initialized = True
+        try:
+            if self.git_id is None:
+                res = committer.git_last_commit_info(log_dir)
+                if res['status'] == 0:
+                    self.git_id = res['msg'][0]
+                    self.git_msg = res['msg'][1]
+        except BaseException as e:
+            pass
+
+        if not self.save_on_first_metric_or_loss:
+            self.create_log_dir()
 
     def _clear(self):
         """
@@ -182,7 +174,7 @@ class Logger:
                 delattr(self, attr_name)
 
         for logger_name in ['meta_logger', 'hyper_logger', 'metric_logger', 'other_logger', 'progress_logger',
-                          'loss_logger', "best_metric_logger"]:
+                          'loss_logger', "best_metric_logger", "file_logger"]:
             if hasattr(self, logger_name):
                 logger = getattr(self, logger_name)
                 handlers = logger.handlers[:]
@@ -197,7 +189,7 @@ class Logger:
         创建日志文件
         """
         if not hasattr(self, 'meta_logger'):
-            if not hasattr(self, '_save_log_dir'):
+            if self._save_log_dir is None:
                 now = datetime.now().strftime('%Y%m%d_%H%M%S')
                 self._save_log_dir = os.path.join(self._log_dir, 'log_' + now)
                 while os.path.exists(self._save_log_dir):
@@ -213,6 +205,7 @@ class Logger:
             self.loss_logger = logging.getLogger('fitlog_loss')
             self.progress_logger = logging.getLogger('fitlog_progress')
             self.best_metric_logger = logging.getLogger('fitlog_best_metric')
+            self.file_logger = logging.getLogger('fitlog_file')
             
             formatter = logging.Formatter('%(message)s')  # 只保存记录的时间与记录的内容
             meta_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'meta.log'), encoding='utf-8')
@@ -222,15 +215,16 @@ class Logger:
             loss_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'loss.log'), encoding='utf-8')
             other_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'other.log'), encoding='utf-8')
             progress_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'progress.log'), encoding='utf-8')
+            file_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'file.log'), encoding='utf-8')
             
             for handler in [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler, progress_handler,
-                            best_metric_handler]:
+                            best_metric_handler, file_handler]:
                 handler.setFormatter(formatter)
             
             for _logger, _handler in zip([self.meta_logger, self.hyper_logger, self.metric_logger, self.other_logger,
-                                          self.loss_logger, self.progress_logger, self.best_metric_logger],
+                                    self.loss_logger, self.progress_logger, self.best_metric_logger, self.file_logger],
                                          [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler,
-                                          progress_handler, best_metric_handler]):
+                                          progress_handler, best_metric_handler, file_handler]):
                 _handler.setLevel(logging.INFO)
                 _logger.setLevel(logging.INFO)
                 _logger.addHandler(_handler)
@@ -239,7 +233,6 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    @_check_git_id
     def __add_meta(self):
         """
         logger自动调用此方法添加meta信息
@@ -280,7 +273,6 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    @_check_git_id
     def add_best_metric(self, value: Union[int, str, float, dict], name: str = None):
         """
         用于添加最好的 metric 。用此方法添加的值，会被显示在 metric 这一列中。
@@ -296,10 +288,21 @@ class Logger:
         _dict = _parse_value(value, name=name, parent_name='metric')
         
         self._write_to_logger(json.dumps(_dict), 'best_metric_logger')
-    
+
     @_check_debug
     @_check_log_dir
-    @_check_git_id
+    def add_to_file(self, value:str):
+        """
+        将str记录到文件中，前端可以从网页跳转打开文件。记录是append到之前的记录之后
+
+        :param value: 字符串类型的数据，将直接写到文件中
+        :return:
+        """
+        assert isinstance(value, str), "Only str allowed, not {}.".format(type(value))
+        self._write_to_logger(value, 'file_logger')
+
+    @_check_debug
+    @_check_log_dir
     def add_metric(self, value: Union[int, str, float, dict], step: int, name: str = None, epoch: int = None):
         """
         用于添加 metric 。用此方法添加的值，会被记录在 metric 这一列中
@@ -323,7 +326,6 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    @_check_git_id
     def add_loss(self, value: Union[int, str, float, dict], step: int, name: str = None, epoch: int = None):
         """
         用于添加 loss。用此方法添加的值，会被记录在 loss 这一列中
@@ -347,7 +349,6 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    @_check_git_id
     def add_hyper(self, value: Union[int, str, float, dict, argparse.Namespace, ConfigParser], name=None):
         """
         用于添加超参数。用此方法添加到值，会被放置在 hyper 这一列中
@@ -369,7 +370,6 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    @_check_git_id
     def add_other(self, value: Union[int, str, float, dict], name: str = None):
         """
         用于添加其它参数
@@ -387,7 +387,6 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    @_check_git_id
     def add_hyper_in_file(self, file_path: str):
         """
         从文件读取参数。如demo.py所示，两行"#######hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
@@ -453,7 +452,6 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    @_check_git_id
     def add_progress(self, total_steps: int = None):
         """
         用于前端显示当前进度条。传入总的step数量
@@ -523,7 +521,7 @@ class Logger:
         :return:
         """
         assert isinstance(logger_name, str) and isinstance(_str, str)
-        if self.save_on_first_metric_or_loss:
+        if self._save_log_dir is None:
             if logger_name in ('metric_logger', 'best_metric_logger', 'loss_logger'):
                 self._create_log_files()
                 self._save()  # 将之前的内容存下来
