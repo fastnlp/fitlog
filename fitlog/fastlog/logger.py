@@ -291,14 +291,16 @@ class Logger:
 
     @_check_debug
     @_check_log_dir
-    def add_to_file(self, value:str):
+    def add_to_file(self, value:Union[str, dict]):
         """
         将str记录到文件中，前端可以从网页跳转打开文件。记录是append到之前的记录之后
 
         :param value: 字符串类型的数据，将直接写到文件中
         :return:
         """
-        assert isinstance(value, str), "Only str allowed, not {}.".format(type(value))
+        assert isinstance(value, (str, dict)), "Only str or dict allowed, not {}.".format(type(value))
+        if isinstance(value, dict):
+            value = json.dumps(value, indent=2)
         self._write_to_logger(value, 'file_logger')
 
     @_check_debug
@@ -525,9 +527,11 @@ class Logger:
             if logger_name in ('metric_logger', 'best_metric_logger', 'loss_logger'):
                 self._create_log_files()
                 self._save()  # 将之前的内容存下来
+        if logger_name not in ('file_logger'):
+            _str = re.sub('(?<!\de)-', '_', _str.replace('\n', ' '))
         if hasattr(self, logger_name):
             logger = getattr(self, logger_name)
-            logger.info(re.sub('(?<!\de)-', '_', _str.replace('\n', ' ')))
+            logger.info(_str)
         else:  # 如果还没有初始化就先cache下来
             self._cache.append([_str, logger_name])
 

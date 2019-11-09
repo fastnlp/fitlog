@@ -11,7 +11,7 @@ from typing import Union
 import argparse
 from configparser import ConfigParser
 
-__version__ = '0.2.9'
+__version__ = '0.3'
 
 
 def get_commit_id(file):
@@ -228,11 +228,11 @@ def add_progress(total_steps: int = None):
     _logger.add_progress(total_steps)
 
 
-def add_to_line(line:str):
+def add_to_line(line:Union[str, dict]):
     """
     将str记录到文件中，前端可以从网页跳转打开文件。每次记录是append到之前的记录之后的。
 
-    :param line: 字符串类型的数据，将直接写到文件中
+    :param line: 字符串类型或字典类型的数据，将直接写到文件中
     :return:
     """
     _logger.add_to_file(line)
