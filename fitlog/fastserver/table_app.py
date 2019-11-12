@@ -341,6 +341,7 @@ def get_file():
     if 'id' in request.values and 'filename' in request.values:
         id = request.values['id']
         log_dir = all_data['root_log_dir']
+        filename = request.values['filename']
         resp = make_response(send_file(os.path.join(log_dir, id, filename)))
         resp.headers["Content-type"]="text/plan;charset=UTF-8"
         return resp
