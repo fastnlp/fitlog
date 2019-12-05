@@ -480,7 +480,8 @@ class Logger:
         """
         if rng_seed is None:
             import time
-            rng_seed = int(time.time()%19491001)
+            import math
+            rng_seed = int(math.modf(time.time())[0]*1000000)
         if random:
             import random
             random.seed(rng_seed)
