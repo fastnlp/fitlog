@@ -247,17 +247,16 @@ def create_log_dir():
     """
     _logger.create_log_dir()
 
-# TODO 好像不work
-# def set_rng_seed(rng_seed:int = None, random:bool = True, numpy:bool = True,
-#                      pytorch:bool=True, deterministic:bool=True):
-#     """
-#     设置模块的随机数种子。由于pytorch还存在cudnn导致的非deterministic的运行，所以一些情况下可能即使seed一样，结果也不一致
-#         需要在fitlog.commit()或fitlog.set_log_dir()之后运行才会记录该rng_seed到log中
-#     :param int rng_seed: 将这些模块的随机数设置到多少，默认为随机生成一个。
-#     :param bool, random: 是否将python自带的random模块的seed设置为rng_seed.
-#     :param bool, numpy: 是否将numpy的seed设置为rng_seed.
-#     :param bool, pytorch: 是否将pytorch的seed设置为rng_seed(设置torch.manual_seed和torch.cuda.manual_seed_all).
-#     :param bool, deterministic: 是否将pytorch的torch.backends.cudnn.deterministic设置为True。如果该值不为True，有时候即使
-#         全部随机数种子都一样也不能跑出相同的结果; 关掉的话可能会有一点性能损失。
-#     """
-#     _logger.set_rng_seed(rng_seed, random, numpy, pytorch, deterministic)
+def set_rng_seed(rng_seed:int = None, random:bool = True, numpy:bool = True,
+                     pytorch:bool=True, deterministic:bool=True):
+    """
+    设置模块的随机数种子。由于pytorch还存在cudnn导致的非deterministic的运行，所以一些情况下可能即使seed一样，结果也不一致
+        需要在fitlog.commit()或fitlog.set_log_dir()之后运行才会记录该rng_seed到log中
+    :param int rng_seed: 将这些模块的随机数设置到多少，默认为随机生成一个。
+    :param bool, random: 是否将python自带的random模块的seed设置为rng_seed.
+    :param bool, numpy: 是否将numpy的seed设置为rng_seed.
+    :param bool, pytorch: 是否将pytorch的seed设置为rng_seed(设置torch.manual_seed和torch.cuda.manual_seed_all).
+    :param bool, deterministic: 是否将pytorch的torch.backends.cudnn.deterministic设置为True。如果该值不为True，有时候即使
+        全部随机数种子都一样也不能跑出相同的结果; 关掉的话可能会有一点性能损失。
+    """
+    return _logger.set_rng_seed(rng_seed, random, numpy, pytorch, deterministic)
