@@ -11,7 +11,7 @@ from typing import Union
 import argparse
 from configparser import ConfigParser
 
-__version__ = '0.2.9'
+__version__ = '0.3'
 
 
 def get_commit_id(file):
@@ -23,7 +23,7 @@ def get_commit_id(file):
     :return: Git 的上次记录的 commit-id 的前七位；错误时返回 `error`
     """
     work_dir = _committer._find_config_file(file)
-    res = Committer.git_last_commit(work_dir)
+    res = Committer.git_last_commit_info(work_dir)
     if res['status'] == 0:
         return res['msg'][0]
     else:
@@ -40,7 +40,7 @@ def get_fit_id(file):
     :return: Fitlog 的上次自动记录的 commit-id 的前七位；错误时返回 `error`
     """
     work_dir = _committer._find_config_file(file)
-    res = Committer.fit_last_commit(work_dir)
+    res = Committer.fit_last_commit_info(work_dir)
     if res['status'] == 0:
         return res['msg'][0]
     else:
@@ -226,6 +226,26 @@ def add_progress(total_steps: int = None):
     :param total_steps: int, 总共有多少个step
     """
     _logger.add_progress(total_steps)
+
+
+def add_to_line(line:Union[str, dict]):
+    """
+    将str记录到文件中，前端可以从网页跳转打开文件。每次记录是append到之前的记录之后的。
+
+    :param line: 字符串类型或字典类型的数据，将直接写到文件中
+    :return:
+    """
+    _logger.add_to_file(line)
+
+
+def create_log_dir():
+    """
+    默认是生成第一个loss或者metric的时候才会在设置的log文件夹下创建一个新的文件夹，如果需要在代码运行时就创建该文件夹，可以通过
+        调用该接口。
+
+    :return:
+    """
+    _logger.create_log_dir()
 
 # TODO 好像不work
 # def set_rng_seed(rng_seed:int = None, random:bool = True, numpy:bool = True,
