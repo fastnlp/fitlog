@@ -596,3 +596,18 @@ class Committer:
                 print("No fitlog records here.")
         else:
             print(_colored_string('Not in a fitlog directory', 'red'))
+
+    def fitlog_revert(self, commit_id: str, run_file_path: str = None, id_suffix: bool = False) -> Info:
+        """fitlog 调用此接口进行版本回退
+
+        :param commit_id: 需要回退版本的 commit-id
+        :param run_file_path: 执行文件的路径 TODO:检查这个变量是否需要
+        :param id_suffix: 回退版本的放置文件夹是否包含 commit-id 做为后缀
+        :return: 返回带状态码的信息。如果成功，信息为回退版本的放置路径
+        """
+        if self.work_dir is None:
+            info = self.get_config(run_file_path)
+            if info['status'] == 1:
+                return info
+        return self._revert(commit_id, id_suffix=id_suffix, cli=False)
+
