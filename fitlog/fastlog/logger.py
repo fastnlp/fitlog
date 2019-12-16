@@ -142,8 +142,8 @@ class Logger:
             warnings.warn("Append to an already exist log.")
             self._log_dir = os.path.dirname(log_dir)
             self._save_log_dir = log_dir
-            self.create_log_dir()
             self.initialized = True
+            self.create_log_dir()
         else:
             self._log_dir = log_dir
         
