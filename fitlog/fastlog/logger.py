@@ -49,7 +49,7 @@ def _check_log_dir(func):
         if not args[0].initialized and args[0].default_log_dir is not None:
             args[0].set_log_dir(args[0].default_log_dir)
         elif not args[0].initialized:
-            raise RuntimeError("You have to call `logger.set_log_dir()` to set where to _save log first.")
+            raise RuntimeError("You have to call `logger.set_log_dir()` to set where to save log first.")
         return func(*args, **kwargs)
     
     return wrapper
@@ -142,7 +142,8 @@ class Logger:
             warnings.warn("Append to an already exist log.")
             self._log_dir = os.path.dirname(log_dir)
             self._save_log_dir = log_dir
-            self._create_log_files()
+            self.create_log_dir()
+            self.initialized = True
         else:
             self._log_dir = log_dir
         
