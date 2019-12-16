@@ -74,13 +74,13 @@ class Logger:
         self._log_dir = None  # 这是哪个大的log文件, 比如logs/
         self._save_log_dir = None  # 存在哪个文件内的，比如log_20191020_193021/。如果
     
-    def debug(self):
+    def debug(self, flag=True):
         """
         再引入logger之后就调用，本次运行不会记录任何东西。所有函数无任何效用
         
         :return:
         """
-        self._debug = True
+        self._debug = flag
     
     @_check_debug
     def commit(self, file: str, fit_msg: str = None):
@@ -142,6 +142,7 @@ class Logger:
             warnings.warn("Append to an already exist log.")
             self._log_dir = os.path.dirname(log_dir)
             self._save_log_dir = log_dir
+            self._create_log_files()
         else:
             self._log_dir = log_dir
         

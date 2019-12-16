@@ -92,7 +92,7 @@ def set_log_dir(log_dir: str, new_log:bool=False):
     _logger.set_log_dir(log_dir, new_log)
 
 
-def debug():
+def debug(flag=True):
     """
     调用该方法之后，所有的fitlog方法都不会产生任何作用。可用于调试代码时避免输出大量无用的信息。
 
@@ -106,7 +106,7 @@ def debug():
 
     :return:
     """
-    _logger.debug()
+    _logger.debug(flag=flag)
 
 
 def finish(status: int = 0):
