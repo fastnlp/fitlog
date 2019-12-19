@@ -171,9 +171,11 @@ class Logger:
         # self._save()
         self.initialized = False
         self._cache = []
-        for attr_name in ['_save_log_dir', '_log_dir', 'total_steps']:
+        for attr_name in ['total_steps']:
             if hasattr(self, attr_name):
                 delattr(self, attr_name)
+        for attr_name in ['_save_log_dir', '_log_dir']:
+            setattr(self, attr_name, None)
 
         for logger_name in ['meta_logger', 'hyper_logger', 'metric_logger', 'other_logger', 'progress_logger',
                           'loss_logger', "best_metric_logger", "file_logger"]:
