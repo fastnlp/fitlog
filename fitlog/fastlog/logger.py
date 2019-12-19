@@ -168,7 +168,7 @@ class Logger:
         内部函数，将logger置为未初始化
         :return:
         """
-        self._save()
+        # self._save()
         self.initialized = False
         self._cache = []
         for attr_name in ['_save_log_dir', '_log_dir', 'total_steps']:
