@@ -534,7 +534,7 @@ class Logger:
                 self._create_log_files()
                 self._save()  # 将之前的内容存下来
         if logger_name not in ('file_logger'):
-            _str = re.sub('(?<!\de)-', '_', _str.replace('\n', ' '))
+            _str = re.sub('-(?!\d)', '_', _str.replace('\n', ' '))
         if hasattr(self, logger_name):
             logger = getattr(self, logger_name)
             logger.info(_str)
