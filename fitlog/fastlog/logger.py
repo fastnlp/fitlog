@@ -168,12 +168,14 @@ class Logger:
         内部函数，将logger置为未初始化
         :return:
         """
-        self._save()
+        # self._save()
         self.initialized = False
         self._cache = []
-        for attr_name in ['_save_log_dir', '_log_dir', 'total_steps']:
+        for attr_name in ['total_steps']:
             if hasattr(self, attr_name):
                 delattr(self, attr_name)
+        for attr_name in ['_save_log_dir', '_log_dir']:
+            setattr(self, attr_name, None)
 
         for logger_name in ['meta_logger', 'hyper_logger', 'metric_logger', 'other_logger', 'progress_logger',
                           'loss_logger', "best_metric_logger", "file_logger"]:
@@ -532,7 +534,7 @@ class Logger:
                 self._create_log_files()
                 self._save()  # 将之前的内容存下来
         if logger_name not in ('file_logger'):
-            _str = re.sub('(?<!\de)-', '_', _str.replace('\n', ' '))
+            _str = re.sub('-(?!\d)', '_', _str.replace('\n', ' '))
         if hasattr(self, logger_name):
             logger = getattr(self, logger_name)
             logger.info(_str)
