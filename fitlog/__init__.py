@@ -4,14 +4,14 @@ fitlog提供给用户的 API 有如下几个：
 
 """
 __all__ = ["commit", "set_log_dir", "finish", "add_best_metric", "add_metric", "add_loss", "add_hyper", "add_other",
-           "add_hyper_in_file", "get_commit_id", "get_fit_id"]
+           "add_to_line", "set_rng_seed", "add_hyper_in_file", "get_commit_id", "get_fit_id"]
 from .fastlog import logger as _logger
 from .fastgit import Committer, committer as _committer
 from typing import Union
 import argparse
 from configparser import ConfigParser
 
-__version__ = '0.3'
+__version__ = '0.3.1'
 
 
 def get_commit_id(file):
@@ -251,8 +251,8 @@ def set_rng_seed(rng_seed:int = None, random:bool = True, numpy:bool = True,
                      pytorch:bool=True, deterministic:bool=True):
     """
     设置模块的随机数种子。由于pytorch还存在cudnn导致的非deterministic的运行，所以一些情况下可能即使seed一样，结果也不一致
-        需要在fitlog.commit()或fitlog.set_log_dir()之后运行才会记录该rng_seed到log中
-    :param int rng_seed: 将这些模块的随机数设置到多少，默认为随机生成一个。
+        在fitlog.set_log_dir()之后调用本函数将自动记录rng_seed到log中。
+    :param int rng_seed: 将这些模块的随机数设置到多少，默认为随机生成一个0-1000,000的随机数。
     :param bool, random: 是否将python自带的random模块的seed设置为rng_seed.
     :param bool, numpy: 是否将numpy的seed设置为rng_seed.
     :param bool, pytorch: 是否将pytorch的seed设置为rng_seed(设置torch.manual_seed和torch.cuda.manual_seed_all).

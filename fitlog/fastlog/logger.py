@@ -332,7 +332,7 @@ class Logger:
     @_check_log_dir
     def add_loss(self, value: Union[int, str, float, dict], step: int, name: str = None, epoch: int = None):
         """
-        用于添加 loss。用此方法添加的值，会被记录在 loss 这一列中
+        用于添加 loss。用此方法添加的值，可以通过曲线看出去变化趋势。
         
         :param value: 类型为 int, float, str, dict中的一种。如果类型为 dict，它的键的类型只能为 str，
                 它的键值的类型可以为int, float, str 或符合同样条件的 dict

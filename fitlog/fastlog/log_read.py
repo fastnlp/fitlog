@@ -197,9 +197,9 @@ def _read_nonstep_log_file(filepath: str, start_line: int = 0) -> (dict, int):
             if not line.startswith('S'):  # 读取非step的内容
                 line = line.strip()
                 try:
-                    b = json.loads(line)
+                    b = json.loads(line)  # TODO 如果含有非法字符(例如“!"#$%&'()*+,./:;<=>?@[\]^`{|}|~ ”)，导致前端无法显示怎么办？
                 except:
-                    print("Corrupted json format in {}. line:{}".format(filepath, line))
+                    print("Corrupted json format in {}, line:{}".format(filepath, line))
                     continue
                 a = merge(a, b, use_b=True)
     return a, index + 1
