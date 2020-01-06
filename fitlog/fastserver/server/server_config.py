@@ -17,10 +17,10 @@ def read_server_config(config_path):
         if not os.path.isdir(config_dir):
             os.makedirs(config_dir)
         _read_default_config(config)
-        with open(config_path, 'w') as f:
+        with open(config_path, 'w', encoding='utf-8') as f:
             config.write(f)
     else:
-        config.read(config_path)
+        config.read(config_path, encoding='utf-8')
         # check configparser, 没有的话用默认值覆盖填写
         check_config(config)
 
@@ -181,7 +181,7 @@ def _read_default_config(config):
     """
     default_cfg_fp = os.path.join(os.path.realpath(__file__)[:-len("server_config.py")], '..',
                                   '..', 'fastgit', 'normal', 'logs', 'default.cfg')
-    config.read(default_cfg_fp)
+    config.read(default_cfg_fp, encoding='utf-8')
     return config
 
 def check_config(config):
