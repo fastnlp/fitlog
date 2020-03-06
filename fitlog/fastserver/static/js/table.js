@@ -135,7 +135,7 @@ function operateFormatter(value, row, index) {
       '<a class="reset" href="javascript:void(0)" title="Reset">',
       '<i class="glyphicon glyphicon-share-alt" style="padding:0px 2px 0px 1px"></i>',
       '</a>',
-      '<a class="trend" href="javascript:void(0)" title="Thread">',
+      '<a class="trend" href="javascript:void(0)" title="Trend">',
       '<i class="glyphicon glyphicon-tasks" style="padding:0px 1px 0px 1px"></i>',
       '</a>',
       '<a class="file" href="javascript:void(0)" title="File">',

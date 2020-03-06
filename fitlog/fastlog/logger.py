@@ -297,7 +297,7 @@ class Logger:
     @_check_log_dir
     def add_to_file(self, value:Union[str, dict]):
         """
-        将str记录到文件中，前端可以从网页跳转打开文件。记录是append到之前的记录之后
+        将str记录到文件中，前端可以从网页跳转打开文件。记录是append到之前的记录之后。每个str之后会自动添加一个换行符
 
         :param value: 字符串类型的数据，将直接写到文件中
         :return:
