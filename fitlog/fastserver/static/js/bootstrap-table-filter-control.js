@@ -724,8 +724,8 @@
           // Check partial column filter
           that.data = fp ? that.options.data.filter(function (item, i) {
             var itemIsExpected = [];
-            // 是否忽略空的value
-            if(window.settings["Ignore null value when filter"]) {
+            // 是否忽略空的value, stupid and ugly coding
+            if(window.settings["Ignore filter condition not exist log"]) {
               for (var search_key in fp) {
                 if (!(search_key in item)) {
                   return false;
