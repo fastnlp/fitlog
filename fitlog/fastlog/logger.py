@@ -577,12 +577,13 @@ def _parse_value(value: Union[int, str, float, dict], name: str, parent_name: st
     _dict = {}
     
     if isinstance(value, (int, float, str, bool)) or value is None:
-        if name == None:
+        if name is None:
             raise RuntimeError("When value is {}, you must pass `name`.".format(type(value)))
-        if parent_name != None:
-            _dict = {parent_name: {name: value}}
     elif isinstance(value, dict):
         _check_dict_value(value)
+    else:
+        value = str(value)  # 直接专为str类型
+        assert name is not None, f"When value is `{type(value)}`, you must pass a name."
     if parent_name != None and name != None:
         _dict = {parent_name: {name: value}}
     elif parent_name != None:
@@ -614,16 +615,15 @@ def _check_dict_value(_dict: dict, prefix: str = ''):
                 value = value.item()
                 _dict[key] = value
             except:
-                raise RuntimeError("For {}. Tensor with only one element is allowed.".format(prefix + ':' + key))
+                value = str(value.tolist())
+                _dict[key] = value
         elif 'numpy.ndarray' in str(type(value)):
             total_ele = 1
             for dim in value.shape:
                 total_ele *= dim
-            if total_ele != 1:
-                raise RuntimeError("For {}. It should only have one element.".format(prefix + ':' + key))
-            _dict[key] = value.reshape(1)[0]
+            if total_ele == 1:
+                _dict[key] = value.reshape(1)[0]
+            else:
+                _dict[key] = str(value.tolist())
         else:
-            raise TypeError("Only str, int, float, one element torch Tensor or numpy.ndarray"
-                            " are allowed.")
-
-
+            _dict[key] = str(value)
