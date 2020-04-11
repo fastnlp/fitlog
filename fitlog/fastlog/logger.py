@@ -73,7 +73,41 @@ class Logger:
         
         self._log_dir = None  # 这是哪个大的log文件, 比如logs/
         self._save_log_dir = None  # 存在哪个文件内的，比如log_20191020_193021/。如果
-    
+
+    @_check_log_dir
+    def get_log_dir(self, absolute=False):
+        """
+        返回的是存放所有log的文件夹。例如logs/，需要调用set_log_dir()先设置log的记录文件夹
+
+        :param bool absolute: 是否返回绝对路径
+        :return:
+        """
+        log_dir = self._log_dir
+        if absolute:
+            if log_dir:
+                log_dir = os.path.abspath(log_dir)
+        else:
+            if log_dir:
+                log_dir = os.path.basename(log_dir)
+        return log_dir
+
+    @_check_log_dir
+    def get_log_folder(self, absolute=False):
+        """
+        返回实际保存log的文件夹，类似log_20200406_055218/这种
+
+        :param bool absolute: 是否返回绝对路径
+        :return:
+        """
+        log_dir = self._save_log_dir
+        if absolute:
+            if log_dir:
+                log_dir = os.path.abspath(log_dir)
+        else:
+            if log_dir:
+                log_dir = os.path.basename(log_dir)
+        return log_dir
+
     def debug(self, flag=True):
         """
         再引入logger之后就调用，本次运行不会记录任何东西。所有函数无任何效用
@@ -99,13 +133,13 @@ class Logger:
             self.default_log_dir = os.path.join(committer.work_dir, config.get('log_settings', 'default_log_dir'))
             self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')
             if not self.save_on_first_metric_or_loss:
-                self.create_log_dir()
+                self.create_log_folder()
         else:
             raise RuntimeError("It seems like you are not running under a folder governed by fitlog.\n" + msg['msg'])
     
     @_check_debug
     @_check_log_dir
-    def create_log_dir(self):
+    def create_log_folder(self):
         """
         默认是生成第一个loss或者metric的时候才会在设置的log文件夹下创建一个新的文件夹，如果需要在代码运行时就创建该文件夹，可以通过
             调用该接口。
@@ -143,7 +177,7 @@ class Logger:
             self._log_dir = os.path.dirname(log_dir)
             self._save_log_dir = log_dir
             self.initialized = True
-            self.create_log_dir()
+            self.create_log_folder()
         else:
             self._log_dir = log_dir
         
@@ -161,7 +195,7 @@ class Logger:
             pass
 
         if not self.save_on_first_metric_or_loss:
-            self.create_log_dir()
+            self.create_log_folder()
 
     def _clear(self):
         """

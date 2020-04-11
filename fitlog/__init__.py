@@ -46,6 +46,35 @@ def get_fit_id(file):
     else:
         return 'error'
 
+def get_log_dir(absolute=False):
+    """
+    返回的是存放所有log的文件夹。例如logs/，需要调用set_log_dir()先设置log的记录文件夹
+
+    :param bool absolute: 是否返回绝对路径
+    :return:
+    """
+    return _logger.get_log_dir(absolute=absolute)
+
+
+def get_log_folder(absolute=False):
+    """
+    返回实际保存log的文件夹(实际上也是该log显示在前端的id)，类似log_20200406_055218/这种。仅在实际发生log保存之后，该值才不为空；
+        或可以通过主动调用create_log_folder()进行某次log folder的创建。
+
+    :param bool absolute: 是否返回绝对路径
+    :return:
+    """
+    return _logger.get_log_folder(absolute=absolute)
+
+
+def get_log_id():
+    """
+    获取显示在前端的log的id，仅当发生了log记录之后，或主动调用create_log_folder()之后该值才不为空
+
+    :return:
+    """
+    return get_log_folder(absolute=False)
+
 
 def commit(file: str, fit_msg: str = None):
     """
@@ -238,14 +267,15 @@ def add_to_line(line:Union[str, dict]):
     _logger.add_to_file(line)
 
 
-def create_log_dir():
+def create_log_folder():
     """
     默认是生成第一个loss或者metric的时候才会在设置的log文件夹下创建一个新的文件夹，如果需要在代码运行时就创建该文件夹，可以通过
         调用该接口。
 
     :return:
     """
-    _logger.create_log_dir()
+    _logger.create_log_folder()
+
 
 def set_rng_seed(rng_seed:int = None, random:bool = True, numpy:bool = True,
                      pytorch:bool=True, deterministic:bool=True):
