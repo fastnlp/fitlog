@@ -133,7 +133,7 @@ def _read_save_log(_save_log_dir: str, ignore_null_loss_or_metric: bool = True, 
                         best_line = line
                         f2.write(best_line)
 
-        empty = _is_file_empty('best_metric.log') and _is_file_empty('loss.log')
+        empty = _is_file_empty('best_metric.log') and _is_file_empty('loss.log') and _is_file_empty('metric.log')
         
         if empty and ignore_null_loss_or_metric:
             return _dict, file_stats
