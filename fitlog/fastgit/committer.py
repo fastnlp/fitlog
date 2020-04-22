@@ -302,7 +302,7 @@ class Committer:
                 print(_colored_string("Commit-id's length is at least 6", "red"))
             return Info(1, "Error: Commit-id's length is at least 6")
         if self._check_directory(work_dir, cli=False):
-            commit_ids = self._get_commits()['msg']
+            commit_ids = self._get_commits(cli=cli)['msg']
             flag = False
             for full_commit_id in commit_ids:
                 if full_commit_id.startswith(commit_id):
