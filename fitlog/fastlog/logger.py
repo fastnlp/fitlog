@@ -567,7 +567,7 @@ class Logger:
             if logger_name in ('metric_logger', 'best_metric_logger', 'loss_logger'):
                 self._create_log_files()
                 self._save()  # 将之前的内容存下来
-        if logger_name not in ('file_logger'):
+        if logger_name not in ('file_logger',):
             _str = re.sub('-(?!\d)', '_', _str.replace('\n', ' '))
         if hasattr(self, logger_name):
             logger = getattr(self, logger_name)
@@ -619,11 +619,11 @@ def _parse_value(value: Union[int, str, float, dict], name: str, parent_name: st
         value = str(value)  # 直接专为str类型
         assert name is not None, f"When value is `{type(value)}`, you must pass a name."
     if parent_name != None and name != None:
-        _dict = {parent_name: {name: value}}
+        _dict = {parent_name.replace(' ', '_'): {name.replace(' ', '_'): value}}
     elif parent_name != None:
-        _dict = {parent_name: value}
+        _dict = {parent_name.replace(' ', '_'): value}
     elif name != None:
-        _dict = {name: value}
+        _dict = {name.replace(' ', '_'): value}
     else:
         _dict = value
     return _dict
