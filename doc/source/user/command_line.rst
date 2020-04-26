@@ -62,7 +62,7 @@ fitlog log
 .. code:: shell
 
     Usage:
-        fitlog log <log-dir> [--log-config-name=L] [--port=P] [--standby-hours=S]
+        fitlog log <log-dir> [--log-config-name=L] [--port=P] [--standby-hours=S] [--token=T] [--ip=I]
 
     Arguments:
         log-dir                 Where to find logs.
@@ -72,3 +72,5 @@ fitlog log
         -l=L --log-config-name  Log server config name. Must under the folder of <log-dir>. [default: default.cfg]
         -p=P --port             Which port to start to looking for usable port.[default: 5000]
         -s=S --standby-hours    How long to wait before the server . [default: 48]
+        -t=T --token            If this is used, your have to specify the token when accessing. Default no token.
+        -i=I --ip               Which ip to bind to. Default is 0.0.0.0 [default: 0.0.0.0]
