@@ -10,4 +10,4 @@
     命令行工具 </user/command_line>
     网页工具 </user/website>
     配置文件 </user/configs>
-    常见错误 </user/errs>
+    常见问题 </user/errs>
