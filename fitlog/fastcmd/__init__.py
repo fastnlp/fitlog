@@ -19,7 +19,7 @@ from .log_cmd import log_cmd
 
 def main_cmd():
     argv = sys.argv[1:2] if len(sys.argv) > 2 else sys.argv[1:]
-    args = docopt(__doc__, version='fitlog v1.0', argv=argv, help=False)
+    args = docopt(__doc__, version='fitlog beta', argv=argv, help=False)
     argv = sys.argv[1:]
     if args['<command>'] in ('init', 'revert'):
         if args['--help'] or args['-h']:

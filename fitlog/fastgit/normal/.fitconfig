@@ -1,5 +1,4 @@
 [fit_settings]
-revert_with_commit_id = False
 watched_rules = *.py
 
 [log_settings]

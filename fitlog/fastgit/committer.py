@@ -70,7 +70,6 @@ class Committer:
     def __init__(self):
         self.work_dir = None
         self.config_file_path = None
-        self.revert_with_commit_id = False  # revert后的文件夹是否以 commit_id 做为后缀
         self.watched_rules = []  # 记录被监控文件的规则
         self.commits = []  # 自动 commit 的历史记录
         self.last_commit = None  # 上一次 commit 的历史记录
@@ -125,15 +124,6 @@ class Committer:
             if 'watched_rules' in config['fit_settings']:
                 tmp = config['fit_settings']['watched_rules']
                 self.watched_rules = [each.strip() for each in tmp.split(',') if len(each) > 1]
-            if 'revert_with_commit_id' in config['fit_settings']:
-                tmp = config['fit_settings']['revert_with_commit_id']
-                if tmp in ['False', 'false']:
-                    self.revert_with_commit_id = False
-                elif tmp in ["True", 'true']:
-                    self.revert_with_commit_id = True
-                else:
-                    print(
-                        _colored_string("The config field 'revert_with_commit_id' (value: %s) error." % tmp, "yellow"))
 
     def _get_watched_files(self) -> List[str]:
         """在获取监管文件的规则后，获取具体的文件列表
@@ -318,7 +308,7 @@ class Committer:
                     path = work_dir + "_revert"
                 else:
                     path = os.path.abspath(path)
-                if self.revert_with_commit_id or id_suffix:
+                if id_suffix:
                     path += "_" + commit_id[:6]
 
                 if os.path.abspath(path).startswith(work_dir + '/'):
@@ -601,7 +591,7 @@ class Committer:
         """fitlog 调用此接口进行版本回退
 
         :param commit_id: 需要回退版本的 commit-id
-        :param run_file_path: 执行文件的路径 TODO:检查这个变量是否需要
+        :param run_file_path: 执行文件的路径
         :param id_suffix: 回退版本的放置文件夹是否包含 commit-id 做为后缀
         :return: 返回带状态码的信息。如果成功，信息为回退版本的放置路径
         """

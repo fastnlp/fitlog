@@ -27,9 +27,9 @@ from fitlog.fastgit import committer
 
 def fit_cmd(argv=None):
     if argv:
-        args = docopt(__doc__, version='fitlog v1.0', argv=argv)
+        args = docopt(__doc__, version='fitlog beta', argv=argv)
     else:
-        args = docopt(__doc__, version='fitlog v1.0')
+        args = docopt(__doc__, version='fitlog beta')
     if args['init']:
         name = args['<name>'] if args['<name>'] else '.'
         committer.init_project(name, hide=args["--hide"], git=not args["--no-git"])

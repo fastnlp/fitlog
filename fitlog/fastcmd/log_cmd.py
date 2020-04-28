@@ -20,9 +20,9 @@ from ..fastserver.app import start_app
 
 def log_cmd(argv=None):
     if argv:
-        args = docopt(__doc__, version='fitlog v1.0', argv=argv)
+        args = docopt(__doc__, version='fitlog beta', argv=argv)
     else:
-        args = docopt(__doc__, version='fitlog v1.0')
+        args = docopt(__doc__, version='fitlog beta')
 
     log_dir = args['<log-dir>']
     start_port = int(args['--port'])
