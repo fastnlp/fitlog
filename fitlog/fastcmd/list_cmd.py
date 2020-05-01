@@ -8,11 +8,11 @@ Arguments:
 
 Options:
     -h --help               This is a command to list committed versions
-    --show-now              Show the current version with green font
+    --show-now              Show the current version
 
 Examples:
     fitlog list 10          List recent 10 commits
-    fitlog list --show-now  List all commits (the current one is green)
+    fitlog list --show-now  List all commits with the current one marked
 """
 from docopt import docopt
 from fitlog.fastgit import committer

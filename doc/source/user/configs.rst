@@ -2,11 +2,14 @@
 配置文件
 ==============
 
+fitlog 的配置文件有 **.fitconfig**
+
+
 .fitconfig
 -------------
 
-``.fitconfig`` 文件是 fitlog 的配置文件，一般位于 fitlog 项目的根目录下，也可以放置在项目的根目录中的 .fitlog 文件夹内。
-``.fitconfig`` 中的默认内容如下：
+**.fitconfig** 文件是 fitlog 的配置文件，一般位于 fitlog 项目的根目录下，也可以放置在项目的根目录中的 .fitlog 文件夹内。
+**.fitconfig** 中的默认内容如下：
 
 .. code-block:: shell
 
@@ -19,7 +22,7 @@
 
 ``watched_rules`` 配置的是 fitlog 会自动进行 commit 的文件类型，等号后面是一系列用英文逗号 ``,`` 隔开的规则，
 每个规则使用 Python 内置的 `fnmatch <https://docs.python.org/3/library/fnmatch.html>`_ 函数来进行匹配。
-你可以添加适当的空格来让配置项更加可读，例如： ``watched_rules = *.py, *.mat, test_*.bak`` 。
+你可以添加适当的空格来让配置项更加可读，例如： `watched_rules = *.py, *.mat, test_*.bak` 。
 
 ``default_log_dir`` 配置的是 fitlog 记录实验日志的目录，默认位于项目根目录下的 **logs** 文件夹。
 
@@ -29,7 +32,7 @@
 default.cfg
 -------------
 
-``default.cfg`` 是日志文件夹（默认为项目根目录下的 **logs** 文件夹）中的配置文件。您可以复制或改名这个文件，
+**default.cfg** 是日志文件夹（默认为项目根目录下的 **logs** 文件夹）中的配置文件。您可以复制或改名这个文件，
 只要在命令行启动网页服务时指定配置文件即可。各个选项的功能请参考文件中的注释。
 
 .. code-block:: shell
