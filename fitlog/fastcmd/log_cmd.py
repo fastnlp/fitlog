@@ -18,11 +18,11 @@ import os
 from ..fastserver.app import start_app
 
 
-def log_cmd(argv=None):
+def log_cmd(argv=None):  # argv=None 仅供调试使用
     if argv:
-        args = docopt(__doc__, version='fitlog beta', argv=argv)
+        args = docopt(__doc__, argv=argv)
     else:
-        args = docopt(__doc__, version='fitlog beta')
+        args = docopt(__doc__)
 
     log_dir = args['<log-dir>']
     start_port = int(args['--port'])
@@ -41,14 +41,14 @@ def log_cmd(argv=None):
 
     if not os.path.exists(log_dir):
         raise RuntimeError("{} is not exist.".format(log_dir))
-    
+
     if not os.path.isdir(log_dir):
         raise NotADirectoryError("{} is not a directory.".format(log_dir))
-    
+
     log_dir = os.path.abspath(log_dir)
     if os.path.dirname(log_config_name) != '':
         raise ValueError("log_config_name can only be a filename.")
-    
+
     start_app(log_dir, log_config_name, start_port, standby_hours, ip, token)
 
 
