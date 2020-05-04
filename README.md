@@ -2,7 +2,7 @@
 [![Pypi](https://img.shields.io/pypi/v/fitlog.svg)](https://pypi.org/project/fitlog)
 [![Documentation Status](https://readthedocs.org/projects/fitlog/badge/?version=latest)](http://fitlog.readthedocs.io/?badge=latest)
 
-fitlog = fast + git + log, 是一款用于辅助用户记录日志和管理代码的工具。
+fitlog = fast + git + log, 是一款用于辅助用户记录日志和管理代码的工具，主要支持 Linux 和 macOS。 
 
 [fitlog中文文档](https://fitlog.readthedocs.io/zh/latest/)
 
@@ -26,7 +26,7 @@ filog 是我们实验室内部使用的一款工具，大部分功能口口相�
 更新计划包括：
 
 - [ ] 增加更多的使用案例
-- [ ] 检查并更详细地介绍 [命令行工具](https://fitlog.readthedocs.io/zh/latest/user/command_line.html) 的使用方法
+- [x] 检查并更详细地介绍 [命令行工具](https://fitlog.readthedocs.io/zh/latest/user/command_line.html) 的使用方法
 - [ ] 完成[网页服务](https://fitlog.readthedocs.io/zh/latest/user/website.html)的详细介绍
 
 

@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'fitlog'
-copyright = '2019, fastNLP'
+copyright = '2020, fastNLP'
 author = 'fastNLP'
 
 # The short X.Y version
-version = '0.1.2'
+version = '0.5.1'
 # The full version, including alpha/beta/rc tags
 
 # -- General configuration ---------------------------------------------------

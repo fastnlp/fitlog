@@ -5,21 +5,22 @@
 .. contents::
    :local:
 
-fitlog 依赖如下两个包::
+fitlog 依赖以下几个包::
 
     docopt>=0.6.2
     flask>=1.0.2
+    numpy>=1.16.4
 
 但您仍然可以使用如下命令一次性完成安装
 
 ..  code:: shell
 
-   >>> pip install fitlog
+    pip install fitlog
 
 您也可以从 github 中安装 fitlog 的最新的版本
 
 ..  code:: shell
 
-    >>> pip install git+https://github.com/fastnlp/fitlog.git
+    pip install git+https://github.com/fastnlp/fitlog.git
 
 
