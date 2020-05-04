@@ -615,6 +615,21 @@ def _parse_value(value: Union[int, str, float, dict], name: str, parent_name: st
             raise RuntimeError("When value is {}, you must pass `name`.".format(type(value)))
     elif isinstance(value, dict):
         _check_dict_value(value)
+    elif 'torch.Tensor' in str(type(value)):
+        assert name is not None, f"When value is `{type(value)}`, you must pass a name."
+        try:
+            value = value.item()
+        except:
+            value = str(value.tolist())
+    elif 'numpy.ndarray' in str(type(value)):
+        assert name is not None, f"When value is `{type(value)}`, you must pass a name."
+        total_ele = 1
+        for dim in value.shape:
+            total_ele *= dim
+        if total_ele == 1:
+            value = value.reshape(1)[0]
+        else:
+            value = str(value.tolist())
     else:
         value = str(value)  # 直接专为str类型
         assert name is not None, f"When value is `{type(value)}`, you must pass a name."
