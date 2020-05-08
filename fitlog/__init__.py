@@ -11,7 +11,7 @@ from typing import Union
 import argparse
 from configparser import ConfigParser
 
-__version__ = '0.5.1'
+__version__ = '0.5.8'
 
 
 def get_commit_id(file):
@@ -45,6 +45,7 @@ def get_fit_id(file):
         return res['msg'][0]
     else:
         return 'error'
+
 
 def get_log_dir(absolute=False):
     """
@@ -94,7 +95,7 @@ def commit(file: str, fit_msg: str = None):
     _logger.commit(file, fit_msg)
 
 
-def set_log_dir(log_dir: str, new_log:bool=False):
+def set_log_dir(log_dir: str, new_log: bool = False):
     """
     设定log 文件夹的路径(在进行其它操作前必须先指定日志路径)。如果你已经顺利执行了 fitlog.commit()命令，
     log 文件夹会自动设定为.fitconfig 文件中的 default_log_dir 字段的值。在某些情况下，可能需要继续往同
@@ -257,7 +258,7 @@ def add_progress(total_steps: int = None):
     _logger.add_progress(total_steps)
 
 
-def add_to_line(line:Union[str, dict]):
+def add_to_line(line: Union[str, dict]):
     """
     将str记录到文件中，前端可以从网页跳转打开文件。每次记录是append到之前的记录之后的。
 
@@ -277,8 +278,8 @@ def create_log_folder():
     _logger.create_log_folder()
 
 
-def set_rng_seed(rng_seed:int = None, random:bool = True, numpy:bool = True,
-                     pytorch:bool=True, deterministic:bool=True):
+def set_rng_seed(rng_seed: int = None, random: bool = True, numpy: bool = True,
+                 pytorch: bool = True, deterministic: bool = True):
     """
     设置模块的随机数种子。由于pytorch还存在cudnn导致的非deterministic的运行，所以一些情况下可能即使seed一样，结果也不一致
         在fitlog.set_log_dir()之后调用本函数将自动记录rng_seed到log中。

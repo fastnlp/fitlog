@@ -87,7 +87,7 @@ class Committer:
         else:
             path = os.path.abspath(run_file_path)
         home_path = os.path.expanduser('~')
-        root_path = "/"
+        root_path = os.path.abspath("/")
         depth_cnt = 0
         max_depth = 8
         while 1:
