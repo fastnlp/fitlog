@@ -150,37 +150,40 @@ class Committer:
         return watched_files
 
     @staticmethod
-    def _switch_to_fast_git(work_dir: str) -> List[str]:
+    def _switch_to_fast_git(work_dir: str):
         """将工作目录从通常的 git 模式切换成 fastgit 模式
 
         :param work_dir: 工作目录的绝对路径
-        :return: 返回系统输出的情况，用于出现错误时的调试
         """
-        commands = ["cd " + work_dir]
-        if os.path.exists(os.path.join(work_dir, ".git")):
-            commands.append("mv .git .git_backup")
-        if os.path.isfile(os.path.join(work_dir, ".gitignore")):
-            commands.append("mv .gitignore .gitignore_backup")
-        commands.append("mv .fitlog .git")
-        commands.append("mv " + os.path.join(".git", ".gitignore") + " .")
-        command = " && ".join(commands)
-        return os.popen(command).readlines()
+        fitlog_path = os.path.join(work_dir, ".fitlog")
+        git_path = os.path.join(work_dir, ".git")
+        git_backup_path = os.path.join(work_dir, ".git_backup")
+        gitignore_path = os.path.join(work_dir, ".gitignore")
+        gitignore_backup_path = os.path.join(work_dir, ".gitignore_backup")
+        if os.path.exists(git_path):
+            shutil.move(git_path, git_backup_path)
+        if os.path.isfile(gitignore_path):
+            shutil.move(gitignore_path, gitignore_backup_path)
+        shutil.move(fitlog_path, git_path)
+        shutil.move(os.path.join(git_path, ".gitignore"), work_dir)
 
     @staticmethod
-    def _switch_to_standard_git(work_dir: str) -> List[str]:
+    def _switch_to_standard_git(work_dir: str):
         """将工作目录从 fastgit 模式切换成通常的 git 模式
 
         :param work_dir: 工作目录的绝对路径
-        :return: 返回系统输出的情况，用于出现错误时的调试
         """
-        commands = ["cd " + work_dir, "mv .git .fitlog"]
-        commands += ["mv .gitignore " + os.path.join(".fitlog", "")]
-        if os.path.exists(os.path.join(work_dir, ".git_backup")):
-            commands.append("mv .git_backup .git", )
-        if os.path.isfile(os.path.join(work_dir, ".gitignore_backup")):
-            commands.append("mv .gitignore_backup .gitignore")
-        command = " && ".join(commands)
-        return os.popen(command).readlines()
+        fitlog_path = os.path.join(work_dir, ".fitlog")
+        git_path = os.path.join(work_dir, ".git")
+        git_backup_path = os.path.join(work_dir, ".git_backup")
+        gitignore_path = os.path.join(work_dir, ".gitignore")
+        gitignore_backup_path = os.path.join(work_dir, ".gitignore_backup")
+        shutil.move(git_path, fitlog_path)
+        shutil.move(gitignore_path, os.path.join(fitlog_path, ""))
+        if os.path.exists(git_backup_path):
+            shutil.move(git_backup_path, git_path)
+        if os.path.isfile(gitignore_backup_path):
+            shutil.move(gitignore_backup_path, gitignore_path)
 
     @staticmethod
     def _check_directory(work_dir: str, cli: bool = True) -> bool:
@@ -190,43 +193,31 @@ class Committer:
         :param cli: 是否在命令行内执行。如果在命令行中执行，则对用户进行提示
         :return: 返回是否存在 fitlog 项目
         """
-        if os.path.exists(os.path.join(work_dir, ".fitlog")) or os.path.exists(os.path.join(work_dir, ".git_backup")):
-            if os.path.exists(os.path.join(work_dir, ".fitlog")) and os.path.exists(
-                    os.path.join(work_dir, ".git_backup")):
-                commands = [
-                    "cd " + work_dir,
-                    "mv " + os.path.join(work_dir, ".git_backup") + " " + os.path.join(work_dir, ".git")
-                ]
-                command = " && ".join(commands)
-                os.popen(command).readlines()
-            elif os.path.exists(os.path.join(work_dir, ".git")) and os.path.exists(
-                    os.path.join(work_dir, ".git_backup")):
-                commands = [
-                    "cd " + work_dir,
-                    "mv " + os.path.join(work_dir, ".git") + " " + os.path.join(work_dir, ".fitlog"),
-                    "mv " + os.path.join(work_dir, ".git_backup") + " " + os.path.join(work_dir, ".git")
-                ]
-                command = " && ".join(commands)
-                os.popen(command).readlines()
+        fitlog_path = os.path.join(work_dir, ".fitlog")
+        git_path = os.path.join(work_dir, ".git")
+        git_backup_path = os.path.join(work_dir, ".git_backup")
+        if os.path.exists(fitlog_path) or os.path.exists(git_backup_path):
+            if os.path.exists(fitlog_path) and os.path.exists(git_backup_path):
+                shutil.move(git_backup_path, git_path)
+            elif os.path.exists(git_path) and os.path.exists(git_backup_path):
+                shutil.move(git_path, fitlog_path)
+                shutil.move(git_backup_path, git_path)
             if cli:
                 print(_colored_string("Fitlog project has been initialized. ", "red"))
             return True
         return False
 
-    def _commit_files(self, watched_files: List[str], commit_message: str) -> List[str]:
+    def _commit_files(self, watched_files: List[str], commit_message: str):
         """利用当前 git（如果运行正常，应该是 fitlog 模式）进行一次 commit
 
         :param watched_files: 即将被 commit 的文件的列表
         :param commit_message: commit的message
-        :return: 返回系统输出的情况，用于出现错误时的调试
         """
-        commands = ["cd " + self.work_dir]
+        repo = Repo(self.work_dir)
         for file in watched_files:
-            commands.append("git add " + file)
-        commands.append("git add .gitignore")
-        commands.append("git commit -m \"%s\"" % commit_message)
-        command = " && ".join(commands)
-        return os.popen(command).readlines()
+            repo.index.add(file)
+        repo.index.add(".gitignore")
+        repo.index.commit(commit_message)
 
     def _save_log(self, logs: List[str]):
         """ 将要存储的信息存储到默认的 fitlog
@@ -319,22 +310,14 @@ class Committer:
                     if cli:
                         print(_colored_string("The <path> can't in your project directory.", "red"))
                     return Info(1, "Error: The <path> can't in your project directory.")
-                else:
-                    target_path = os.path.join(path, ".fitlog")
-                    if not os.path.exists(path):
-                        os.makedirs(path, exist_ok=True)
-                    ret_code = os.system("rm -rf %s && cp -rf %s %s" %
-                                         (target_path, os.path.join(work_dir, ".fitlog"), target_path))
-                    if ret_code != 0:
-                        if cli:
-                            print(_colored_string("Some error occurs in cp", "red"))
-                        return Info(1, "Error: Some error occurs in cp")
+                core_path = os.path.join(path, ".fitlog")
+                if not os.path.exists(path):
+                    os.makedirs(path, exist_ok=True)
+                shutil.rmtree(core_path, ignore_errors=True)
+                shutil.copytree(os.path.join(work_dir, ".fitlog"), core_path)
                 self._switch_to_fast_git(path)
-                ret_code = os.system("cd %s && git reset --hard %s" % (path, commit_id))
-                if ret_code != 0:
-                    if cli:
-                        print(_colored_string("Some error occurs in git reset", "red"))
-                    return Info(1, "Error: Some error occurs in git reset")
+                repo = Repo(path)
+                repo.index.reset(commit=commit_id, head=True)
                 if cli:
                     print("Your code is reverted to " + _colored_string(path, "green"))
                 return Info(0, path)
@@ -379,18 +362,16 @@ class Committer:
                 raise TimeoutError("One auto-commit must run after another. Please run again a few seconds later."
                                    "\nIf you fail several times, please refer to our documents.")
             # TODO add the link
-        logs += self._switch_to_fast_git(self.work_dir)
+        self._switch_to_fast_git(self.work_dir)
         try:
             commit_files = self._get_watched_files()
-            msg = self._commit_files(commit_files, commit_message)
-            logs += msg
-            if msg:
-                print(_colored_string('Auto commit by fitlog', 'blue'))
+            self._commit_files(commit_files, commit_message)
+            print(_colored_string('Auto commit by fitlog', 'blue'))
         except BaseException as e:
             print(_colored_string('Some error occurs during committing.', 'red'))
             self._switch_to_standard_git(self.work_dir)
             raise e
-        logs += self._switch_to_standard_git(self.work_dir)
+        self._switch_to_standard_git(self.work_dir)
         commit_id = self._get_last_commit()['msg']
         self.last_commit = Commit(commit_id, commit_message)
         self.commits.append(self.last_commit)
@@ -532,9 +513,14 @@ class Committer:
                 Repo.init(path=pj_path)
             # 添加 ignore 的内容
             if hide:
-                open(os.path.join(pj_path, '.gitignore'), 'a').write("\n.fitlog\nlogs\n")
+                write_text = ".fitlog\nlogs\n"
             else:
-                open(os.path.join(pj_path, '.gitignore'), 'a').write("\n.fitlog\n.fitconfig\nlogs\n")
+                write_text = ".fitlog\n.fitconfig\nlogs\n"
+            gitignore_path = os.path.join(pj_path, '.gitignore')
+            if os.path.exists(gitignore_path):
+                open(gitignore_path, 'a').write("\n" + write_text)
+            else:
+                open(gitignore_path, 'w').write(write_text)
         print(_colored_string("Fitlog project %s is initialized." % pj_name, "green"))
         return 0
 
