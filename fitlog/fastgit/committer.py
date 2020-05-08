@@ -1,10 +1,12 @@
 import os
 import sys
+import shutil
 import configparser
 from datetime import datetime
 from fnmatch import fnmatch
 import time
 from typing import List, Union
+from git import Repo
 
 _commit_flag = '-------commit-------\n'
 _system_flag = '-------system-------\n'
@@ -320,7 +322,7 @@ class Committer:
                 else:
                     target_path = os.path.join(path, ".fitlog")
                     if not os.path.exists(path):
-                        os.makedirs(path)
+                        os.makedirs(path, exist_ok=True)
                     ret_code = os.system("rm -rf %s && cp -rf %s %s" %
                                          (target_path, os.path.join(work_dir, ".fitlog"), target_path))
                     if ret_code != 0:
@@ -490,57 +492,49 @@ class Committer:
     def init_project(self, pj_name: str, version: str = "normal", hide: bool = False, git: bool = True) -> int:
         """命令行用来初始化一个 fitlog 项目
 
-        :param pj_name: 项目名称`
+        :param pj_name: 项目名称
         :param version: 项目初始化文件夹的版本，目前只有 normal 这一种
         :param hide: 是否隐藏 .fitconfig 文件到 .fitlog 文件夹中
         :param git: 是否在初始化 fitlog 的同时为项目初始化 git
         :return: 状态码。0表示正常完成，其它错误码与系统相关
         """
+
         if pj_name == '.':
-            if self._check_directory("."):
-                return 0
-            if os.path.exists(".git"):
-                self._switch_to_fast_git(os.path.abspath(pj_name))
-        elif self._check_directory(os.path.join(pj_name, ".fitlog")):
+            pj_path = os.path.realpath('.')
+        else:
+            pj_path = os.path.join(os.path.realpath('.'), pj_name)
+        # 如果没有项目目录，则创建
+        if not os.path.exists(pj_path):
+            os.makedirs(pj_path, exist_ok=True)
+        # 如果已有 fitlog 项目，则检查是否需要修复
+        if self._check_directory(pj_path):
             return 0
-        tools_path = os.path.realpath(__file__)[:-len("committer.py")]
-        commands = [
-            "cd " + pj_name,
-            "cp -r %s ." % os.path.join(tools_path + version, "."),
-            "mv main main.py",
-            "git init"
-        ]
-        if pj_name != '.':
-            commands = ["mkdir " + pj_name] + commands
+        # 如果已有 git 项目，则切换模式
+        if os.path.exists(os.path.join(pj_path, ".git")):
+            self._switch_to_fast_git(pj_path)
+
+        tools_path = os.path.realpath(__file__)[:-len("committer.py")] + version
+        shutil.copytree(os.path.join(tools_path, "logs"), os.path.join(pj_path, "logs"))
+        for file in [".fitconfig", ".gitignore", "main"]:
+            shutil.copy(os.path.join(tools_path, file), pj_path)
+        shutil.move(os.path.join(pj_path, "main"), os.path.join(pj_path, "main.py"))
+        Repo.init(path=pj_path)
         if hide:
-            commands.append("mv .fitconfig .git")
-        ret_code = os.system(" && ".join(commands))
-        if ret_code != 0:
-            print(_colored_string("Some error occurs.", "red"))
-            return ret_code
-        self._switch_to_standard_git(os.path.abspath(pj_name))
+            shutil.move(os.path.join(pj_path, ".fitconfig"), os.path.join(pj_path, ".git", ""))
+        self._switch_to_standard_git(pj_path)
+        # 以上完成 fitlog 的初始化，切换模式
 
-        self.commit(os.path.join(pj_name, "main.py"), "Project initialized.")
+        self.commit(os.path.join(pj_path, "main.py"), "Project initialized.")
 
+        # 新建普通的 git
         if git:
-            if pj_name == '.' and os.path.exists(".git"):
-                if hide:
-                    open('.gitignore', 'a').write(".fitlog\nlogs\n.gitignore\n")
-                else:
-                    open('.gitignore', 'a').write(".fitlog\n.fitconfig\nlogs\n.gitignore\n")
+            if not os.path.exists(os.path.join(pj_path, ".git")):
+                Repo.init(path=pj_path)
+            # 添加 ignore 的内容
+            if hide:
+                open(os.path.join(pj_path, '.gitignore'), 'a').write("\n.fitlog\nlogs\n")
             else:
-                commands = [
-                    "cd " + pj_name,
-                    "git init"]
-                if hide:
-                    commands += ["echo .fitlog > .gitignore"]
-                else:
-                    commands += ["echo \".gitignore\\n" + os.path.join(".fitlog", "")
-                                 + "\\n.fitconfig\\n" + os.path.join("logs", "") + "\" > .gitignore"]
-                ret_code = os.system(" && ".join(commands))
-                if ret_code != 0:
-                    print(_colored_string("Some error occurs.", "red"))
-                    return ret_code
+                open(os.path.join(pj_path, '.gitignore'), 'a').write("\n.fitlog\n.fitconfig\nlogs\n")
         print(_colored_string("Fitlog project %s is initialized." % pj_name, "green"))
         return 0
 
