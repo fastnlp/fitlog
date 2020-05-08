@@ -97,12 +97,12 @@ class Committer:
                     print(_colored_string("Folder depth out of limitation.", "red"))
                     print(_colored_string("Can not find the config file.", "red"))
                 return "Error"
-            if os.path.isfile(path + "/" + config_file_name):
-                self.config_file_path = path + "/" + config_file_name
+            if os.path.isfile(os.path.join(path, config_file_name)):
+                self.config_file_path = os.path.join(path, config_file_name)
                 self.work_dir = path
                 return path
-            if os.path.isfile(path + "/.fitlog/" + config_file_name):
-                self.config_file_path = path + "/.fitlog/" + config_file_name
+            if os.path.isfile(os.path.join(path, ".fitlog", config_file_name)):
+                self.config_file_path = os.path.join(path, ".fitlog", config_file_name)
                 self.work_dir = path
                 return path
             if path == home_path or path == root_path:
@@ -155,12 +155,12 @@ class Committer:
         :return: 返回系统输出的情况，用于出现错误时的调试
         """
         commands = ["cd " + work_dir]
-        if os.path.exists(work_dir + "/.git"):
+        if os.path.exists(os.path.join(work_dir, ".git")):
             commands.append("mv .git .git_backup")
-        if os.path.isfile(work_dir + "/.gitignore"):
+        if os.path.isfile(os.path.join(work_dir, ".gitignore")):
             commands.append("mv .gitignore .gitignore_backup")
         commands.append("mv .fitlog .git")
-        commands.append("mv .git/.gitignore .")
+        commands.append("mv " + os.path.join(".git", ".gitignore") + " .")
         command = " && ".join(commands)
         return os.popen(command).readlines()
 
@@ -172,10 +172,10 @@ class Committer:
         :return: 返回系统输出的情况，用于出现错误时的调试
         """
         commands = ["cd " + work_dir, "mv .git .fitlog"]
-        commands += ["mv .gitignore .fitlog/"]
-        if os.path.exists(work_dir + "/.git_backup"):
+        commands += ["mv .gitignore " + os.path.join(".fitlog", "")]
+        if os.path.exists(os.path.join(work_dir, ".git_backup")):
             commands.append("mv .git_backup .git", )
-        if os.path.isfile(work_dir + "/.gitignore_backup"):
+        if os.path.isfile(os.path.join(work_dir, ".gitignore_backup")):
             commands.append("mv .gitignore_backup .gitignore")
         command = " && ".join(commands)
         return os.popen(command).readlines()
@@ -188,19 +188,21 @@ class Committer:
         :param cli: 是否在命令行内执行。如果在命令行中执行，则对用户进行提示
         :return: 返回是否存在 fitlog 项目
         """
-        if os.path.exists(work_dir + "/.fitlog") or os.path.exists(work_dir + "/.git_backup"):
-            if os.path.exists(work_dir + "/.fitlog") and os.path.exists(work_dir + "/.git_backup"):
+        if os.path.exists(os.path.join(work_dir, ".fitlog")) or os.path.exists(os.path.join(work_dir, ".git_backup")):
+            if os.path.exists(os.path.join(work_dir, ".fitlog")) and os.path.exists(
+                    os.path.join(work_dir, ".git_backup")):
                 commands = [
                     "cd " + work_dir,
-                    "mv " + work_dir + "/.git_backup" + " " + work_dir + "/.git"
+                    "mv " + os.path.join(work_dir, ".git_backup") + " " + os.path.join(work_dir, ".git")
                 ]
                 command = " && ".join(commands)
                 os.popen(command).readlines()
-            elif os.path.exists(work_dir + "/.git") and os.path.exists(work_dir + "/.git_backup"):
+            elif os.path.exists(os.path.join(work_dir, ".git")) and os.path.exists(
+                    os.path.join(work_dir, ".git_backup")):
                 commands = [
                     "cd " + work_dir,
-                    "mv " + work_dir + "/.git" + " " + work_dir + "/.fitlog",
-                    "mv " + work_dir + "/.git_backup" + " " + work_dir + "/.git"
+                    "mv " + os.path.join(work_dir, ".git") + " " + os.path.join(work_dir, ".fitlog"),
+                    "mv " + os.path.join(work_dir, ".git_backup") + " " + os.path.join(work_dir, ".git")
                 ]
                 command = " && ".join(commands)
                 os.popen(command).readlines()
@@ -230,7 +232,7 @@ class Committer:
         :param logs: 要存储的信息
         :return:
         """
-        with open(self.work_dir + "/.fitlog/fit_logs", "a")as file_out:
+        with open(os.path.join(self.work_dir, ".fitlog", "fit_logs"), "a")as file_out:
             file_out.writelines(logs)
 
     def _get_commits(self, cli: bool = False) -> Info:
@@ -246,7 +248,7 @@ class Committer:
                 return Info(1, "Error: Have not set the work directory")
             work_dir = self.work_dir
         try:
-            master = work_dir + "/.fitlog/logs/refs/heads/master"
+            master = os.path.join(work_dir, *"/.fitlog/logs/refs/heads/master".split('/'))
             with open(master, "r") as fin:
                 lines = fin.readlines()
             commit_ids = []
@@ -311,13 +313,14 @@ class Committer:
                 if id_suffix:
                     path += "_" + commit_id[:6]
 
-                if os.path.abspath(path).startswith(work_dir + '/'):
+                if os.path.abspath(path).startswith(os.path.join(work_dir, "")):
                     if cli:
                         print(_colored_string("The <path> can't in your project directory.", "red"))
                     return Info(1, "Error: The <path> can't in your project directory.")
                 else:
-                    ret_code = os.system("mkdir -p %s && rm -rf %s/.fitlog && /bin/cp -rf %s/.fitlog %s/.fitlog" %
-                                         (path, path, work_dir, path))
+                    target_path = os.path.join(path, ".fitlog")
+                    ret_code = os.system("mkdir -p %s && rm -rf %s && cp -rf %s %s" %
+                                         (path, target_path, os.path.join(work_dir, ".fitlog"), target_path))
                     if ret_code != 0:
                         if cli:
                             print(_colored_string("Some error occurs in cp", "red"))
@@ -352,7 +355,7 @@ class Committer:
             if self.config_file_path is None:
                 return Info(1, "Error: Config file is not found")
             self._read_config()
-            if not os.path.exists(self.work_dir + "/.fitlog"):
+            if not os.path.exists(os.path.join(self.work_dir, ".fitlog")):
                 print(_colored_string(".fitlog folder is not found", "red"))
                 return Info(1, "Error: .fitlog folder is not found")
         else:
@@ -364,7 +367,8 @@ class Committer:
         logs = [_arguments_flag, "Run ", " ".join(sys.argv), "\n"]
         logs += [_system_flag]
         sleep_cnt = 0
-        while os.path.isdir(self.work_dir + "/.git_backup") or os.path.isfile(self.work_dir + "/.gitignore_backup"):
+        while os.path.isdir(os.path.join(self.work_dir, ".git_backup")) or \
+                os.path.isfile(os.path.join(self.work_dir, ".gitignore_backup")):
             time.sleep(1)
             sleep_cnt += 1
             if sleep_cnt == 10:
@@ -465,7 +469,7 @@ class Committer:
             work_dir = '.'
         work_dir = os.path.abspath(work_dir)
         try:
-            master = work_dir + "/.fitlog/logs/refs/heads/master"
+            master = os.path.join(work_dir, *"/.fitlog/logs/refs/heads/master".split('/'))
             return Committer._read_id_from_file(master)
         except FileNotFoundError:
             return Info(1, "Error: Some error occurs")
@@ -495,12 +499,12 @@ class Committer:
                 return 0
             if os.path.exists(".git"):
                 self._switch_to_fast_git(os.path.abspath(pj_name))
-        elif self._check_directory(pj_name + "/.fitlog"):
+        elif self._check_directory(os.path.join(pj_name, ".fitlog")):
             return 0
         tools_path = os.path.realpath(__file__)[:-len("committer.py")]
         commands = [
             "cd " + pj_name,
-            "cp -r %s/. ." % (tools_path + version),
+            "cp -r %s ." % os.path.join(tools_path + version, "."),
             "mv main main.py",
             "git init"
         ]
@@ -514,7 +518,7 @@ class Committer:
             return ret_code
         self._switch_to_standard_git(os.path.abspath(pj_name))
 
-        self.commit(pj_name + "/main.py", "Project initialized.")
+        self.commit(os.path.join(pj_name, "main.py"), "Project initialized.")
 
         if git:
             if pj_name == '.' and os.path.exists(".git"):
@@ -529,7 +533,8 @@ class Committer:
                 if hide:
                     commands += ["echo .fitlog > .gitignore"]
                 else:
-                    commands += ["echo \".gitignore\\n.fitlog/\\n.fitconfig\\nlogs/\" > .gitignore"]
+                    commands += ["echo \".gitignore\\n" + os.path.join(".fitlog", "")
+                                 + "\\n.fitconfig\\n" + os.path.join("logs", "") + "\" > .gitignore"]
                 ret_code = os.system(" && ".join(commands))
                 if ret_code != 0:
                     print(_colored_string("Some error occurs.", "red"))
@@ -550,7 +555,7 @@ class Committer:
                 if show_now:
                     work_dir = os.path.abspath('.')
                     head_id = self._get_last_commit(work_dir)["msg"]
-                with open('.fitlog/fit_logs', 'r') as fin:
+                with open(os.path.join('.fitlog', 'fit_logs'), 'r') as fin:
                     lines = fin.readlines()
                 cnt = 0
                 show_logs = []
@@ -600,4 +605,3 @@ class Committer:
             if info['status'] == 1:
                 return info
         return self._revert(commit_id, id_suffix=id_suffix, cli=False)
-
