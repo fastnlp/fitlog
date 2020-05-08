@@ -319,8 +319,10 @@ class Committer:
                     return Info(1, "Error: The <path> can't in your project directory.")
                 else:
                     target_path = os.path.join(path, ".fitlog")
-                    ret_code = os.system("mkdir -p %s && rm -rf %s && cp -rf %s %s" %
-                                         (path, target_path, os.path.join(work_dir, ".fitlog"), target_path))
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                    ret_code = os.system("rm -rf %s && cp -rf %s %s" %
+                                         (target_path, os.path.join(work_dir, ".fitlog"), target_path))
                     if ret_code != 0:
                         if cli:
                             print(_colored_string("Some error occurs in cp", "red"))
