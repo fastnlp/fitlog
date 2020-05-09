@@ -430,7 +430,7 @@ class Logger:
     def add_hyper_in_file(self, file_path: str):
         """
         从文件读取参数。如demo.py所示，两行"#######hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
-        如果多次出现，只会记录第一次出现的值。demo.py::
+        如果多次出现，只会记录第一次出现的值。另外等号最右侧的不能是一个变量，fitlog无法知道变量取什么值。demo.py::
         
             from numpy as np
             # do something
@@ -438,6 +438,7 @@ class Logger:
             ############hyper
             lr = 0.01 # some comments
             char_embed = word_embed = 300
+            # char_embed = args.char_embed  # 非法的，不支持变量赋值
     
             hidden_size = 100
             # num_layers = 3 # 这个值不会被记录，通过#注释掉的行将被忽略
