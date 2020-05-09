@@ -1,3 +1,4 @@
 docopt>=0.6.2
 flask>=1.0.2
 numpy>=1.16.4
+gitpython>=3.1.2
