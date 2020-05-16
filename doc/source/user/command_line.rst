@@ -39,7 +39,7 @@ fitlog init
     Options:
         -h --help               This is a command to initialize a fitlog project
         --hide                  Hide .fitconfig inside .fitlog folder
-        --not-git               Not initialize with a standard git
+        --no-git                Not initialize with a standard git
 
     Examples:
         fitlog init project     Create a your project named project
