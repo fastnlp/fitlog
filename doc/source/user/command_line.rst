@@ -39,7 +39,7 @@ fitlog init
     Options:
         -h --help               This is a command to initialize a fitlog project
         --hide                  Hide .fitconfig inside .fitlog folder
-        --not-git               Not initialize with a standard git
+        --no-git                Not initialize with a standard git
 
     Examples:
         fitlog init project     Create a your project named project
@@ -57,7 +57,7 @@ fitlog init
         Fitlog project project is initialized.
 
     前两行表示 fitlog 生成了一个 git 仓库，并将其转化成了隐藏的 fitlog 仓库。第三行表示 fitlog 又帮你生成了
-    一个明面上的 git 仓库，如果你只想使用 fitlog 而不想手动进行 git 管理，可以使用 ``--not-git`` 参数控制。
+    一个明面上的 git 仓库，如果你只想使用 fitlog 而不想手动进行 git 管理，可以使用 ``--no-git`` 参数控制。
 
     项目初始化后 project 目录下就会有 **.git** 、 **.fitlog** 、 **logs** 三个文件夹，和 **.gitignore** ， **.fitconfig** 、 **main.py** 三个文件。
 
