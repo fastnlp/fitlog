@@ -1,5 +1,5 @@
 
-from ...fastlog.log_read import StandbyStepLogReader
+from ...fastlog.log_read import StandbyStepLogReader, MultiStandbyStepLogReader
 from .utils import flatten_dict
 
 from collections import defaultdict
@@ -7,10 +7,12 @@ import re
 import random
 from itertools import chain
 
+
 class ChartStepLogHandler:
     def __init__(self, save_log_dir, uuid, round_to=6, max_steps=400, wait_seconds=60,
                  exclude_columns=None, max_no_updates=30):
         self.reader = StandbyStepLogReader(save_log_dir, uuid, wait_seconds, max_no_updates)
+        self.reader.start()
 
         self._save_log_dir = save_log_dir
         self.uuid = uuid
@@ -165,7 +167,6 @@ def _reverse_path(paths):
         path2path['-'.join(path)] = '-'.join(reversed(new_path))
     return path2path
 
-
 def _refine_path(paths):
     """
     给定list的path，将公共的部分删掉一些. 这里只处理完全一样深度的metric. 主要为了删除相同的metric_name
@@ -208,6 +209,67 @@ def _refine_logs(logs, max_points, round_to=6):
     new_logs = list(chain(*groups.values()))
 
     return new_logs
+
+
+class MultiChartStepLogHandler:
+    def __init__(self, root_log_dir, logs, uuid, titles=None, round_to=6, wait_seconds=60, max_no_updates=30):
+        """
+        在multi_chart中使用的读取函数
+
+        :param str root_log_dir: 从哪个folder读取
+        :param list logs: 需要监控的logs，内容类似log_xxx_xxxx
+        :param str uuid: multi page独特的uuid
+        :param list[str] titles: 出现在这个list的对象需要包含在结果中, None是都包含所有
+        :param int round_to:
+        :param int wait_seconds: 多少秒没有新的请求就停止
+        :param int max_no_updates: 多少次update没有新数据就停止
+        """
+
+        self.reader = MultiStandbyStepLogReader(root_log_dir, logs, uuid, wait_seconds, max_no_updates)
+        self.reader.start()
+        self.root_log_dir = root_log_dir
+        self.uuid = uuid
+        self.round_to = round_to
+        self.titles = titles
+
+    def update_logs(self, handler_names=('metric', 'loss')):
+        """
+        :param tuple(str) handler_names:
+
+        :return: 返回值的结构如下
+                {
+                    metric-1: {
+                        log_1: [
+                            [value, step, epoch],
+                            []
+                        ]
+                    }
+                    ...
+                    finished_logs: []
+                }
+        """
+        results = self.reader.read_update(handler_names=handler_names)
+        for key in list(results.keys()):
+            value = results[key]
+            if isinstance(value, dict):  # 防止删除了finished_logs
+                if self.titles is not None and key not in self.titles:
+                    results.pop(key)
+                else:
+                    for log_id, vs in value.items():
+                        for v in vs:
+                            # TODO 暂时不考虑inf nan的问题吧
+                            v[0] = round(v[0], self.round_to)
+        return results
+
+
+def _replace_nan_inf(value):
+    if value == float('inf'):
+        value = "Infinity"
+    elif value == float('-inf'):
+        value = "-Infinity"
+    elif str(value) == 'nan':
+        value = "NaN"
+    return value
 
 
 if __name__ == '__main__':

@@ -203,6 +203,10 @@ function initalizeTable(){
         new_button = generate_a_button("btn btn-default", 'statistics', 'Stats', show_statistics,
             '<i class="glyphicon glyphicon-stats"></i>');
         document.getElementsByClassName('columns').item(0).appendChild(new_button);
+       // 在toggle新增一个对比log曲线的按钮
+       new_button = generate_a_button("btn btn-default", 'Compare', 'Compare', CompareLogTrend,
+           '<i class="glyphicon glyphicon-random"></i>');
+       document.getElementsByClassName('columns').item(0).appendChild(new_button);
        //显示summary
         new_button = generate_a_button('btn btn-default', 'summary', 'Summary', jump_to_summary,
             '<i class="glyphicon glyphicon-usd"></i>');
@@ -222,6 +226,81 @@ function generate_a_button(className, name, title, onclick, innerHTML){
     new_button.onclick = onclick;
     new_button.innerHTML = innerHTML;
     return new_button
+}
+
+function CompareLogTrend() {
+    var ids = getIdSelections();
+    if(ids.length<2){
+        bootbox.alert("You have not chosen enough logs (at least 2).")
+    }else if(ids.length>window.max_compare_metrics){
+        bootbox.alert("You have to choose no more than " + window.max_compare_metrics + ' logs (more logs may stuck ' +
+            'you browser)');
+    }else{
+        var logs = [];
+        for(var index=0;index<ids.length;index++){
+            logs.push(window.table_data[ids[index]]);
+        }
+        // 获取所有的值
+        var metrics = {};
+        var log;
+        for(var index=0;index<logs.length;index++){
+            log = logs[index];
+            for(var key in log){
+                if(key.startsWith('metric')){
+                    if(key==='metric-epoch' || key==='metric-step'){
+                        continue
+                    }
+                    if(!(key in metrics)){
+                        metrics[key] = [log[key]];
+                    }else{
+                        metrics[key].push(log[key]);
+                    }
+                }
+            }
+        }
+        // 只允许至少有两个log都含有的metric进行显示
+        var at_least_2_log_metrics = [];
+        for(var key in metrics){
+            if(metrics[key].length>=2){
+                at_least_2_log_metrics.push(key);
+            }
+        }
+        if(at_least_2_log_metrics.length==0){
+            bootbox.prompt("Metric is different for all logs.");
+            return;
+        }
+        // 弹出多选框
+        var $div = $('#compare_metric_modal');
+        var checked=true;
+        var metric;
+        for(var index=0;index<at_least_2_log_metrics.length;index++){
+            metric = at_least_2_log_metrics[index];
+            $div.append("<div class=\"page__toggle\" style=\"padding: 0 0;margin: 0 0\">\n" +
+                "                                      <label class=\"toggle\" style=\"margin-bottom: 0\">\n" +
+                "                                        <input class=\"toggle__input\""  +
+                                                    checked +  " name='compare-metric-check-box'  type=\"checkbox\" id='"+ metric + "'>\n" +
+                "                                        <span class=\"toggle__label\">\n" +
+                "                                          <span class=\"toggle__text\">"  + metric + "</span>\n" +
+                "                                        </span>\n" +
+                "                                      </label>\n" +
+                "                                    </div>");
+        }
+        $('#compare_metric_box').modal('show');
+    }
+}
+
+function jump_to_multi_chart(metrics) {
+    if(metrics.length>0){
+        var ids = getIdSelections();
+        if(ids.length>1){
+            openPostWindow('/multi_chart', {'ids': ids, 'titles': metrics,
+                'uuid': window.server_uuid});
+        }else{
+            bootbox.alert("You have to choose at least two log.")
+        }
+    }else{
+        bootbox.alert("You have to choose at least one metric to compare.")
+    }
 }
 
 function show_statistics(){
@@ -325,7 +404,6 @@ function jump_to_summary() {
     })
 }
 
-
 function jump_to_summary_line() {
     var ids = getIdSelections();
     if(ids.length>1){
@@ -354,7 +432,6 @@ function jump_to_summary_table() {
         })
     }
 }
-
 
 function AddRowModal() {
     // 点击add row之后弹出一个modal. 对应的确认处理在table.html页面
@@ -387,9 +464,7 @@ function ShutDownServer() {
             })
         }
     })
-
 }
-
 
 var TableInit = function () {
     var oTableInit = new Object();
@@ -504,7 +579,6 @@ function update_config_name(config_name){
     }
 }
 
-
 function update_settings(settings){
     // 将新的settings更新到后端
     if(!window.settings['Offline']){
@@ -530,7 +604,6 @@ function update_settings(settings){
         })
     }
 }
-
 
 function update_hide_row_ids(ids){
     //将需要隐藏的row的id发送到后端
@@ -559,7 +632,6 @@ function update_hide_row_ids(ids){
 
 }
 
-
 function update_hidden_columns(hidden_columns) {
     // 将隐藏的column发送到后端
     if(!window.settings['Offline']){
@@ -587,7 +659,6 @@ function update_hidden_columns(hidden_columns) {
 
 }
 
-
 function update_column_order(column_order) {
     // 将生成的column顺序发送到前端
     if(!window.settings['Offline']){
@@ -614,7 +685,6 @@ function update_column_order(column_order) {
     }
 }
 
-
 function update_new_row(row){
     if(!window.settings['Offline']){
         $.ajax({
@@ -639,7 +709,6 @@ function update_new_row(row){
         })
     }
 }
-
 
 function update_filter_condition(condition, only_save) {
     // condition: 一级json; only_save: bool是否只保存没有condition

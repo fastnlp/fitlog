@@ -47,7 +47,7 @@ def read_server_config(config_path):
     deleted_rows = read_list_from_config(config, 'data_settings', 'deleted_logs', ',')
     configs['deleted_rows'] = {log: 1 for log in deleted_rows}
     if len(config.get('data_settings', 'filter_condition'))!=0:
-        configs['filter_condition'] = json.loads(config.get('data_settings', 'filter_condition'))
+        configs['filter_condition'] = json.loads(config.get('data_settings', 'filter_condition').replace("'", '"'))
         for key in list(configs['filter_condition'].keys()):
             delete = False
             if not isinstance(configs['filter_condition'][key], (str, list, numbers.Number)):
@@ -94,6 +94,15 @@ def read_server_config(config_path):
     _dict['max_no_updates'] = config.getint('chart_settings', 'max_no_updates')
     configs['chart_settings'] = _dict
 
+    _dict = {}
+    if 'multi_chart_settings' in config:
+        _dict['max_compare_metrics'] = config.getint('multi_chart_settings', 'max_compare_metrics')
+    else:
+        _dict['max_compare_metrics'] = 10
+        config.add_section('multi_chart_settings')
+        config.set('multi_chart_settings', 'max_compare_metrics', 10)
+    configs['multi_chart_settings'] = _dict
+
     return configs
 
 def save_config(all_data, config_path):
@@ -132,6 +141,7 @@ def save_config(all_data, config_path):
 
     with open(config_path, 'w', encoding='utf-8') as f:
         config.write(f)
+
 
 def refine_column_order(column_order):
     # 重新生成column_order

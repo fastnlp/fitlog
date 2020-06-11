@@ -80,6 +80,7 @@ class LogFilter:
         self._parse()
 
     def _filter_this_log_or_not(self, flat_log, ignore_not_exist):
+        # flat的json{}, ignore_not_exist为True的话就忽略没有删选条件的
         _filter = False
         for field_name, field_filters in self.filters.items():
             if field_name in flat_log:
@@ -96,11 +97,15 @@ class LogFilter:
                                 con = True
                         else:
                             con = type(value)(con)
+                            if isinstance(con, (float, int)) and 'in' in operator:
+                                operator = '=='
                         con_expr = 'con' + operator + 'value'
                         __filter = False
                         try:
                             __filter = eval(con_expr)  # 满足条件说明为True
                         except Exception as e:
+                            import traceback
+                            traceback.print_exc()
                             print(_colored_string(repr(e), 'red'))
                         _filter_flag = _filter_flag and __filter
                     _field_filter_flag = (not _filter_flag) and _field_filter_flag # 任何一个不删除就不删除了

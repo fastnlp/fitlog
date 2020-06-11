@@ -98,6 +98,8 @@ def summary_selections():
 
         return jsonify(status='success', metrics=metrics, axises=axises)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(e)
         return jsonify(status='fail', msg="Unknown error from the server.")
 
@@ -165,6 +167,8 @@ def save_summary_api():
     except Exception as e:
         print(_colored_string("Save summary failed.", 'red'))
         print(e)
+        import traceback
+        traceback.print_exc()
         return jsonify(status='fail', msg='Fail to save summary, check server log.')
 
 @summary_page.route('/summary/delete_summary', methods=['POST'])

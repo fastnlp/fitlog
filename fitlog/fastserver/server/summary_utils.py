@@ -66,6 +66,8 @@ def save_summary(root_log_dir, summary_name, summary):
     except Exception as e:
         print(_colored_string("Error happens when save summaries.", 'red'))
         print(e)
+        import traceback
+        traceback.print_exc()
         return {'status':'fail', 'msg':'Fail to save your summaries.'}
 
 def delete_summary(root_log_dir, summary_name):
@@ -84,6 +86,8 @@ def delete_summary(root_log_dir, summary_name):
     except Exception as e:
         print(_colored_string("Error happens when delete summary {}.".format(summary_name), 'red'))
         print(e)
+        import traceback
+        traceback.print_exc()
         return False
 
 
@@ -452,6 +456,8 @@ def avg_method(data, result_on):
         except:
             pass
         print(e)
+        import traceback
+        traceback.print_exc()
         raise e
 
 def avg_std_method(data, result_on):
@@ -473,6 +479,8 @@ def avg_std_method(data, result_on):
         except:
             pass
         print(e)
+        import traceback
+        traceback.print_exc()
         raise e
 
 
@@ -506,6 +514,8 @@ def max_method(data, base_on, result_on):
     except Exception as e:
         print(_colored_string("Exception occurred when calculate max for {}.".format(result_on), 'red'))
         print(e)
+        import traceback
+        traceback.print_exc()
         raise e
 
 def min_method(data, base_on, result_on):
@@ -538,4 +548,6 @@ def min_method(data, base_on, result_on):
     except Exception as e:
         print(_colored_string("Exception occurred when calculate min for {}.".format(result_on), 'red'))
         print(e)
+        import traceback
+        traceback.print_exc()
         raise e

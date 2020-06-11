@@ -127,13 +127,14 @@ class Logger:
         """
         msg = committer.commit(file=file, commit_message=fit_msg)
         if msg['status'] == 0:  # 成功了
-            config = committer.config
             self.fit_id = committer.last_commit[0]
             self.fit_msg = committer.last_commit[1]
-            self.default_log_dir = os.path.join(committer.work_dir, config.get('log_settings', 'default_log_dir'))
-            self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')
-            if not self.save_on_first_metric_or_loss:
-                self.create_log_folder()
+            # if not self.initialized: # 感觉没有必要
+            #     self.default_log_dir = os.path.join(committer.work_dir, config.get('log_settings', 'default_log_dir'))
+            #     self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')
+            #     self.initialized = True
+            # if not self.save_on_first_metric_or_loss:
+            #     self.create_log_folder()
         else:
             raise RuntimeError("It seems like you are not running under a folder governed by fitlog.\n" + msg['msg'])
     
@@ -631,6 +632,12 @@ def _parse_value(value: Union[int, str, float, dict], name: str, parent_name: st
             value = value.reshape(1)[0]
         else:
             value = str(value.tolist())
+    elif isinstance(value, np.bool_):
+        value = bool(value)
+    elif isinstance(value, np.integer):
+        value = int(value)
+    elif isinstance(value, np.floating):
+        value = float(value)
     else:
         value = str(value)  # 直接专为str类型
         assert name is not None, f"When value is `{type(value)}`, you must pass a name."
@@ -656,7 +663,7 @@ def _check_dict_value(_dict: dict, prefix: str = ''):
     keys = list(_dict.keys())
     for key in keys:
         value = _dict[key]
-        if isinstance(value, (np.str, str)) or isinstance(value, numbers.Number) or value is None:
+        if isinstance(value, (np.str, str)) or value is None:
             continue
         elif isinstance(value, dict):
             _check_dict_value(value, prefix=prefix + ':' + key)
@@ -675,5 +682,11 @@ def _check_dict_value(_dict: dict, prefix: str = ''):
                 _dict[key] = value.reshape(1)[0]
             else:
                 _dict[key] = str(value.tolist())
+        elif isinstance(value, np.bool_):
+            _dict[key] = bool(value)
+        elif isinstance(value, np.integer):
+            _dict[key] = int(value)
+        elif isinstance(value, np.floating):
+            _dict[key] = float(value)
         else:
             _dict[key] = str(value)

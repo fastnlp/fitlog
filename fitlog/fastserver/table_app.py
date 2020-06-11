@@ -45,7 +45,8 @@ def get_table():
                    uuid=all_data['uuid'],
                    hidden_rows=list(all_data['hidden_rows'].keys()),
                    unchanged_columns=all_data['unchanged_columns'],
-                   log_config_name=all_data['log_config_name'])
+                   log_config_name=all_data['log_config_name'],
+                   max_compare_metrics=all_data['config']['multi_chart_settings']['max_compare_metrics'])
 
 
 @table_page.route('/table/refresh', methods=['POST'])
@@ -136,6 +137,8 @@ def table_edit():
         return jsonify(status='success', msg='')
     except Exception as e:
         print(e)
+        import traceback
+        traceback.print_exc()
         return jsonify(status='fail', msg='Unknown error fail to save edit results.')
 
 @table_page.route('/table/reset', methods=['POST'])
@@ -153,6 +156,8 @@ def table_reset():
             return jsonify(status='fail', msg=response['msg'])
     except Exception as e:
         print(e)
+        import traceback
+        traceback.print_exc()
         return jsonify(status='fail', msg='Unknown error from server.')
 
 @table_page.route('/table/settings', methods=['POST'])

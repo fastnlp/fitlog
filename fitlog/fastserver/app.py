@@ -6,6 +6,7 @@ from flask import Flask, url_for, redirect
 from .chart_app import chart_page
 from .table_app import table_page
 from .summary_app import summary_page
+from .multi_char_app import multi_chart_page
 from .line_app import line_page
 from .server.table_utils import save_all_data
 from .server.app_utils import get_usage_port
@@ -31,11 +32,10 @@ app.register_blueprint(chart_page)
 app.register_blueprint(table_page)
 app.register_blueprint(summary_page)
 app.register_blueprint(line_page)
+app.register_blueprint(multi_chart_page)
 
 LEAST_REQUEST_TIMESTAMP = deque(maxlen=1)
 LEAST_REQUEST_TIMESTAMP.append(time.time())
-
-server_watcher = ServerWatcher(LEAST_REQUEST_TIMESTAMP)
 
 @app.route('/')
 def index():
@@ -93,6 +93,7 @@ def start_app(log_dir, log_config_name, start_port, standby_hours, ip='0.0.0.0',
     all_data['uuid'] = str(uuid.uuid1())
 
     port = get_usage_port(start_port=start_port)
+    server_watcher = ServerWatcher(LEAST_REQUEST_TIMESTAMP, port)
     server_watcher.set_server_wait_seconds(server_wait_seconds)
     server_watcher.start()
     if all_data['token']!=None:
@@ -111,7 +112,6 @@ if __name__ == '__main__':
     from .server.app_utils import cmd_parser
     parser = cmd_parser()
     args =parser.parse_args()
-
     start_app(args.log_dir, args.log_config_name, args.port, 1, '123')
 
 
