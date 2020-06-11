@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,height=device-height">
+    <link rel="shortcut icon" href="/chart.ico" >
+    <title>chart-{{log_dir}}</title>
+    <style>::-webkit-scrollbar{display:none;}html,body{overflow:auto;height:100%;margin:0;}</style>
+    <link href="/static/css/bootstrap.css" rel="stylesheet"/>
+    <link href="/static/css/table.css" rel="stylesheet"/>
+    <link href="/static/css/bootstrap-slider.css" rel="stylesheet"/>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+    <script src="/static/js/bootbox.js"></script>
+    <script src="/static/js/g2.min.js"></script>
+    <script src="/static/js/bootstrap-slider.js"></script>
+    <script src="/static/js/chart.js"></script>
+    <style>
+        .slider-selection {
+	        background: #B8B8B8;
+        }
+
+    </style>
+    <script>
+        var prompt = function (message, time) {
+            $("#alertDiv").delay(time || 5000).fadeOut();
+            const id  = "alertDiv_" + new Date().getTime() + "_" + (Math.random() * 10000).toFixed();
+            $("body").append(`
+            <div id="${id}" class="alert alert-success" role="alert" style="position: fixed; top: 12px; left: 12px;
+            z-index:999999">
+                  ${message}
+                </div>
+            `);
+            const $alertDiv = $("#" + id);
+            $alertDiv.delay(time || 5000).fadeOut(() => {
+                $alertDiv.remove();
+            });
+        };
+
+        // 成功提示
+        var success_prompt = function(message, time)
+        {
+            prompt(message, time);
+        };
+    </script>
+<style>
+    .g2-legend {
+        width: 250px !important;
+        height: 100%;
+        font-size: 14px !important;
+        color: #595959 !important;
+    }
+
+    .g2-legend-list {
+        margin-top: 10px !important
+    }
+
+    .g2-legend-text {
+        margin-top: 3px !important;
+        color: rgb(140, 140, 140);
+        display: inline-flex;
+    }
+
+</style>
+</head>
+<body>
+    <div style="overflow:hidden;padding:5px 200px 0px 10px;">
+        <button id="range" class="btn btn-info" style="margin-right: 5px;float:left;height:20px;padding: 0px 5px 0px 3px"
+                data-toggle="modal" data-target="#range_box">
+            <i class="glyphicon glyphicon-cog"></i> Range
+        </button>
+        <div style="visibility: hidden"
+         id="progress-bar-div">
+            <div style="float:left;margin-right:5px;margin-left: 5px">
+                <span>Progress: </span>
+            </div>
+            <div class="progress progress-striped active" style="margin-bottom: 0px" id="progress">
+                <div class="progress-bar progress-bar-success" role="progressbar"
+                     aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                     style="width: 0;" id="progress-bar">
+                    <span id="progress-bar-text" style="color: black"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="charts"></div>
+    <script>/*Fixing iframe window.innerHeight 0 issue in Safari*/document.body.clientHeight;</script>
+
+    <!--range-->
+    <div class="modal fade" id="range_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 18px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Enable to choose range</h4>
+          </div>
+          <div class="modal-body" id="range_modal">
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+<script>
+    const firstData = JSON.parse('{{ data|tojson }}');
+    const message = '{{ message }}';
+    const multi_chart_uuid = '{{ multi_chart_uuid }}';
+    {#const finish_status = '{{ finish_status|tojson }}';#}
+    const titles = '{{ titles }}'.split(',');
+    if(message.length>0){
+        bootbox.alert("Fail to load data, " + message);
+    }
+    const logs='{{ logs }}'.split(',');
+    const finish_status = {};
+    if(firstData.hasOwnProperty('finish_logs')){
+        for(var i=0;i<firstData['finish_logs'].length;i++){
+            finish_status[firstData['finish_logs'][i]] = true;
+        }
+    }
+    for(var i=0;i<logs.length;i++){
+        if(!finish_status.hasOwnProperty(logs[i])){
+            finish_status[logs[i]] = false;
+        }
+    }
+    var finish_update_log = false;
+
+</script>
+<script src="/static/js/multi_chart.js"></script>
+</body>
+</html>

@@ -496,6 +496,76 @@
       }
     };
 
+    function _isArray(obj) {
+        return Object.prototype.toString.call(obj) === '[object Array]'
+      }
+    function _getLogicResult(value, condition){
+          var keep_flag=true;
+          if(Utils.isNumeric(condition)){
+            return (Utils.isNumeric(value) ? value===parseFloat(condition): value===''+condition);
+          }
+          var first_two_word = condition.substr(0, 2);
+          var last_two_word = condition.substr(condition.length-2);
+          var first_word = condition.charAt(0);
+          var last_word = condition.charAt(condition.length-1);
+
+          if(first_two_word === '<=')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value<=parseFloat(condition.substr(2), 10):
+              value<=condition.substr(2));
+          else if (last_two_word === '<=')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value>=parseFloat(condition.substr(0, condition.length-2), 10):
+              value>=condition.substr(0, condition.length-2));
+          else if (first_two_word === '>=')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value>=parseFloat(condition.substr(2), 10):
+              value>=condition.substr(2));
+          else if (last_two_word === '>=')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value<=parseFloat(condition.substr(0, condition.length-2), 10):
+              value<=condition.substr(0, condition.length-2));
+          else if (first_two_word === '!=')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value!==parseFloat(condition.substr(2), 10):
+              value!==condition.substr(2));
+          else if (last_two_word === '!=')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value!==parseFloat(condition.substr(0, condition.length-2), 10):
+              value!==condition.substr(0, condition.length-2));
+          else if (first_two_word === '==')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value===parseFloat(condition.substr(2), 10):
+              value===condition.substr(2));
+          else if (last_two_word === '==')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value===parseFloat(condition.substr(0, condition.length-2), 10):
+              value===condition.substr(0, condition.length-2));
+          else if (first_word === '=')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value===parseFloat(condition.substr(1), 10):
+              value===condition.substr(1));
+          else if (last_word === '=')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value===parseFloat(condition.substr(0, condition.length-1), 10):
+              value===condition.substr(0, condition.length-1));
+          else if (first_word === '>')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value>parseFloat(condition.substr(1), 10):
+              value>condition.substr(1));
+          else if (first_word === '<')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value<parseFloat(condition.substr(1), 10):
+              value<condition.substr(1));
+          else if (last_word === '<')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value>parseFloat(condition.substr(0, condition.length-1), 10):
+              value>condition.substr(0, condition.length-1));
+          else if (last_word === '>')
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value<parseFloat(condition.substr(0, condition.length-1), 10):
+              value<condition.substr(0, condition.length-1));
+          else if ((''+condition).indexOf('&&')!=-1){
+            var cons = condition.split('&&');
+            for(var index=0;index<cons.length;index++){
+              keep_flag = _getLogicResult(value, cons[index]) && keep_flag;
+              if (!keep_flag){
+                return false;
+              }
+            }
+          }else{ // 非大小符号
+            keep_flag = keep_flag && (Utils.isNumeric(value) ? value===parseFloat(condition, 10):
+              value===condition);
+          }
+          return keep_flag;
+      }
+
     // BOOTSTRAP TABLE CLASS DEFINITION
     // ======================
 
@@ -1512,8 +1582,7 @@
               this.data = Utils.calculateObjectValue(this.options, this.options.customSearch, [this.options.data, this.searchText]);
               return;
             }
-
-            var s = this.searchText && (this.options.escape ? Utils.escapeHTML(this.searchText) : this.searchText).toLowerCase();
+            var s = this.searchText && (this.options.escape ? Utils.escapeHTML(this.searchText) : this.searchText);
             var f = Utils.isEmptyObject(this.filterColumns) ? null : this.filterColumns;
 
             // Check filter
@@ -1525,13 +1594,13 @@
               }
               return true;
             }) : this.options.data;
-
-            this.data = s ? this.data.filter(function (item, i) {
+            if(s.charAt(0)!=='$'){
+                this.data = s ? this.data.filter(function (item, i) {
+              // 在这里写解析各种的逻辑
               for (var j = 0; j < _this5.header.fields.length; j++) {
                 if (!_this5.header.searchables[j]) {
                   continue;
                 }
-
                 var key = Utils.isNumeric(_this5.header.fields[j]) ? parseInt(_this5.header.fields[j], 10) : _this5.header.fields[j];
                 var column = _this5.columns[_this5.fieldsColumnsIndex[key]];
                 var value = void 0;
@@ -1567,6 +1636,64 @@
               }
               return false;
             }) : this.data;
+            }else if(s.length>2 && s.charAt(s.length-1)==='$' && s.charAt(0)==='$' ){
+              var logic_s = s.substr(1, s.length-2).replace(/'/g, '"');
+              var is_valid_json = false;
+              try {
+                  var obj=JSON.parse(logic_s);
+                  if(typeof obj == 'object' && obj ){
+                      is_valid_json = true;
+                  }else{
+                      is_valid_json = false;
+                  }
+              } catch(e) {
+                  is_valid_json = false;
+              }
+              if(!is_valid_json){
+                bootbox.alert("Invalid json, check the format.");
+                return;
+              }
+              var and_rel = true;
+              if(obj.hasOwnProperty('and_filters')){
+                and_rel = obj.hasOwnProperty('and_filters')===1;
+              }
+              // 过滤数据
+              this.data = logic_s ? this.data.filter(function (item, i) {
+                // 在这里写解析各种的逻辑, item是一个json
+                var keep_flag = true;
+                for(var key in obj){
+                  var cur_key_flag;
+                  var condition = obj[key];
+                  if(item.hasOwnProperty(key)){
+                    var value = item[key];
+                    if (typeof condition==="string" || Utils.isNumeric(condition)){
+                      cur_key_flag = _getLogicResult(value, condition);
+                    }else if (_isArray(condition)){
+                      for(var i=0;i<condition.length;i++){
+                        cur_key_flag = _getLogicResult(value, condition[i]);
+                        if(cur_key_flag){
+                          break;
+                        }
+                      }
+                    }else{
+                      return false;
+                    }
+                    if (!and_rel && cur_key_flag){
+                      return true;
+                    }else if(and_rel){
+                      keep_flag = keep_flag&&cur_key_flag;
+                    }
+                  }else if (window.settings['Ignore filter condition not exist log']){
+                    return false;
+                  }
+                }
+
+                if(!and_rel){
+                  return false;
+                }
+                return keep_flag;
+              }) : this.data;
+            }
           }
         }
       }, {

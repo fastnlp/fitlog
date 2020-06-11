@@ -21,7 +21,7 @@ fitlog = fast + git + log, 是一款用于辅助用户记录日志和管理代�
 
 ## update schedule
 
-filog 是我们实验室内部使用的一款工具，大部分功能口口相传，文档和教程还没有特别全。感谢大家的尝试使用，遇到问题可以在 Issues 处提出，我们也会在五一假期结束前更新一系列文档和教程。
+filog 是我们实验室内部使用的一款工具，大部分功能口口相传，文档和教程还没有特别全。感谢大家的尝试使用，遇到问题可以在 Issues 处提出。
 
 更新计划包括：
 
@@ -31,10 +31,8 @@ filog 是我们实验室内部使用的一款工具，大部分功能口口相�
 
 
 ## 一些使用说明
-1. 如果在debug阶段，不希望fitlog发生任何作用，那么直接在入口代码处加入fitlog.debug()
-就可以让所有的fitlog调用不起任何作用，debug结束再注释掉这一行就可以了。  
-2. fitlog默认只有在产生了第一个metric或loss的时候才会创建log文件夹，防止因为其它bug还没运行
-到model就崩溃产生大量无意义的log。
+1. 如果在debug阶段，不希望fitlog发生任何作用，那么直接在入口代码处(import fitlog的下一行)加入fitlog.debug()就可以让所有的fitlog调用不起任何作用，debug结束再注释掉这一行就可以了。 如果希望在某一段代码不要记录，可以在这段代码之前fitlog.debug(flag=True), 跑出这段代码之后fitlog.debug(flag=True)即可恢复
+2. fitlog默认只有在产生了第一个metric或loss的时候才会创建log文件夹，防止因为其它bug还没运行到model就崩溃产生大量无意义的log。
 3. 如果使用了分布式训练，一般只需要主进程记录fitlog就好。这个时候可以通过将非主进程的fitlog设置fitlog.debug()
     ```python
     import torch
@@ -45,5 +43,32 @@ filog 是我们实验室内部使用的一款工具，大部分功能口口相�
     ```
 4. 不要通过多进程使用fitlog，即multiprocessing模块。
 5. fitlog.commit()只需要在某个python文件调用就可以了，一般就在入口python文件即可。 
-6. 传入到fitlog的各种参数、metric的名称，请 **避免特殊符号（例如$%!#@空格），请只使用
-_与各种字母的组合** ，因为特殊符号可能导致网页端显示不正常。
+6. 传入到fitlog的各种参数、metric的名称，请 **避免特殊符号（例如$%!#@空格），请只使用_与各种字母的组合** ，因为特殊符号可能导致网页端显示不正常。
+
+## New Features(2020.06.11)
+以下的功能都没有经过实战使用检验，可能有bug。
+#### 1. 支持一些复杂筛选条件
+ 现在支持在Table那个页面的search框中输入复杂搜索逻辑进行筛选，例如下面log
+![before_search](doc/source/figures/before_search.png)  
+
+想要搜索**2020年06月11号15点到2020年06月11号16点之间，并且hidden_size大于60**的log, 可以通过下面的语法输入到search框中  
+```
+${'id':'log_20200611_150000<=&&<=log_20200611_160000', 'hyper-hidden_size':'>60'}$
+```
+使用效果如下（只显示满足条件的log了）
+![after_search](doc/source/figures/after_search.png)  
+
+其中开头结尾的$是特殊标记符号，申明这是特殊搜索，否则fitlog会只进行常规字符串匹配搜索。由于search框一旦有文字就会触发搜索，所以建议在其他地方把文本编辑好，直接复制到search框中。支持的search语法规则如下
+(1) 支持使用list表达或的关系。比如{"hyper-lr":[0.3, 0.1]}表示等于0.3或者0.1都会显示在前端。  
+(2) 支持通过>,<,<=,>=表示范围.{"hyper-lr":"<0.3", "hyper-dropout":">0.5"}表示lr小于0.3且dropout大于0.5的才保留。 大于小于符号可以在条件的最右边或者最左边，即"<0.5"或"0.5>"是等价的。
+(3)支持不等式操作，例如{'hyper-dropout':"!=0.4"}则为dropout不是0.4的才会保留  
+(4) 使用大于小于的场景，支持通过&&表达并且如{"hyper-lr":"0.1<&&<0.3"}，表示lr需要大于0.1但小于0.3。
+(5)不同column之间默认是and的关系比如{"hyper-lr": 0.1, "hyper-dropout":0.3}表示lr和dropout同时为0.1和0.3的log; 如果需要使得不同column之间为或的关系，可以通过在filter_condition中加入一个特殊的字段and_filters, 以下的条件表示是不同filter为或的关系{"and_filters":0, "hyper-lr": 0.1, "hyper-dropout":0.3}, 请通过0或1表示and_filters。
+**申明某个column时，它名称是从最top的header一路到最底层的header，通过-连接。例如hyper下面的hidden_size, 搜索的时候条件应该写为hyper-hidden_size。**
+
+#### 2.支持多条log的metric收敛曲线对比
+操作如下图所示，先选择需要对比的log(默认只能选择10条)，然后点击右上角红色框处
+![compare_metric](doc/source/figures/compare_metric.png)
+然后会弹出选择需要对比的metric，选好需要对比的metric后点击确认跳转，跳转后界面为
+![compare_metric_trend](doc/source/figures/compare_metric_trend.png)
+我十分垃圾的js代码能力坚定地告诉我：你们一定不可能需要对比loss曲线的，所以我就没有必要再做loss对比了🐶。

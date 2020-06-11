@@ -1,6 +1,4 @@
 from flask import render_template
-
-
 from flask import request, jsonify
 import random
 import os
@@ -28,7 +26,7 @@ def chart():
     _uuid = str(uuid.uuid1())
     max_points = all_data['chart_settings']['max_points']
     update_every_second = all_data['chart_settings']['update_every']
-    wait_seconds = update_every_second*3 # 如果本来应该收到三次更新，但是却没有收到，则自动关闭
+    wait_seconds = update_every_second*5 # 如果本来应该收到五次更新，但是却没有收到，则自动关闭
     handler = ChartStepLogHandler(save_log_dir, _uuid, round_to=all_data['basic_settings']['round_to'],
                             max_steps=max_points,
                             wait_seconds=wait_seconds,
@@ -124,6 +122,8 @@ def ranges():
 
     except Exception as e:
         print(e)
+        import traceback
+        traceback.print_exc()
         return jsonify(status='fail', msg='Some bug happens, contact developer.')
 
 

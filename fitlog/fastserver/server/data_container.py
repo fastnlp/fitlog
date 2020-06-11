@@ -4,6 +4,10 @@ import threading
 import time
 
 class HandlerWatcher(threading.Thread):
+    """
+    一个用于监控reader的类。
+
+    """
     def __init__(self):
         super().__init__()
         self.all_handlers = all_handlers
@@ -21,6 +25,7 @@ class HandlerWatcher(threading.Thread):
                     if handler.reader._quit:
                         handler.reader.stop()
                         handler = self.all_handlers.pop(_uuid)
+                        print(f"Delete handler {_uuid}")
                         del handler
             time.sleep(0.5)
         # 删除所有的handler
@@ -28,9 +33,11 @@ class HandlerWatcher(threading.Thread):
             handler = self.all_handlers.pop(_uuid)
             if handler.reader._quit:
                 handler.reader.stop()
+                print(f"Delete handler {_uuid}")
                 del handler
 
         self._quit = True
+
     def stop(self):
         self._stop_flag = True
         count = 0
@@ -70,5 +77,5 @@ all_data包含以下的key:
     data: {id1:{'id':id1, 'field1':xxx,}, id2:{}}, 所有的数据都在这个里面，这是一个一级dict. extra_data已经替换了里面的值
 """
 all_data = {}
-all_handlers = {}
-handler_watcher = HandlerWatcher()
+all_handlers = {}  # 存放的是key是一个特有的uuid, value是一个ChartStepLogHandler
+handler_watcher = HandlerWatcher() # 对all_handlers中的内容进行监控，如果发现太长时间没有update就把它移除，防止线程爆炸了

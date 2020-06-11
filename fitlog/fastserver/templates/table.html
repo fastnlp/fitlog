@@ -82,6 +82,7 @@
                 window.table_data: 2级json，是一个json，key为id，value是一行的内容，为一个一层json对象
                 window.server_uuid: str, 当前这个页面的uuid
                 window.hidden_rows: json，当前隐藏的row
+                window.max_compare_metrics, int表示最多可以对比多少
                 window.column_order_updated: bool, 当前是否更新了column_order,用于判断是否需要向服务器发送更新
                 window.hidden_columns_updated: bool, 是否更新了隐藏column，用于向服务器发送更新
                 window.unchanged_columns: json, 值永远都恒定的column。
@@ -117,6 +118,7 @@
                     window.table_data = value['data']; // 是一个json，key为id，value是一行的内容，为一个一层json对象
                     window.server_uuid = value['uuid'];
                     window.hidden_rows = value['hidden_rows'];
+                    window.max_compare_metrics = value['max_compare_metrics']; //最多可以对比的log数量
                     window.column_order_updated = false;
                     window.hidden_columns_updated = false;
                     window.unchanged_columns = value['unchanged_columns'];
@@ -259,6 +261,26 @@
       </div>
     </div>
 
+    <!--View multiple metric-->
+    <div class="modal fade" id="compare_metric_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+            style="font-size: 16px">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Choose metric to compare</h4>
+          </div>
+          <div class="modal-body" id="compare_metric_modal">
+
+          </div>
+          <div class="modal-footer" >
+            <button type="button" class="btn btn-default" id="cancel_compare_metric">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm_compare_metric">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!--consistent_columns-->
     <div class="modal fade" id="unchanged_columns_box" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
             style="font-size: 18px">
@@ -322,6 +344,8 @@
    var $delete_config = $('#delete_config');
    var $cancel_stats = $('#cancel_stats');
    var $confirm_stats = $('#confirm_stats');
+   var $cancel_compare_metric = $('#cancel_compare_metric');
+   var $confirm_compare_metric = $('#confirm_compare_metric');
 
    var col_sortables = [];
 
@@ -493,6 +517,25 @@
        $("#row_box").modal('hide');
    });
 
+   $cancel_compare_metric.click(function () {
+       $("#compare_metric_box").modal('hide');
+   });
+   $confirm_compare_metric.click(function () {
+       var checkboxes = document.getElementsByName('compare-metric-check-box');
+       var chosen_metric = [];
+       checkboxes.forEach(function (element, index, array) {
+           if(element.checked){
+               chosen_metric.push(element.getAttribute('id'));
+           }
+       });
+       if(chosen_metric.length>0){
+           jump_to_multi_chart(chosen_metric);
+          $("#compare_metric_box").modal('hide');
+       }else{
+           bootbox.alert("You have to choose at least one metric.")
+       }
+   });
+
    // 确认切换config
    $config_change_config.click(function () {
        var value = $("input:radio:checked").val();
@@ -573,7 +616,6 @@
        var new_hidden_columns = window.hidden_columns;
        get_new_hidden_columns($nested, new_hidden_columns, '');
 
-
        $("#columns_box").modal('hide');
        // 更新columns
        if(window.column_order_updated) {
@@ -633,8 +675,6 @@
        add_calculate_stats_to_table('min')
    });
 
-   <!--TODO 新增max和min-->
-
    $cancel_stats.click(function () {
       $('#stats_box').modal('hide');
    });
@@ -658,6 +698,9 @@
    $('#stats_box').on('hide.bs.modal', function (e) {
        $("#stats_dialogue").empty();
    });
+   $('#compare_metric_box').on('hide.bs.modal', function (e) {
+      $('#compare_metric_modal').empty();
+   });
 
    // 当前选中的row的id
    function getIdSelections() {
@@ -677,8 +720,9 @@
    //点击delete
     $delete.click(function () {
         var ids = getIdSelections();
-        var msg = "Delete rows with id=" + JSON.stringify(ids) + ". `delete` only make" +
-                " them invisible in current setting; `erase` will delete them from disk.";
+        var msg = 'Delete ' + '<span style="color: red;font-weight: bold;">' +
+                 ids.length + '</span> rows with id=' + JSON.stringify(ids) + '`delete` only make' +
+                ' them invisible in current setting; `erase` will delete them from disk.';
         bootbox.deleteConfirm(msg, function(result){
             if(!window.settings['Offline']){
                 if(result===1){
