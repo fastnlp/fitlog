@@ -73,7 +73,7 @@ ${'id':'log_20200611_150000<=&&<=log_20200611_160000', 'hyper-hidden_size':'>60'
 
 ![compare_metric](./doc/source/figures/compare_metric.jpg)
 
-然后会弹出选择需要对比的metric，选好需要对比的metric后点击确认跳转，跳转后界面为
+然后会弹出选择需要对比的metric，选好需要对比的metric后点击确认跳转，跳转后界面为
 
 ![compare_metric_trend](./doc/source/figures/compare_metric_trend.jpg)
 
