@@ -110,7 +110,9 @@ fitlog list & revert
     **/workspace/project_revert** 的位置。您可以通过指定 ``<path>`` 的方式改变回退目录（例如：指定为 **/workspace/project_v1**），
     也可以使用 ``--id-suffix`` 参数使回退目录含有版本号后缀，变为 **/workspace/project_revert_ab7625** 。
 
-    注意！使用版本回退功能可能会覆盖目标文件夹（如  **/workspace/project_revert** ）中的文件。
+.. warning::
+
+    注意！使用版本回退功能 **一定** 会覆盖目标文件夹（如  **/workspace/project_revert** ）中的文件，请不要直接在 *project_revert* 目录下工作。
 
 fitlog log
 ----------

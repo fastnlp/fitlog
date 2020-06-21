@@ -311,13 +311,14 @@ class Committer:
                         print(_colored_string("The <path> can't in your project directory.", "red"))
                     return Info(1, "Error: The <path> can't in your project directory.")
                 core_path = os.path.join(path, ".fitlog")
-                if not os.path.exists(path):
-                    os.makedirs(path, exist_ok=True)
+                if os.path.exists(path):
+                    shutil.rmtree(path, ignore_errors=True)
+                os.makedirs(path)
                 shutil.rmtree(core_path, ignore_errors=True)
                 shutil.copytree(os.path.join(work_dir, ".fitlog"), core_path)
                 self._switch_to_fast_git(path)
                 repo = Repo(path)
-                repo.index.reset(commit=commit_id, head=True)
+                repo.head.reset(commit=commit_id, working_tree=True)
                 if cli:
                     print("Your code is reverted to " + _colored_string(path, "green"))
                 return Info(0, path)
