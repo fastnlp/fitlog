@@ -41,6 +41,9 @@ def show_folder():
     if id:
         log_dir = all_data['root_log_dir']
         folder = os.path.join(log_dir, id)
+        if os.path.relpath(folder, log_dir).startswith('.'):
+            return jsonify(status='fail', msg='Permission denied.')
+
         if subdir == '':  # 如果为空，说明还是需要访问folder
             pass
         elif os.path.isfile(os.path.join(folder, subdir)):  # 文件直接发送
@@ -53,6 +56,10 @@ def show_folder():
             folder = os.path.join(folder, subdir)
         else:
             return jsonify(status='fail', msg="Invalid file.")
+
+        if os.path.relpath(folder, log_dir).startswith('.'):
+            return jsonify(status='fail', msg='Permission denied.')
+        
         current_list = os.listdir(folder)
         contents = []
         for i in sorted(current_list):
