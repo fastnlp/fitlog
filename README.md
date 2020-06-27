@@ -63,7 +63,7 @@ ${'id':'log_20200611_150000<=&&<=log_20200611_160000', 'hyper-hidden_size':'>60'
 (2) 支持通过>,<,<=,>=表示范围.{"hyper-lr":"<0.3", "hyper-dropout":">0.5"}表示lr小于0.3且dropout大于0.5的才保留。 大于小于符号可以在条件的最右边或者最左边，即"<0.5"或"0.5>"是等价的。  
 (3)支持不等式操作，例如{'hyper-dropout':"!=0.4"}则为dropout不是0.4的才会保留    
 (4) 使用大于小于的场景，支持通过&&表达并且如{"hyper-lr":"0.1<&&<0.3"}，表示lr需要大于0.1但小于0.3。  
-(5)不同column之间默认是and的关系比如{"hyper-lr": 0.1, "hyper-dropout":0.3}表示lr和dropout同时为0.1和0.3的log; 如果需要使得不同column之间为或的关系，可以通过在filter_condition中加入一个特殊的字段and_filters, 以下的条件表示是不同filter为或的关系{"and_filters":0, "hyper-lr": 0.1, "hyper-dropout":0.3}, 请通过0或1表示and_filters。
+(5)不同column之间默认是and的关系比如{"hyper-lr": 0.1, "hyper-dropout":0.3}表示lr和dropout同时为0.1和0.3的log; 如果需要使得不同column之间为或的关系，可以通过在filter_condition中加入一个特殊的字段and_filters, 以下的条件表示是不同filter为或的关系{"and_filters":0, "hyper-lr": 0.1, "hyper-dropout":0.3}, 请通过0或1表示and_filters。  
 **申明某个column时，它名称是从最top的header一路到最底层的header，通过-连接。例如hyper下面的hidden_size, 搜索的时候条件应该写为hyper-hidden_size。**
 
 #### 2.支持多条log的metric收敛曲线对比

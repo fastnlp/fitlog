@@ -103,6 +103,10 @@ window.operateEvents = {
                 }
         })
     },
+    'click .folder': function (e, value, row, index) {
+          openPostWindow('/folder', {'id': row['id'], 'subdir': '',
+                            "uuid": window.server_uuid});
+    },
 };
 
 
@@ -139,7 +143,10 @@ function operateFormatter(value, row, index) {
       '<i class="glyphicon glyphicon-tasks" style="padding:0px 1px 0px 1px"></i>',
       '</a>',
       '<a class="file" href="javascript:void(0)" title="File">',
-      '<i class="glyphicon glyphicon-list-alt" style="padding:0px 1px 0px 2px"></i>',
+      '<i class="glyphicon glyphicon-list-alt" style="padding:0px 1px 0px 1px"></i>',
+      '</a>',
+        '<a class="folder" href="javascript:void(0)" title="Folder">',
+      '<i class="glyphicon glyphicon-folder-open" style="padding:0px 1px 0px 2px"></i>',
       '</a>',
        "</div>"
     ].join('')

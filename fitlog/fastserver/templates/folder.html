@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log Folder</title>
+    <link rel="shortcut icon" href="/table.ico" >
+    <link href="/static/css/bootstrap.css" rel="stylesheet" />
+    <script src="/static/js/bootstrap.js"></script>
+    <style type="text/css">
+         .big-border {
+        background: #fff;
+        width: 1400px;
+        margin: 0 auto;
+        padding: 10px;
+        }
+
+        body {
+            background: #f3f3f3;
+        }
+
+        .page-title {
+            text-align: center;
+        }
+    </style>
+    <script>
+        var uuid = {{ uuid }};
+        var log_id = {{ id }};
+    </script>
+</head>
+<body>
+  <div class="big-border">
+    <h3 class="page-title">Folder</h3>
+    <hr>
+    <h4>Current Folder {{id+ossep+subdir}}</h4>
+    <hr>
+    <table width="600px">
+      <thead>
+        <tr>
+          <th>File or Directory</th>
+          <th>Modify Time</th>
+          <th>Size</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if subdir %}
+        <tr>
+          <td><a href="{{ url_for('folder_page.show_folder', uuid=uuid, id=id, subdir=subdir+ossep+'..') }}">..{{ossep}}</a></td>
+          <td></td>
+          <td></td>
+        </tr>
+        {% endif %}
+        {% for i in contents %}
+        <tr>
+          <td>
+              {% if i.isfile %}
+                  <a href="{{ url_for('folder_page.show_folder', uuid=uuid, id=id,
+                    subdir=subdir+i.filename) }}" target="_blank">{{ i.filename }}
+                  </a>
+              {% else %}
+                  <a href="{{ url_for('folder_page.show_folder', uuid=uuid, id=id,
+                    subdir=subdir+i.filename) }}">{{ i.filename }}
+                  </a>
+              {% endif %}
+          </td>
+          <td>{{ i.mtime }}</td>
+          <td>{{ i.size }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <hr>
+  </div>
+</body>
+</html>

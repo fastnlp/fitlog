@@ -7,6 +7,7 @@ from .chart_app import chart_page
 from .table_app import table_page
 from .summary_app import summary_page
 from .multi_char_app import multi_chart_page
+from .folder_app import folder_page
 from .line_app import line_page
 from .server.table_utils import save_all_data
 from .server.app_utils import get_usage_port
@@ -33,6 +34,7 @@ app.register_blueprint(table_page)
 app.register_blueprint(summary_page)
 app.register_blueprint(line_page)
 app.register_blueprint(multi_chart_page)
+app.register_blueprint(folder_page)
 
 LEAST_REQUEST_TIMESTAMP = deque(maxlen=1)
 LEAST_REQUEST_TIMESTAMP.append(time.time())
