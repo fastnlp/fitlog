@@ -49,11 +49,14 @@ fitlog 的其它函数用法参见 :doc:`/fitlog`
     import fitlog
     import random
 
-    fitlog.commit(__file__)             # auto commit your codes
-    fitlog.add_hyper_in_file(__file__)  # record your hyperparameters
+    fitlog.commit(__file__)             # 自动 commit 你的代码
+    # fitlog.set_log_dir("logs/")          #  设定日志存储的目录
+    fitlog.add_hyper_in_file(__file__)  # 记录本文件中写死的超参数
+
     ######hyper
     rand_seed = 12
     ######hyper
+
     random.seed(rand_seed)
     best_acc, best_step, step = 0, 0, 0
 
@@ -72,7 +75,12 @@ fitlog 的其它函数用法参见 :doc:`/fitlog`
     fitlog.add_best_metric({"Test":{"Acc":best_acc,"Step":best_step}})
     fitlog.finish()                     # finish the logging
 
-我们rand_seed 分别设为 12, 123, 1234, 12345 进行四次实验，然后就是打开网页服务查看实验结果了。
+我们 rand_seed 分别设为 12, 123, 1234, 12345 进行四次实验，然后就是打开网页服务查看实验结果了。
+
+.. note::
+
+    其中 ``fitlog.set_log_dir("logs/")`` 可以不写是因为 ``fitlog.commit(__file__)`` 会自动找到该文件所在项目的根目录，
+    并将项目根目录下的 **logs/** 目录设为日志存储目录。如果没有使用 ``fitlog.commit(__file__)`` ，或者想指定其它位置为日志存储目录，可以使用 :func:`fitlog.set_log_dir` 函数。
 
 Step3
 ----------

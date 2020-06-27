@@ -110,12 +110,14 @@ fitlog list & revert
     **/workspace/project_revert** 的位置。您可以通过指定 ``<path>`` 的方式改变回退目录（例如：指定为 **/workspace/project_v1**），
     也可以使用 ``--id-suffix`` 参数使回退目录含有版本号后缀，变为 **/workspace/project_revert_ab7625** 。
 
-    注意！使用版本回退功能可能会覆盖目标文件夹（如  **/workspace/project_revert** ）中的文件。
+.. warning::
+
+    注意！使用版本回退功能 **一定** 会覆盖目标文件夹（如  **/workspace/project_revert** ）中的文件，请不要直接在 *project_revert* 目录下工作。
 
 fitlog log
 ----------
 
-你可以使用 fitlog log 命令来启动一个管理日志的网页，你必须提供参数<log-dir>来表示日志存放的位置，项目初始化时会生成符合条件的 logs 文件夹。
+你可以使用 fitlog log 命令来启动一个管理日志的网页，你必须提供参数 ``<log-dir>`` 来表示日志存放的位置，项目初始化时会生成符合条件的 logs 文件夹。
 你还可以指定配置文件的名称、网页对应的端口号和服务器停止的时间。
 
 .. code:: text
