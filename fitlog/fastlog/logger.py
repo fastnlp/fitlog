@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from copy import deepcopy
 import argparse
 import json
 import time
@@ -10,6 +11,7 @@ from configparser import ConfigParser
 
 from .log_read import is_dirname_log_record
 from ..fastgit import committer
+
 import warnings
 import numpy as np
 import numbers
@@ -404,6 +406,7 @@ class Logger:
         """
         if isinstance(value, argparse.Namespace):
             value = vars(value)
+            value=deepcopy(value)
             _check_dict_value(value)
         elif isinstance(value, ConfigParser):
             value = _convert_configparser_to_dict(value)  # no need to check
@@ -697,7 +700,7 @@ def _check_dict_value(_dict: dict, prefix: str = ''):
 
 def get_hour_min_second(seconds):
     # seconds: int
-    m, s = divmod(round(seconds, 2), 60)
+    m, s = divmod(int(seconds), 60)
     h, m = divmod(m, 60)
     f = ''
     f += '{:d}h'.format(int(h))
