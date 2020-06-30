@@ -164,8 +164,10 @@ class Committer:
             shutil.move(git_path, git_backup_path)
         if os.path.isfile(gitignore_path):
             shutil.move(gitignore_path, gitignore_backup_path)
-        shutil.move(fitlog_path, git_path)
-        shutil.move(os.path.join(git_path, ".gitignore"), work_dir)
+        if os.path.exists(fitlog_path):
+            shutil.move(fitlog_path, git_path)
+        if os.path.isfile(os.path.join(git_path, ".gitignore")):  # 使用 .fitlog 下的 .gitignore
+            shutil.move(os.path.join(git_path, ".gitignore"), work_dir)
 
     @staticmethod
     def _switch_to_standard_git(work_dir: str):
@@ -178,8 +180,10 @@ class Committer:
         git_backup_path = os.path.join(work_dir, ".git_backup")
         gitignore_path = os.path.join(work_dir, ".gitignore")
         gitignore_backup_path = os.path.join(work_dir, ".gitignore_backup")
-        shutil.move(git_path, fitlog_path)
-        shutil.move(gitignore_path, os.path.join(fitlog_path, ""))
+        if os.path.exists(git_path):
+            shutil.move(git_path, fitlog_path)
+        if os.path.exists(gitignore_path):  # 把 .gitignore 移动到 .fitlog 下
+            shutil.move(gitignore_path, os.path.join(fitlog_path, ""))
         if os.path.exists(git_backup_path):
             shutil.move(git_backup_path, git_path)
         if os.path.isfile(gitignore_backup_path):
