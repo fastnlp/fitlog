@@ -273,7 +273,7 @@ function CompareLogTrend() {
             }
         }
         if(at_least_2_log_metrics.length==0){
-            bootbox.prompt("Metric is different for all logs.");
+            bootbox.alert("No overlapped metric to compare.");
             return;
         }
         // 弹出多选框
