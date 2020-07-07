@@ -401,6 +401,8 @@ class Logger:
         """
         if isinstance(value, argparse.Namespace):
             value = vars(value)
+            from copy import deepcopy
+            value=deepcopy(value)
             _check_dict_value(value)
         elif isinstance(value, ConfigParser):
             value = _convert_configparser_to_dict(value)  # no need to check
