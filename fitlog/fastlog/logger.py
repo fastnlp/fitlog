@@ -704,6 +704,6 @@ def get_hour_min_second(seconds):
     h, m = divmod(m, 60)
     f = ''
     f += '{:d}h'.format(int(h))
-    f += '{:d}m'.format(int(h))
+    f += '{:d}m'.format(int(m))
     f += '{:d}s'.format(s)
     return f
