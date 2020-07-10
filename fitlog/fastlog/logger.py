@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from copy import deepcopy
 import argparse
 import json
 import time
@@ -10,6 +11,7 @@ from configparser import ConfigParser
 
 from .log_read import is_dirname_log_record
 from ..fastgit import committer
+
 import warnings
 import numpy as np
 import numbers
@@ -401,7 +403,6 @@ class Logger:
         """
         if isinstance(value, argparse.Namespace):
             value = vars(value)
-            from copy import deepcopy
             value=deepcopy(value)
             _check_dict_value(value)
         elif isinstance(value, ConfigParser):
