@@ -198,6 +198,8 @@ class Logger:
         if not self.save_on_first_metric_or_loss:
             self.create_log_folder()
 
+        self._start_time = time.time()
+
     def _clear(self):
         """
         内部函数，将logger置为未初始化
@@ -309,7 +311,8 @@ class Logger:
             else:
                 _dict = {'meta': {'state': 'error'}}
             self._write_to_logger(json.dumps(_dict), 'meta_logger')
-    
+        self.add_other(value=get_hour_min_second(time.time()-self._start_time), name='cost_time')
+
     @_check_debug
     @_check_log_dir
     def add_best_metric(self, value: Union[int, str, float, dict], name: str = None):
@@ -690,3 +693,14 @@ def _check_dict_value(_dict: dict, prefix: str = ''):
             _dict[key] = float(value)
         else:
             _dict[key] = str(value)
+
+
+def get_hour_min_second(seconds):
+    # seconds: int
+    m, s = divmod(round(seconds, 2), 60)
+    h, m = divmod(m, 60)
+    f = ''
+    f += '{:d}h'.format(int(h))
+    f += '{:d}m'.format(int(h))
+    f += '{:d}s'.format(s)
+    return f
