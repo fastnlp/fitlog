@@ -51,7 +51,7 @@ def _check_log_dir(func):
         if not args[0].initialized and args[0].default_log_dir is not None:
             args[0].set_log_dir(args[0].default_log_dir)
         elif not args[0].initialized:
-            raise RuntimeError("You have to call `logger.set_log_dir()` to set where to save log first.")
+            raise RuntimeError("You have to call `fitlog.set_log_dir()` to set where to save log first.")
         return func(*args, **kwargs)
     
     return wrapper
@@ -219,12 +219,12 @@ class Logger:
         for logger_name in ['meta_logger', 'hyper_logger', 'metric_logger', 'other_logger', 'progress_logger',
                           'loss_logger', "best_metric_logger", "file_logger"]:
             if hasattr(self, logger_name):
-                logger = getattr(self, logger_name)
-                handlers = logger.handlers[:]
+                _logger = getattr(self, logger_name)
+                handlers = _logger.handlers[:]
                 for handler in handlers:
                     handler.close()
                     handler.flush()
-                    logger.removeHandler(handler)
+                    _logger.removeHandler(handler)
                 delattr(self, logger_name)
 
     def _create_log_files(self):
@@ -427,7 +427,7 @@ class Logger:
         :return:
         """
         if name in ('meta', 'hyper', 'metric', 'loss') and not isinstance(value, dict):
-            raise KeyError("Don't use {} as a name. Use logger.add_{}() to _save it.".format(name, name))
+            raise KeyError("Don't use {} as a name. Use fitlog.add_{}() to save it.".format(name, name))
         
         _dict = _parse_value(value, name=name, parent_name='other')
         self._write_to_logger(json.dumps(_dict), 'other_logger')
@@ -558,8 +558,8 @@ class Logger:
         if len(self._cache) != 0:
             self._create_log_files()
             for value, logger_name in self._cache:
-                logger = getattr(self, logger_name)
-                logger.info(value)
+                _logger = getattr(self, logger_name)
+                _logger.info(value)
             self._cache = []
     
     def _write_to_logger(self, _str: str, logger_name: str):
@@ -578,8 +578,8 @@ class Logger:
         if logger_name not in ('file_logger',):
             _str = re.sub('-(?!\d)', '_', _str.replace('\n', ' '))
         if hasattr(self, logger_name):
-            logger = getattr(self, logger_name)
-            logger.info(_str)
+            _logger = getattr(self, logger_name)
+            _logger.info(_str)
         else:  # 如果还没有初始化就先cache下来
             self._cache.append([_str, logger_name])
 

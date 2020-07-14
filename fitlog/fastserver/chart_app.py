@@ -19,6 +19,9 @@ chart_page = Blueprint("chart_page", __name__, template_folder='templates')
 
 @chart_page.route('/chart', methods=['POST'])
 def chart():
+    res = check_uuid(all_data['uuid'], request.values['uuid'])
+    if res != None:
+        return jsonify(res)
     log_dir = request.values['log_dir']
     finish = request.values['finish']
     save_log_dir = os.path.join(all_data['root_log_dir'], log_dir)

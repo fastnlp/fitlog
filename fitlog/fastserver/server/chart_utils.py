@@ -44,6 +44,8 @@ class ChartStepLogHandler:
             for v in values:
                 expand_v = {}
                 real_v = v[key]
+                if not isinstance(real_v, dict):
+                    real_v = {key: real_v}
                 for _key in ['step', 'epoch']:
                     if _key in v:
                         expand_v[_key] = v[_key]
@@ -74,7 +76,7 @@ class ChartStepLogHandler:
         # data: {'finish':(如果结束了有), 'metric': [{}, {}], 'loss':[{}, {}]}
         steps = self.reader.read_update(only_once)
         data = {}
-        for key, values in steps.items():# key为loss, metric, value为[{'step':, epoch:, loss:{}}]
+        for key, values in steps.items():# key为loss, metric, value为[{'step':, epoch:, loss:{}或value}]
             # [{'step':, epoch:, metric:{}}]
             if key!='finish' and key!='total_steps':
                 if key in self.path2path:
@@ -85,6 +87,8 @@ class ChartStepLogHandler:
                 for v in values:
                     expand_v = {}
                     real_v = v[key]
+                    if not isinstance(real_v, dict):
+                        real_v = {key: real_v}
                     for _key in ['step', 'epoch']:
                         if _key in v:
                             expand_v[_key] = v[_key]

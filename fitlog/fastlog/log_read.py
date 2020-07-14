@@ -384,7 +384,7 @@ class StandbyStepLogReader(threading.Thread):
         :param handler_names: 只check包含在handler_name的内容
         :return: 返回值的结构如下
             {
-                loss: [dict('step':x, epoch:value, 'loss':{})],
+                loss: [dict('step':x, epoch:value, 'loss':{}), ...],  # 或[dict('step':x, epoch:value, 'loss':value), ...]
                 metric:[dict('step':x, epoch:value, 'metric':{'SpanFMetric':xxx})],
                 finish:bool(not every time),
                 total_steps:int(only the first access)
