@@ -366,7 +366,6 @@ class Committer:
             if sleep_cnt == 10:
                 raise TimeoutError("One auto-commit must run after another. Please run again a few seconds later."
                                    "\nIf you fail several times, please refer to our documents.")
-            # TODO add the link
         self._switch_to_fast_git(self.work_dir)
         try:
             commit_files = self._get_watched_files()
@@ -413,6 +412,7 @@ class Committer:
         """
         return self.commits
 
+    @staticmethod
     def _read_id_from_file(path: str) -> Info:
         with open(path, "r") as fin:
             lines = fin.readlines()
@@ -502,9 +502,15 @@ class Committer:
         tools_path = os.path.realpath(__file__)[:-len("committer.py")] + version
         if not os.path.isdir(os.path.join(pj_path, "logs")):
             shutil.copytree(os.path.join(tools_path, "logs"), os.path.join(pj_path, "logs"))
+        elif not os.path.exists(os.path.join(pj_path, "logs", "default.cfg")):
+            shutil.copy(os.path.join(tools_path, "logs", "default.cfg"), os.path.join(pj_path, "logs"))
         for file in [".fitconfig", ".gitignore", "main"]:
-            shutil.copy(os.path.join(tools_path, file), pj_path)
-        shutil.move(os.path.join(pj_path, "main"), os.path.join(pj_path, "main.py"))
+            if not os.path.exists(os.path.join(pj_path, file)):
+                shutil.copy(os.path.join(tools_path, file), pj_path)
+        if not os.path.exists(os.path.join(pj_path, "main.py")):
+            shutil.move(os.path.join(pj_path, "main"), os.path.join(pj_path, "main.py"))
+        else:
+            os.remove(os.path.join(pj_path, "main"))
         Repo.init(path=pj_path)
         if hide:
             shutil.move(os.path.join(pj_path, ".fitconfig"), os.path.join(pj_path, ".git", ""))
@@ -541,8 +547,7 @@ class Committer:
         if self._check_directory(os.path.abspath('.'), cli=False):
             try:
                 if show_now:
-                    work_dir = os.path.abspath('.')
-                    head_id = self._get_last_commit(work_dir)["msg"]
+                    head_id = self._get_last_commit()["msg"]
                 with open(os.path.join('.fitlog', 'fit_logs'), 'r') as fin:
                     lines = fin.readlines()
                 cnt = 0
