@@ -381,6 +381,30 @@ function save_filter_conditions(){
             condition[key] = value;
         }
     }
+
+    // search query也可以
+    var s = document.getElementsByClassName('form-control')[0].value;
+    if(s!=='' && s.length>2 && s.charAt(s.length-1)==='$' && s.charAt(0)==='$'){
+        var logic_s = s.substr(1, s.length-2).replace(/'/g, '"');
+        var is_valid_json = false;
+        try {
+              var obj=JSON.parse(logic_s);
+              if(typeof obj == 'object' && obj ){
+                  is_valid_json = true;
+              }else{
+                  is_valid_json = false;
+              }
+        } catch(e) {
+              is_valid_json = false;
+        }
+        if(is_valid_json)
+        {
+            for(var key in obj){
+                condition[key] = obj[key];
+            }
+        }
+    }
+
     if(Object.keys(condition).length!==0){
         if($table.bootstrapTable('getData', false).length===0){
             bootbox.alert("There is no data qualify your condition.")
@@ -398,7 +422,6 @@ function save_filter_conditions(){
                     }
                 ],
                 callback:function (result) {
-                    console.log(result);
                     if(result==='true'){
                         update_filter_condition(condition, false);
                     }else if(result==='false'){

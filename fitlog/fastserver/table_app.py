@@ -117,6 +117,7 @@ def erase_records():
     else:
         return jsonify(status='success', msg='')
 
+
 @table_page.route('/table/edit', methods=['POST'])
 def table_edit():
     try:
@@ -140,6 +141,7 @@ def table_edit():
         import traceback
         traceback.print_exc()
         return jsonify(status='fail', msg='Unknown error fail to save edit results.')
+
 
 @table_page.route('/table/reset', methods=['POST'])
 def table_reset():
