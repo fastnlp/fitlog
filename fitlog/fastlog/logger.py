@@ -688,11 +688,11 @@ def _check_dict_value(_dict: dict, prefix: str = ''):
                 _dict[key] = value.reshape(1)[0]
             else:
                 _dict[key] = str(value.tolist())
-        elif isinstance(value, np.bool_):
+        elif isinstance(value, (np.bool_, bool)):
             _dict[key] = bool(value)
-        elif isinstance(value, np.integer):
+        elif isinstance(value, (np.integer, int)):
             _dict[key] = int(value)
-        elif isinstance(value, np.floating):
+        elif isinstance(value, (np.floating, float)):
             _dict[key] = float(value)
         else:
             _dict[key] = str(value)

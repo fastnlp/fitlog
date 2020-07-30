@@ -69,7 +69,8 @@ window.operateEvents = {
                 success: function(value){
                     var status = value['status'];
                     if(status==='success' && value['have_trends']){
-                        openPostWindow('/chart', {'log_dir': row['id'], 'finish': finish});
+                        openPostWindow('/chart', {'log_dir': row['id'], 'finish': finish,
+                            'uuid':window.server_uuid});
                     } else{
                         bootbox.alert(value['msg']);
                     }
