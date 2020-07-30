@@ -75,12 +75,12 @@ fitlog 的其它函数用法参见 :doc:`/fitlog`
             acc = random.random()
             fitlog.add_loss(loss,name="Loss",step=step)
             fitlog.add_metric(acc,name="Acc",step=step)
-        if step % 100 == 0:
-            test_acc = random.random()
-            if test_acc > best_acc:
-                best_acc = test_acc
-                best_step = step
-    fitlog.add_best_metric({"Test":{"Acc":best_acc,"Step":best_step}})
+            if acc>best_acc:
+                best_acc = acc
+                fitlog.add_best_metric({"dev":{"Acc":best_acc}, "Step":step})
+                # 当dev取得更好的performance就在test上evaluate一下
+                test_acc = random.random()
+                fitlog.add_best_metric({"test":{"Acc":test_acc}})
     fitlog.finish()                     # finish the logging
 
 我们 rand_seed 分别设为 12, 123, 1234, 12345 进行四次实验，然后就是打开网页服务查看实验结果了。
