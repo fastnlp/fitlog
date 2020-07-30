@@ -48,9 +48,17 @@ fitlog 的其它函数用法参见 :doc:`/fitlog`
 
     import fitlog
     import random
+    import argparse
+
+    # 从命令行传入参数
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--demo', type=int, default=2)
 
     fitlog.commit(__file__)             # 自动 commit 你的代码
     fitlog.set_log_dir("logs/")         # 设定日志存储的目录
+
+    args = parser.parse_args()
+    fitlog.add_hyper(args)  # 通过这种方式记录ArgumentParser的参数
     fitlog.add_hyper_in_file(__file__)  # 记录本文件中写死的超参数
 
     ######hyper
