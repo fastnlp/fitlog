@@ -53,6 +53,11 @@ class ChartStepLogHandler:
                 real_v.pop('epoch', None)
                 _flat_v = flatten_dict('', real_v)
                 for i_key, i_value in _flat_v.items():
+                    if isinstance(i_value, str):
+                        try:
+                            i_value = float(i_value)
+                        except:
+                            continue
                     if isinstance(i_value, (float, int)):
                         if i_key not in path2path:
                             path2path = self._add_path2path(key, real_v)

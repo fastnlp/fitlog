@@ -38,24 +38,26 @@ def stringify_dict_key(_dict):
             _dict[str(key)] = value
     return _dict
 
-def replace_nan_inf(data):
+def replace_nan_inf(data, round_to=6):
     # data: List[dict]
     if isinstance(data, list):
         for d in data:
-            _replace_nan_inf(d)
+            _replace_nan_inf(d, round_to=round_to)
     elif isinstance(data, dict):
-        _replace_nan_inf(data)
+        _replace_nan_inf(data, round_to=round_to)
     else:
         raise TypeError("Unsupported type.")
     return data
 
-def _replace_nan_inf(d):
+def _replace_nan_inf(d, round_to=6):
     for k, value in d.items():
         if isinstance(value, dict):
-            _replace_nan_inf(value)
+            _replace_nan_inf(value, round_to=round_to)
         elif isinstance(value, list):
             for d in value:
-                _replace_nan_inf(d)
+                _replace_nan_inf(d, round_to=round_to)
+        elif isinstance(value, float):
+            d[k] = round(value, round_to)
         elif value==float('inf'):
             d[k] = "Infinity"
         elif value==float('-inf'):

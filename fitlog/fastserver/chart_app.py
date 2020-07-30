@@ -43,7 +43,7 @@ def chart():
         if not handler_watcher._start:
             handler_watcher.start()
 
-    replace_nan_inf(points)
+    replace_nan_inf(points, round_to=all_data['basic_settings']['round_to'])
 
     return render_template('chart.html', log_dir=log_dir, data=points, chart_uuid=_uuid,
                            server_uuid=all_data['uuid'],
@@ -74,7 +74,7 @@ def chart_new_step():
     else:
         points['finish'] = True
 
-    replace_nan_inf(points)  # points内部是{'loss':[{}, {}, {}],
+    replace_nan_inf(points, all_data['basic_settings']['round_to'])  # points内部是{'loss':[{}, {}, {}],
     #                                       'metric':[{}, {}]}
 
     return jsonify(steps=points)

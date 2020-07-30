@@ -36,7 +36,7 @@ def get_table():
     data = all_data['data'].copy() # all_data['data'] 只包含从硬盘的读取的log的信息
     # replace_with_extra_data(data, all_data['extra_data'], all_data['filter_condition'], all_data['deleted_rows'],
     #                          all_data['settings']['Ignore_filter_condition_not_exist_log'])
-    replace_nan_inf(data)
+    replace_nan_inf(data, all_data['basic_settings']['round_to'])
 
     return jsonify(column_order=all_data['column_order'], column_dict=all_data['column_dict'],
                    hidden_columns=all_data['hidden_columns'],
@@ -68,8 +68,8 @@ def refresh_table():
             if len(new_logs)==0 and len(updated_logs)==0:
                 return jsonify(status='success', msg='Update successfully, no update found.', new_logs=[],
                                updated_logs=[])
-            replace_nan_inf(new_logs)
-            replace_nan_inf(updated_logs)
+            replace_nan_inf(new_logs, all_data['basic_settings']['round_to'])
+            replace_nan_inf(updated_logs, all_data['basic_settings']['round_to'])
             return jsonify(status='success', msg='Update successfully, {} log have updates, {} newly added.'\
                            .format(len(updated_logs), len(new_logs)),
                            new_logs=new_logs, updated_logs=updated_logs)
