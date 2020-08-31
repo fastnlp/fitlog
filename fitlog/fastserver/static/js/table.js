@@ -359,6 +359,10 @@ function show_statistics(){
                 }
             }
         }
+
+        if(log_values.hasOwnProperty('checkbox'))
+            delete log_values['checkbox'];
+
         var values;
         var value_set;
         var invariant_values = {};
