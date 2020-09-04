@@ -1584,7 +1584,8 @@
             }
             var s = this.searchText && (this.options.escape ? Utils.escapeHTML(this.searchText) : this.searchText);
             var f = Utils.isEmptyObject(this.filterColumns) ? null : this.filterColumns;
-
+            if(s===undefined)
+              s='';
             // Check filter
             this.data = f ? this.options.data.filter(function (item, i) {
               for (var key in f) {
