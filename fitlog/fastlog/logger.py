@@ -241,37 +241,17 @@ class Logger:
                     self._save_log_dir = os.path.join(self._log_dir, 'log_' + now)
                 os.mkdir(self._save_log_dir)
             # prepare logger
-            self.meta_logger = logging.getLogger('fitlog_meta')
-            self.hyper_logger = logging.getLogger('fitlog_hyper')
-            self.metric_logger = logging.getLogger('fitlog_metric')
-            self.other_logger = logging.getLogger('fitlog_other')
-            self.loss_logger = logging.getLogger('fitlog_loss')
-            self.progress_logger = logging.getLogger('fitlog_progress')
-            self.best_metric_logger = logging.getLogger('fitlog_best_metric')
-            self.file_logger = logging.getLogger('fitlog_file')
-            
             formatter = logging.Formatter('%(message)s')  # 只保存记录的时间与记录的内容
-            meta_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'meta.log'), encoding='utf-8')
-            hyper_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'hyper.log'), encoding='utf-8')
-            metric_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'metric.log'), encoding='utf-8')
-            best_metric_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'best_metric.log'), encoding='utf-8')
-            loss_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'loss.log'), encoding='utf-8')
-            other_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'other.log'), encoding='utf-8')
-            progress_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'progress.log'), encoding='utf-8')
-            file_handler = logging.FileHandler(os.path.join(self._save_log_dir, 'file.log'), encoding='utf-8')
-            
-            for handler in [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler, progress_handler,
-                            best_metric_handler, file_handler]:
+            for name in ['meta', 'hyper', 'metric', 'other', 'loss', 'progress', 'best_metric', 'file']:
+                logger_name = 'fitlog_{}'.format(name)
+                logger = logging.getLogger(logger_name)
+                handler = logging.FileHandler(os.path.join(self._save_log_dir, '{}.log'.format(name)), encoding='utf-8')
                 handler.setFormatter(formatter)
-            
-            for _logger, _handler in zip([self.meta_logger, self.hyper_logger, self.metric_logger, self.other_logger,
-                                    self.loss_logger, self.progress_logger, self.best_metric_logger, self.file_logger],
-                                         [meta_handler, hyper_handler, metric_handler, other_handler, loss_handler,
-                                          progress_handler, best_metric_handler, file_handler]):
-                _handler.setLevel(logging.INFO)
-                _logger.setLevel(logging.INFO)
-                _logger.addHandler(_handler)
-            
+                handler.setLevel(logging.INFO)
+                logger.setLevel(logging.INFO)
+                logger.propagate = False
+                logger.addHandler(handler)
+                setattr(self, name+'_logger', logger)
             self.__add_meta()
     
     @_check_debug
