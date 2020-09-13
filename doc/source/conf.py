@@ -22,7 +22,7 @@ copyright = '2020, fastNLP'
 author = 'fastNLP'
 
 # The short X.Y version
-version = '0.9.13-alpha'
+version = '0.9.13'
 # The full version, including alpha/beta/rc tags
 
 # -- General configuration ---------------------------------------------------

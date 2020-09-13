@@ -40,11 +40,26 @@ filog 是我们实验室内部使用的一款工具，大部分功能口口相�
 6. 传入到fitlog的各种参数、metric的名称，请 **避免特殊符号（例如$%!#@空格），请只使用_与各种字母的组合** ，因为特殊符号可能导致网页端显示不正常。
 7. **在命令行中通过fitlog log logs打开网页的时候，如果出现了网页无法访问的情况，首先检查一下ip地址是否正确，例如如果是在服务器上启动的服务，在电脑这端应该用http://服务器的ip:5000 来访问，如果是在本地电脑启动的，可以尝试通过http://0.0.0.0:5000 或http://127.0.0.1:5000 或http://localhost:5000 访问。如果以上仍然不能访问，可以通过ctrl+c关闭fitlog服务，然后通过命令fitlog log logs --ip 127.0.0.1启动再试一下能不能访问。**
 
-## Developing Features(2020.09.11)
+## Developing Features(2020.09.13)
 
 以下为正在开发中的功能，API 可能发生变化。
 
-为函数 `fitlog.finish` 增加了可选参数 send_to_bot，传入一个字符串，为飞书机器人的 webhook 地址。飞书机器人的使用方法参见 [一个人也可以用的群聊机器人](https://getfeishu.cn/hc/zh-cn/articles/360024984973-%E5%9C%A8%E7%BE%A4%E8%81%8A%E4%B8%AD%E4%BD%BF%E7%94%A8%E6%9C%BA%E5%99%A8%E4%BA%BA) 。使用这个参数可以让用户在训练完成时收到通知。
+为函数 `fitlog.finish` 增加了可选参数 send_to_bot，传入一个字符串，为飞书机器人的 webhook 地址。 使用这个参数可以让用户在训练完成时收到通知。
+
+例如：设定 status 为 1， send_to_bot 为 webhook 的地址，可让飞书机器人发布训练发生错误的讯息。（status默认值为0，表示实验成功结束）
+
+```python
+fitlog.finish(status=1,
+	send_to_bot="https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx")      
+```
+
+#### 添加飞书机器人的方法
+
+如下图所示，打开群聊后点击 "设置-群机器人-添加机器人-Custom Bot" 可以打开机器人窗口，点击添加后可以获得飞书机器人的 webhook 地址。
+
+![add_bot_1](doc/source/figures/add_bot_1.png)  
+
+另外，可以参考[一个人也可以用的群聊机器人](https://getfeishu.cn/hc/zh-cn/articles/360024984973-%E5%9C%A8%E7%BE%A4%E8%81%8A%E4%B8%AD%E4%BD%BF%E7%94%A8%E6%9C%BA%E5%99%A8%E4%BA%BA)
 
 ## New Features(2020.06.11)
 以下的功能都没有经过实战使用检验，可能有bug。
