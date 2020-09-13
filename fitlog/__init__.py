@@ -11,7 +11,7 @@ from typing import Union
 import argparse
 from configparser import ConfigParser
 
-__version__ = '0.7.1'
+__version__ = '0.9.13-alpha'
 
 
 def get_commit_id(file):
@@ -139,13 +139,13 @@ def debug(flag=True):
     _logger.debug(flag=flag)
 
 
-def finish(status: int = 0):
+def finish(status: int = 0, send_to_bot: str = None):
     """
         使用此方法告知 fitlog 你的实验已经正确结束。你可以使用此方法来筛选出失败的实验。
 
         :param int status: 告知当前实验的状态。0: 结束了; 1: 发生了错误
     """
-    _logger.finish(status)
+    _logger.finish(status, send_to_bot)
 
 
 def add_metric(value: Union[int, str, float, dict], step: int, name: str = None, epoch: int = None):
