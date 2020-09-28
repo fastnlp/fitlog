@@ -55,7 +55,7 @@
             fillColor:     245
           },
           tableExport: {
-            doc:               null,    // jsPDF doc object. If set, an already created doc will be used to export to
+            doc:               null,    // jsPDF docs object. If set, an already created docs will be used to export to
             onAfterAutotable:  null,
             onBeforeAutotable: null,
             onAutotableText:   null,
@@ -110,7 +110,7 @@
       tfootSelector:       'tr',        // Set empty ('') to prevent export of tfoot rows
       theadSelector:       'tr',
       tableName:           'Table',
-      type:                'csv'        // 'csv', 'tsv', 'txt', 'sql', 'json', 'xml', 'excel', 'doc', 'png' or 'pdf'
+      type:                'csv'        // 'csv', 'tsv', 'txt', 'sql', 'json', 'xml', 'excel', 'docs', 'png' or 'pdf'
     };
 
     var pageFormats = { // Size in pt of various paper formats. Adopted from jsPDF.
@@ -966,7 +966,7 @@
                     function () {
                       jsPdfOutput(doc, false);
                     });
-        //delete doc;
+        //delete docs;
       }
       else {
         // pdf output using jsPDF AutoTable plugin
@@ -1008,7 +1008,7 @@
           defaults.jspdf.orientation = (ro === '' ? 'w' : ro);
         }
 
-        // The jsPDF doc object is stored in defaults.jspdf.autotable.tableExport,
+        // The jsPDF docs object is stored in defaults.jspdf.autotable.tableExport,
         // thus it can be accessed from any callback function
         if ( teOptions.doc == null ) {
           teOptions.doc = new jsPDF(defaults.jspdf.orientation,
