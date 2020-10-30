@@ -24,13 +24,10 @@ fitlog是一款集成了自动版本管理和自动日志记录两种功能的 P
 API 文档
 -------------
 
-一般情况下你只需要阅读用户 API 文档即可，里面包括了你可以调用的函数接口。内部 API 是为开发者准备的。
-
 .. toctree::
     :maxdepth: 1
 
-    用户 API <fitlog>
-    内部 API <inner_api>
+    fitlog
 
 
 

@@ -1,7 +1,6 @@
 import logging
 import os
 import requests
-import json
 from datetime import datetime
 from copy import deepcopy
 import argparse
@@ -236,12 +235,22 @@ class Logger:
         if not hasattr(self, 'meta_logger'):
             if self._save_log_dir is None:
                 now = datetime.now().strftime('%Y%m%d_%H%M%S')
-                self._save_log_dir = os.path.join(self._log_dir, 'log_' + now)
-                while os.path.exists(self._save_log_dir):
+                _save_log_dir = os.path.join(self._log_dir, 'log_' + now)
+                while os.path.exists(_save_log_dir):
                     time.sleep(1)
                     now = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    self._save_log_dir = os.path.join(self._log_dir, 'log_' + now)
-                os.mkdir(self._save_log_dir)
+                    _save_log_dir = os.path.join(self._log_dir, 'log_' + now)
+                while True:
+                    try:
+                        os.mkdir(_save_log_dir)
+                        break
+                    except FileExistsError:
+                        time.sleep(1)
+                        now = datetime.now().strftime('%Y%m%d_%H%M%S')
+                        _save_log_dir = os.path.join(self._log_dir, 'log_' + now)
+                    except Exception as e:
+                        raise e
+                self._save_log_dir = _save_log_dir
             # prepare logger
             formatter = logging.Formatter('%(message)s')  # 只保存记录的时间与记录的内容
             for name in ['meta', 'hyper', 'metric', 'other', 'loss', 'progress', 'best_metric', 'file']:

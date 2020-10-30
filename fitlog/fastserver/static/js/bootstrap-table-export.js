@@ -24,7 +24,7 @@
     $.extend($.fn.bootstrapTable.defaults, {
         showExport: false,
         exportDataType: 'basic', // basic, all, selected
-        // 'json', 'xml', 'png', 'csv', 'txt', 'sql', 'doc', 'excel', 'powerpoint', 'pdf'
+        // 'json', 'xml', 'png', 'csv', 'txt', 'sql', 'docs', 'excel', 'powerpoint', 'pdf'
         exportTypes: ['json', 'xml', 'csv', 'txt', 'sql', 'excel'],
         exportOptions: {}
     });
