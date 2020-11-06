@@ -33,8 +33,12 @@ pipeline {
         }
     }
     post {
-        always {
-            sh 'post'
+        failure {
+            sh 'post 1'
+        }
+        success {
+            sh 'post 0'
+            sh 'post github'
         }
 
     }
