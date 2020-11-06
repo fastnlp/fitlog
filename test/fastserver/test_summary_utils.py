@@ -1,7 +1,7 @@
-
 from itertools import groupby
 from operator import itemgetter
 import numpy as np
+
 
 def groupBy(data, key):
     """
@@ -11,8 +11,9 @@ def groupBy(data, key):
     :return: 可以看成[[key1, group1], [key2, group2]]
     """
     data.sort(key=itemgetter(key))
-    grouped_data = groupby(data, itemgetter(key)) # key + 迭代器。可以看成[[key1, group1], [key2, group2]]
+    grouped_data = groupby(data, itemgetter(key))  # key + 迭代器。可以看成[[key1, group1], [key2, group2]]
     return grouped_data
+
 
 def get_grouped_data(data, keys):
     """
@@ -22,7 +23,7 @@ def get_grouped_data(data, keys):
     :return: {}nested的dict，最后的value是符合这个group的结果
     """
     _dict = {}
-    if len(keys)==1:
+    if len(keys) == 1:
         grouped_data = groupBy(data, keys[0])
         for key, group in grouped_data:
             _dict[key] = list(group)
@@ -33,6 +34,7 @@ def get_grouped_data(data, keys):
             _dict[key] = get_grouped_data(list(group), keys[1:])
     return _dict
 
+
 def merge(a, b, path=None):
     "merges b into a"
     if path is None: path = []
@@ -41,7 +43,7 @@ def merge(a, b, path=None):
             if isinstance(a[key], dict) and isinstance(b[key], dict):
                 merge(a[key], b[key], path + [str(key)])
             elif a[key] == b[key]:
-                pass # same leaf value
+                pass  # same leaf value
             else:
                 raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
         else:
@@ -81,4 +83,4 @@ if __name__ == '__main__':
     root_log_dir = '../../model_test/codes/V1/logs'
 
     print(generate_summary_table(vertical, horizontals, method, criteria, results, results, selected_data,
-                     root_log_dir))
+                                 root_log_dir))

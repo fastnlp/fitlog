@@ -1,5 +1,6 @@
 import logging
 import os
+import requests
 from datetime import datetime
 from copy import deepcopy
 import argparse
@@ -289,11 +290,13 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    def finish(self, status:int=0):
+    def finish(self, status: int=0, send_to_bot: str=None):
         """
         使用此方法告知 fitlog 你的实验已经正确结束。你可以使用此方法来筛选出失败的实验。
 
-        :param int status: 告知当前实验的状态。0: 结束了; 1: 发生了错误
+        :param status: 告知当前实验的状态。0: 结束了; 1: 发生了错误
+        :param send_to_bot: 飞书机器人的 webhook 地址，设置后可以
+        :return:
         """
         if status not in (0, 1):
             raise ValueError("status only supports 0,1 to stand for 'finish','error'.")
@@ -304,6 +307,36 @@ class Logger:
                 _dict = {'meta': {'state': 'error'}}
             self._write_to_logger(json.dumps(_dict), 'meta_logger')
         self.add_other(value=get_hour_min_second(time.time()-self._start_time), name='cost_time')
+
+        if send_to_bot is not None:
+            if isinstance(send_to_bot, str):
+                if status == 0:
+                    title = "[ fitlog 训练完成 ]"
+                    text = "fitlog 提醒您：您的训练任务已完成！"
+                else:
+                    title = "[ fitlog 训练错误 ]"
+                    text = "fitlog 提醒您：您的训练任务发生了错误。"
+                data = {
+                    "msg_type": "post",
+                    "content": {
+                        "post": {
+                                "zh_cn": {
+                                    "title": title,
+                                    "content": [
+                                        [
+                                            {
+                                                "tag": "text",
+                                                "text": text
+                                            },
+                                        ]
+                                    ]
+                                }
+                        }
+                    }
+                }
+                requests.post(url=send_to_bot, headers={'Content-Type': 'application/json'}, data=json.dumps(data))
+            else:
+                print("[send_to_bot] 应该设置为飞书机器人的 webhook 地址")
 
     @_check_debug
     @_check_log_dir

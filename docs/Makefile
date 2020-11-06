@@ -20,7 +20,10 @@ server:
 	cd build/html && python -m http.server
 
 dev:
-	rm -rf build && make html && make server
+	rm -f source/$(SPHINXPROJ).* source/modules.rst && rm -rf build && make apidoc && make html && make server
+
+prod:
+	make apidoc && make html
 
 .PHONY: help Makefile
 
