@@ -4,6 +4,6 @@ include README.md
 recursive-include fitlog/fastserver/static *
 recursive-include fitlog/fastserver/templates *.html
 include fitlog/fastserver/favicon.ico
-prune test/
+prune tests/
 recursive-include fitlog/fastgit/example/ *
 graft fitlog/fastgit/normal
