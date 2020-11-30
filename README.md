@@ -15,7 +15,7 @@ fitlog = fast + git + log, 是一款用于辅助用户记录日志和管理代�
 |  |--- fastlog
 |  |--- fastgit
 |  |--- server
-|-test
+|-tests
   
 ```
 

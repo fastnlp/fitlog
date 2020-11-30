@@ -26,7 +26,7 @@ pipeline {
                 }
                 stage('Package Testing') {
                     steps {
-                        sh 'pytest ./test --html=test_results.html --self-contained-html'
+                        sh 'pytest ./tests --html=test_results.html --self-contained-html'
                     }
                 }
             }
