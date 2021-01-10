@@ -229,7 +229,7 @@ class Committer:
         :param logs: 要存储的信息
         :return:
         """
-        with open(os.path.join(self.work_dir, ".fitlog", "fit_logs"), "a")as file_out:
+        with open(os.path.join(self.work_dir, ".fitlog", "fit_logs"), "a", encoding='utf8')as file_out:
             file_out.writelines(logs)
 
     def _get_commits(self, cli: bool = False) -> Info:
@@ -246,7 +246,7 @@ class Committer:
             work_dir = self.work_dir
         try:
             master = os.path.join(work_dir, *"/.fitlog/logs/refs/heads/master".split('/'))
-            with open(master, "r") as fin:
+            with open(master, "r", encoding='utf8') as fin:
                 lines = fin.readlines()
             commit_ids = []
             for line in lines:
@@ -414,7 +414,7 @@ class Committer:
 
     @staticmethod
     def _read_id_from_file(path: str) -> Info:
-        with open(path, "r") as fin:
+        with open(path, "r", encoding='utf8') as fin:
             lines = fin.readlines()
         cuts = lines[-1].strip().split()
         msg = "\t"
@@ -530,9 +530,9 @@ class Committer:
                 write_text = ".fitlog\n.fitconfig\nlogs\n"
             gitignore_path = os.path.join(pj_path, '.gitignore')
             if os.path.exists(gitignore_path):
-                open(gitignore_path, 'a').write("\n" + write_text)
+                open(gitignore_path, 'a', encoding='utf8').write("\n" + write_text)
             else:
-                open(gitignore_path, 'w').write(write_text)
+                open(gitignore_path, 'w', encoding='utf8').write(write_text)
         print(_colored_string("Fitlog project %s is initialized." % pj_name, "green"))
         return 0
 
@@ -548,7 +548,7 @@ class Committer:
             try:
                 if show_now:
                     head_id = self._get_last_commit()["msg"]
-                with open(os.path.join('.fitlog', 'fit_logs'), 'r') as fin:
+                with open(os.path.join('.fitlog', 'fit_logs'), 'r', encoding='utf8') as fin:
                     lines = fin.readlines()
                 cnt = 0
                 show_logs = []
