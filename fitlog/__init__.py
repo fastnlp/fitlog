@@ -139,6 +139,14 @@ def debug(flag=True):
     _logger.debug(flag=flag)
 
 
+def is_debug():
+    """
+    返回当前是否处于debug状态
+
+    """
+    return _logger.is_debug()
+
+
 def finish(status: int = 0, send_to_bot: str = None):
     """
         使用此方法告知 fitlog 你的实验已经正确结束。你可以使用此方法来筛选出失败的实验。

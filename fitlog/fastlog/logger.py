@@ -606,6 +606,11 @@ class Logger:
         else:  # 如果还没有初始化就先cache下来
             self._cache.append([_str, logger_name])
 
+    def is_debug(self):
+        """
+        返回当前是否是debug状态
+        """
+        return self._debug
 
 def _convert_configparser_to_dict(config: ConfigParser) -> dict:
     """
