@@ -508,8 +508,16 @@
           var last_two_word = condition.substr(condition.length-2);
           var first_word = condition.charAt(0);
           var last_word = condition.charAt(condition.length-1);
-
-          if(first_two_word === '<=')
+          if ((''+condition).indexOf('&&')!=-1){
+            var cons = condition.split('&&');
+            for(var index=0;index<cons.length;index++){
+              keep_flag = _getLogicResult(value, cons[index]) && keep_flag;
+              if (!keep_flag){
+                return false;
+              }
+            }
+          }
+          else if(first_two_word === '<=')
             keep_flag = keep_flag && (Utils.isNumeric(value) ? value<=parseFloat(condition.substr(2), 10):
               value<=condition.substr(2));
           else if (last_two_word === '<=')
@@ -551,15 +559,7 @@
           else if (last_word === '>')
             keep_flag = keep_flag && (Utils.isNumeric(value) ? value<parseFloat(condition.substr(0, condition.length-1), 10):
               value<condition.substr(0, condition.length-1));
-          else if ((''+condition).indexOf('&&')!=-1){
-            var cons = condition.split('&&');
-            for(var index=0;index<cons.length;index++){
-              keep_flag = _getLogicResult(value, cons[index]) && keep_flag;
-              if (!keep_flag){
-                return false;
-              }
-            }
-          }else{ // 非大小符号
+          else{ // 非大小符号
             keep_flag = keep_flag && (Utils.isNumeric(value) ? value===parseFloat(condition, 10):
               value===condition);
           }
@@ -1638,6 +1638,7 @@
               return false;
             }) : this.data;
             }else if(s.length>2 && s.charAt(s.length-1)==='$' && s.charAt(0)==='$' ){
+              // 用户自定义搜索条件
               var logic_s = s.substr(1, s.length-2).replace(/'/g, '"');
               var is_valid_json = false;
               try {
