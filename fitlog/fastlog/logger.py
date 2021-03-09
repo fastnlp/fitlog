@@ -169,9 +169,11 @@ class Logger:
                 raise RuntimeError("Don't set log dir again.")
             else:
                 return
-        
+
         if not os.path.exists(log_dir):
-            raise NotADirectoryError("`{}` is not exist.".format(log_dir))
+            print("Create logging folder in `{}`.".format(log_dir))
+            os.makedirs(log_dir)
+            # raise NotADirectoryError("`{}` is not exist.".format(log_dir))
         if not os.path.isdir(log_dir):
             raise FileExistsError("`{}` is not a directory.".format(log_dir))
         
