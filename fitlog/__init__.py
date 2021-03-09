@@ -5,6 +5,9 @@ fitlog提供给用户的 API 有如下几个：
 """
 __all__ = ["commit", "set_log_dir", "finish", "add_best_metric", "add_metric", "add_loss", "add_hyper", "add_other",
            "add_to_line", "set_rng_seed", "add_hyper_in_file", "get_commit_id", "get_fit_id"]
+import os
+os.environ['GIT_PYTHON_REFRESH']="quiet"
+
 from .fastlog import logger as _logger
 from .fastgit import Committer, committer as _committer
 from typing import Union
