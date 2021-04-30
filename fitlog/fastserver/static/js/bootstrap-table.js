@@ -1610,7 +1610,7 @@
                   value = item;
                   var props = key.split('.');
                   for (var _i10 = 0; _i10 < props.length; _i10++) {
-                    if (value[props[_i10]] !== null) {
+                    if (value.hasOwnProperty(props[_i10]) && value[props[_i10]] !== null) {
                       value = value[props[_i10]];
                     }
                   }
