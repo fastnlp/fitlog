@@ -105,7 +105,7 @@ def summary_selections():
 
 @summary_page.route('/summary/new_summary', methods=['POST'])
 def new_summary():
-    # 根据前端发送的数据生成新的summary
+    # 根据前端发送的数据生成新的summary, 得到summary的数据
     res = check_uuid_summary(all_data['uuid'], request.json['uuid'])
     if res != None:
         return jsonify(res)

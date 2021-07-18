@@ -16,6 +16,8 @@ from ..server.table_utils import merge as merge_use_b, expand_dict
 from .table_utils import expand_dict
 from .table_utils import generate_columns
 from copy import deepcopy
+from ..server.data_container import all_data
+
 
 def check_uuid_summary(gold_uuid, _uuid):
     if gold_uuid==_uuid:
@@ -428,10 +430,11 @@ def generate_summary_table(vertical, horizontals, method, criteria, results, res
 
     # 6. 加入extra_summary, 如果有的话
     summary_results.extend(expand_dict(extra_summary))
-
+    str_max_length = all_data['basic_settings']['str_max_length']
+    round_to = all_data['basic_settings']['round_to']
     results = generate_columns(summary_results, hidden_columns={'id':1}, column_order=column_order, editable_columns={},
                      exclude_columns={}, ignore_unchanged_columns=False,
-                     str_max_length=20, round_to=6, num_extra_log=0)
+                     str_max_length=str_max_length, round_to=round_to, num_extra_log=0)
     results['status'] = 'success'
     results['summary_sources'] = summary_sources
     return results
@@ -470,7 +473,9 @@ def avg_std_method(data, result_on):
             value = {}
             return value, {}
         else:
-            value = '{:.6f}({:.6f})'.format(np.mean(values), np.std(values))
+            round_to = str(all_data['basic_settings']['round_to'])
+            _format = "{:." + round_to + "f}({:." + round_to  + "f})"
+            value = _format.format(np.mean(values), np.std(values))
             return {result_on: value}, {result_on:[log['id'] for log in data]}
     except Exception as e:
         print(_colored_string("Exception occurred when calculate mean for {}.".format(result_on), 'red'))
