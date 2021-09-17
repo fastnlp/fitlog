@@ -435,6 +435,17 @@ class Logger:
             _check_dict_value(value)
         elif isinstance(value, ConfigParser):
             value = _convert_configparser_to_dict(value)  # no need to check
+        else:
+            try:
+                import dataclasses
+                if dataclasses.is_dataclass(value):
+                    _dict = {}
+                    for field in value.__dataclass_fields__:
+                        v = getattr(value, field)
+                        _dict[field] = v
+                    value = _dict
+            except:  # python 3.7以上才有这个
+                pass
         
         _dict = _parse_value(value, name=name, parent_name='hyper')
         
