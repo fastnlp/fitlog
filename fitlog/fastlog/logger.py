@@ -554,6 +554,7 @@ class Logger:
         """
         设置模块的随机数种子。由于pytorch还存在cudnn导致的非deterministic的运行，所以一些情况下可能即使seed一样，结果也不一致
             需要在fitlog.commit()或fitlog.set_log_dir()之后运行才会记录该rng_seed到log中
+            
         :param int rng_seed: 将这些模块的随机数设置到多少，默认为随机生成一个。
         :param bool, random: 是否将python自带的random模块的seed设置为rng_seed.
         :param bool, numpy: 是否将numpy的seed设置为rng_seed.

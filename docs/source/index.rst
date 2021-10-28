@@ -25,10 +25,15 @@ API 文档
 -------------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 0
 
     fitlog
 
+开发参考
+-------------
 
+.. toctree::
+    :maxdepth: 1
 
+    developer
 

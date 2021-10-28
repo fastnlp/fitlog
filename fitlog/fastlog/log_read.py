@@ -43,13 +43,16 @@ class LogReader:
 
         :param ignore_log_names: 如果包含在这个里面，就不会读取该log
         :return: 如果有内容或者有更新的内容，则返回一个 list，里面每个元素都是nested的dict.
-            [{
-                'id':
-                'metric': {nested dict},
-                'meta': {},
-                ...
-            },{
-            }]
+
+            .. code::
+
+                [{
+                    'id':
+                    'metric': {nested dict},
+                    'meta': {},
+                    ...
+                },{
+                }]
         """
         assert self._log_dir is not None, "You have to set log_dir first."
         if ignore_log_names is None:
@@ -71,7 +74,8 @@ class LogReader:
     def read_certain_logs(self, log_dir_names):
         """
         给定log的名称，只读取对应的log
-        :param log_dir_names: list[str]
+
+        :param log_dir_names list[str]: log的名称
         :return: [{}, {}], nested的log
         """
         assert self._log_dir is not None, "You have to set log_dir first."
@@ -346,10 +350,13 @@ class StandbyStepLogReader(threading.Thread):
         :param filepaths: 完整的path路径
         :param ranges: {'metric':[min, max] }
         :return: 返回值的结构如下。loss这个list是进行了step排序的
-            {
-                loss: [dict('step':x, epoch:value, 'loss':{'loss1':xx})],
-                metric:[dict('step':x, epoch:value, 'metric':{'SpanFMetric':{'f':xx}})]
-            }
+
+            .. code:: 
+
+                {
+                    loss: [dict('step':x, epoch:value, 'loss':{'loss1':xx})],
+                    metric:[dict('step':x, epoch:value, 'metric':{'SpanFMetric':{'f':xx}})]
+                }
                 
         """
         updates = defaultdict(list)
@@ -383,12 +390,16 @@ class StandbyStepLogReader(threading.Thread):
         :param only_once: 是否只读取内容一次。是的话就不会保持读取到的行数，之后直接退出了
         :param handler_names: 只check包含在handler_name的内容
         :return: 返回值的结构如下
-            {
-                loss: [dict('step':x, epoch:value, 'loss':{}), ...],  # 或[dict('step':x, epoch:value, 'loss':value), ...]
-                metric:[dict('step':x, epoch:value, 'metric':{'SpanFMetric':xxx})],
-                finish:bool(not every time),
-                total_steps:int(only the first access)
-            }
+
+            .. code::
+
+                {
+                    loss: [dict('step':x, epoch:value, 'loss':{}), ...],  
+                    # 或[dict('step':x, epoch:value, 'loss':value), ...]
+                    metric:[dict('step':x, epoch:value, 'metric':{'SpanFMetric':xxx})],
+                    finish:bool(not every time),
+                    total_steps:int(only the first access)
+                }
                 
         """
         updates = {}
@@ -511,6 +522,9 @@ class MultiStandbyStepLogReader(threading.Thread):
 
         :param handler_names: 只check包含在handler_name的内容
         :return: 返回值的结构如下
+
+            .. code:: 
+
                 {
                     metric-1: {
                         log_1: [
