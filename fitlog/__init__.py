@@ -3,13 +3,36 @@ fitlog是一款集成了自动版本管理和自动日志记录两种功能的 P
 fitlog提供给用户的 API 有如下几个：
 
 """
-__all__ = ["commit", "set_log_dir", "finish", "add_best_metric", "add_metric", "add_loss", "add_hyper", "add_other",
-           "add_to_line", "set_rng_seed", "add_hyper_in_file", "get_commit_id", "get_fit_id", "is_debug", "is_initialized"]
-import os
-os.environ['GIT_PYTHON_REFRESH']="quiet"
+__all__ = [
+    "set_log_dir",
+    "is_initialized",
+    "commit",
+    "finish",
+    "debug",
+    "is_debug",
+    "add_metric",
+    "add_loss",
+    "add_best_metric",
+    "add_hyper",
+    "add_hyper_in_file",
+    "add_other",
+    "add_progress",
+    "add_to_line",
+    "set_rng_seed",
+    "get_log_dir",
+    "get_log_folder",
+    "get_log_id",
+    "get_commit_id",
+    "get_fit_id",
+    "create_log_folder"
+]
 
-from .fastlog import logger as _logger
-from .fastgit import Committer, committer as _committer
+import os
+
+os.environ['GIT_PYTHON_REFRESH'] = "quiet"
+
+from fitlog.fastlog import logger as _logger
+from fitlog.fastgit import Committer, committer as _committer
 from typing import Union
 import argparse
 from configparser import ConfigParser
@@ -135,7 +158,7 @@ def debug(flag=True):
         fitlog.commit()
         fitlog.add_metric(0.3, f1)
 
-    由于有fitlog.debug(), commit()和add_metric()都不会实际执行的。
+    由于有 fitlog.debug(), commit() 和 add_metric() 都不会实际执行的。
 
     :return:
     """
@@ -152,7 +175,7 @@ def is_debug():
 
 def is_initialized():
     """
-    返回fitlog是否已经初始化
+    返回fitlog是否已经初始化。在使用 fitlog.set_log_dir() 时会进行初始化。
 
     """
     return _logger.initialized
@@ -311,3 +334,16 @@ def set_rng_seed(rng_seed: int = None, random: bool = True, numpy: bool = True,
         全部随机数种子都一样也不能跑出相同的结果; 关掉的话可能会有一点性能损失。
     """
     return _logger.set_rng_seed(rng_seed, random, numpy, pytorch, deterministic)
+
+
+if 'FITLOG_FLAG' not in os.environ or os.environ['FITLOG_FLAG'] == "" or os.environ['FITLOG_FLAG'] == "NULL":
+    os.environ['FITLOG_FLAG'] = "NULL"
+elif os.environ['FITLOG_FLAG'] == "DEBUG":
+    debug()
+    print("[fitlog] FITLOG_FLAG is DEBUG. All logging and committing method will not work.")
+elif os.environ['FITLOG_FLAG'] == "NO_COMMIT":
+    _logger.no_commit()
+    print("[fitlog] FITLOG_FLAG is NO_COMMIT. 'fitlog.commit()' will not work.")
+else:
+    print("[fitlog] FITLOG_FLAG should be 'DEBUG', 'NO_COMMIT' or 'NULL")
+    os.environ['FITLOG_FLAG'] = "NULL"

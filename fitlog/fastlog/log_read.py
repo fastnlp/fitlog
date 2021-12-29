@@ -32,7 +32,7 @@ class LogReader:
             if is_dirname_log_record(os.path.join(log_dir, _dir)):
                 empty = False
         if empty:
-            raise RuntimeError("`{}` has no valid logs.".format(log_dir))
+            raise RuntimeError("`{}` has no valid logs. You should run your program first.".format(log_dir))
         
         self._log_dir = log_dir
         self._line_counter.clear()  # 删除记录，使得重新读取
