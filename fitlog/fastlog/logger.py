@@ -12,6 +12,7 @@ from configparser import ConfigParser
 
 from .log_read import is_dirname_log_record
 from ..fastgit import committer
+from ..fastgit.committer import _colored_string
 
 import warnings
 import numpy as np
@@ -151,10 +152,11 @@ class Logger:
             # if not self.save_on_first_metric_or_loss:
             #     self.create_log_folder()
         else:
+            print(
+                _colored_string("Put your code inside a fitlog project, or use 'fitlog init' to initialize it\n", "red")
+            )
             raise RuntimeError(
-                "It seems like you are not running under a folder governed by fitlog.\n"
-                "Put your code inside a fitlog project, or use 'fitlog init' to initialize your project\n" +
-                msg['msg']
+                "It seems like you are not running under a folder governed by fitlog.\n" + msg['msg']
             )
     
     @_check_debug

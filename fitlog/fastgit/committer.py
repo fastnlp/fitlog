@@ -150,16 +150,23 @@ class Committer:
         return watched_files
     
     @staticmethod
-    def _switch_to_fast_git(work_dir: str):
-        """将工作目录从通常的 git 模式切换成 fastgit 模式
-
-        :param work_dir: 工作目录的绝对路径
-        """
+    def _get_path_names(work_dir: str):
         fitlog_path = os.path.join(work_dir, ".fitlog")
         git_path = os.path.join(work_dir, ".git")
         git_backup_path = os.path.join(work_dir, ".git_backup")
         gitignore_path = os.path.join(work_dir, ".gitignore")
         gitignore_backup_path = os.path.join(work_dir, ".gitignore_backup")
+        return fitlog_path, git_path, git_backup_path, gitignore_path, gitignore_backup_path
+    
+    @staticmethod
+    def _switch_to_fast_git(work_dir: str):
+        """将工作目录从通常的 git 模式切换成 fastgit 模式
+
+        :param work_dir: 工作目录的绝对路径
+        """
+        fitlog_path, git_path, git_backup_path, gitignore_path, gitignore_backup_path = Committer._get_path_names(
+            work_dir)
+        
         if os.path.exists(git_path):
             shutil.move(git_path, git_backup_path)
         if os.path.isfile(gitignore_path):
@@ -175,11 +182,9 @@ class Committer:
 
         :param work_dir: 工作目录的绝对路径
         """
-        fitlog_path = os.path.join(work_dir, ".fitlog")
-        git_path = os.path.join(work_dir, ".git")
-        git_backup_path = os.path.join(work_dir, ".git_backup")
-        gitignore_path = os.path.join(work_dir, ".gitignore")
-        gitignore_backup_path = os.path.join(work_dir, ".gitignore_backup")
+        fitlog_path, git_path, git_backup_path, gitignore_path, gitignore_backup_path = Committer._get_path_names(
+            work_dir)
+        
         if os.path.exists(git_path):
             shutil.move(git_path, fitlog_path)
         if os.path.exists(gitignore_path):  # 把 .gitignore 移动到 .fitlog 下
@@ -190,26 +195,81 @@ class Committer:
             shutil.move(gitignore_backup_path, gitignore_path)
     
     @staticmethod
-    def _check_directory(work_dir: str, cli: bool = True) -> bool:
+    def _check_directory(work_dir: str, cli: bool = True, fix: bool = False, wait: bool = False) -> bool:
         """检查指定目录是否已经存在 fitlog 项目，同时会修复可能错误的存在
 
         :param work_dir: 工作目录的绝对路径
         :param cli: 是否在命令行内执行。如果在命令行中执行，则对用户进行提示
+        :param fix: 是否进行自动修复
+        :param wait: 如果处于中间状态，是否等待恢复
         :return: 返回是否存在 fitlog 项目
         """
-        fitlog_path = os.path.join(work_dir, ".fitlog")
-        git_path = os.path.join(work_dir, ".git")
-        git_backup_path = os.path.join(work_dir, ".git_backup")
-        if os.path.exists(fitlog_path) or os.path.exists(git_backup_path):
-            if os.path.exists(fitlog_path) and os.path.exists(git_backup_path):
-                shutil.move(git_backup_path, git_path)
-            elif os.path.exists(git_path) and os.path.exists(git_backup_path):
-                shutil.move(git_path, fitlog_path)
-                shutil.move(git_backup_path, git_path)
-            if cli:
-                print(_colored_string("Fitlog project has been initialized. ", "red"))
+        fitlog_path, git_path, git_backup_path, gitignore_path, gitignore_backup_path = Committer._get_path_names(
+            work_dir)
+        
+        if os.path.exists(fitlog_path) or os.path.exists(git_backup_path) or os.path.exists(git_path):
+            #  存在 .fitlog 或者存在 .git 变成的 .git_backup
+            if fix:
+                if os.path.exists(fitlog_path) and os.path.exists(git_backup_path):
+                    # 把 .git_backup 恢复成 .git
+                    shutil.move(git_backup_path, git_path)
+                elif os.path.exists(git_path) and os.path.exists(git_backup_path):
+                    # 先把 .git 变成 .fitlog ， 再把 .git_backup 恢复成 .git
+                    shutil.move(git_path, fitlog_path)
+                    shutil.move(git_backup_path, git_path)
+                if os.path.isfile(gitignore_backup_path):
+                    # 如果存在 .gitignore_backup , 就恢复成 .gitignore
+                    shutil.move(gitignore_backup_path, gitignore_path)
+                if cli:
+                    print(_colored_string("Fitlog project has been initialized. ", "blue"))
+            elif wait:
+                WAITING_TIME = 30
+                WAITING_ROUND = 10
+                for i in range(WAITING_ROUND):
+                    try:
+                        git_modified_time = os.path.getmtime(git_backup_path)
+                    except:
+                        git_modified_time = time.time()
+                    cnt = WAITING_TIME
+                    while cnt > 0:
+                        # 如果不存在 .fitlog_path 或 存在 .git_backup 则等待 30s（可能是其它程序在 commit）
+                        if not os.path.exists(git_backup_path) and os.path.exists(fitlog_path):
+                            return True
+                        time.sleep(1)
+                        cnt -= 1
+                    # 如果 30s 内 .git_backup 文件夹有更新过，则继续等待
+                    try:
+                        git_modified_time_2 = os.path.getmtime(git_backup_path)
+                    except:
+                        git_modified_time_2 = time.time()
+                    if git_modified_time_2 == git_modified_time:
+                        print(
+                            _colored_string(
+                                "After {} seconds waiting, it fails to automatically commit.".format(WAITING_TIME),
+                                "red"
+                            )
+                        )
+                        raise RuntimeError("After {} seconds waiting, it fails to automatically commit.".format(
+                            WAITING_TIME))
+                    print(
+                        _colored_string(
+                            "It seems like other fitlog is trying to auto-commit too "
+                            "(If there is no other fitlog running, this is a bug)"
+                            ", will wait another {} seconds.".format((WAITING_ROUND-i-1)*WAITING_TIME), 'blue'
+                        )
+                    )
+                print(
+                    _colored_string("After {} seconds waiting, it fails to automatically commit.".format(
+                        WAITING_TIME * WAITING_ROUND),
+                        "red")
+                )
+                raise RuntimeError("After {} seconds waiting, it fails to automatically commit.".format(
+                    WAITING_TIME * WAITING_ROUND))
             return True
-        return False
+        else:
+            # 如果都不存在，则认为 fitlog 项目文件夹损坏
+            print(_colored_string(".fitlog folder is not found", "red"))
+            return False
     
     def _commit_files(self, watched_files: List[str], commit_message: str):
         """利用当前 git（如果运行正常，应该是 fitlog 模式）进行一次 commit
@@ -347,12 +407,10 @@ class Committer:
             if self.config_file_path is None:
                 return Info(1, "Error: Config file is not found")
             self._read_config()
-            if not os.path.exists(os.path.join(self.work_dir, ".fitlog")):
-                print(_colored_string(".fitlog folder is not found", "red"))
-                return Info(1, "Error: .fitlog folder is not found")
-        else:
-            # 后续执行 commit
-            self._check_directory(self.work_dir, cli=False)
+        # 后续执行 commit
+        flag = self._check_directory(self.work_dir, cli=False, wait=True)
+        if not flag:
+            return Info(1, "Error: Fitlog project is damaged")
         commit_files = self._get_watched_files()
         if commit_files is None:
             return Info(1, "Error: no file matches the rules")
@@ -493,7 +551,7 @@ class Committer:
         if not os.path.exists(pj_path):
             os.makedirs(pj_path, exist_ok=True)
         # 如果已有 fitlog 项目，则检查是否需要修复
-        if self._check_directory(pj_path):
+        if self._check_directory(pj_path, fix=True):
             return 0
         # 如果已有 git 项目，则切换模式
         if os.path.exists(os.path.join(pj_path, ".git")):
