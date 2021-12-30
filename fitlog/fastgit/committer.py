@@ -181,13 +181,12 @@ class Committer:
             shutil.move(gitignore_backup_path, gitignore_path)
     
     @staticmethod
-    def _check_directory(work_dir: str, cli: bool = True, fix: bool = False, wait: bool = False) -> bool:
+    def _check_directory(work_dir: str, fix: bool = False, wait: bool = False) -> bool:
         """检查指定目录是否已经存在 fitlog 项目，同时会修复可能错误的存在
 
         :param work_dir: 工作目录的绝对路径
-        :param cli: 是否在命令行内执行。如果在命令行中执行，则对用户进行提示
-        :param fix: 是否进行自动修复
-        :param wait: 如果处于中间状态，是否等待恢复
+        :param fix: 是否进行自动修复，用于 fitlog init 模式
+        :param wait: 是否等待其它使用 fitlog 的程序，用于 commit 前的检查
         :return: 返回是否存在 fitlog 项目
         """
         fitlog_path, git_path, git_backup_path, gitignore_path, gitignore_backup_path = Committer._get_path_names(
@@ -206,8 +205,7 @@ class Committer:
                 if os.path.isfile(gitignore_backup_path):
                     # 如果存在 .gitignore_backup , 就恢复成 .gitignore
                     shutil.move(gitignore_backup_path, gitignore_path)
-                if cli:
-                    print(_colored_string("Fitlog project has been initialized. ", "blue"))
+                print(_colored_string("Fitlog project has been initialized. ", "blue"))
             elif wait:
                 WAITING_TIME = 30
                 WAITING_ROUND = 10
@@ -350,7 +348,7 @@ class Committer:
             if cli:
                 print(_colored_string("Commit-id's length is at least 6", "red"))
             return Info(1, "Error: Commit-id's length is at least 6")
-        if self._check_directory(work_dir, cli=False):
+        if self._check_directory(work_dir):
             commit_ids = self._get_commits(cli=cli)['msg']
             flag = False
             for full_commit_id in commit_ids:
@@ -408,7 +406,7 @@ class Committer:
                 return Info(1, "Error: Config file is not found")
             self._read_config()
         # 后续执行 commit
-        flag = self._check_directory(self.work_dir, cli=False, wait=True)
+        flag = self._check_directory(self.work_dir, wait=True)
         if not flag:
             return Info(1, "Error: Fitlog project is damaged")
         logs = [_arguments_flag, "Run ", " ".join(sys.argv), "\n"]
@@ -590,7 +588,7 @@ class Committer:
         :return:
         """
         head_id, log = None, None
-        if self._check_directory(os.path.abspath('.'), cli=False):
+        if self._check_directory(os.path.abspath('.')):
             try:
                 if show_now:
                     head_id = self._get_last_commit()["msg"]
