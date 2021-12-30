@@ -3,7 +3,6 @@ import sys
 import shutil
 import configparser
 from datetime import datetime
-from fnmatch import fnmatch
 import time
 from typing import List, Union
 from git import Repo
@@ -11,6 +10,13 @@ from git import Repo
 _commit_flag = '-------commit-------\n'
 _system_flag = '-------system-------\n'
 _arguments_flag = '------arguments-----\n'
+
+gitignore_list = [
+    "*",
+    "!/**/",
+    ".git_backup/",
+    ".gitignore_backup",
+]
 
 
 class Commit(list):
@@ -127,28 +133,6 @@ class Committer:
                 tmp = config['fit_settings']['watched_rules']
                 self.watched_rules = [each.strip() for each in tmp.split(',') if len(each) > 1]
     
-    def _get_watched_files(self) -> List[str]:
-        """在获取监管文件的规则后，获取具体的文件列表
-
-        :return: 即将被 commit 的文件的列表
-        """
-        rules = self.watched_rules
-        watched_files = []
-        to_match = []
-        for rule in rules:
-            t = rule.count('*')
-            if t == 0:
-                watched_files.append(rule)
-            elif t == 1:
-                to_match.append(rule)
-        for parent, _, file_names in os.walk(self.work_dir):
-            for file_name in file_names:
-                for each in to_match:
-                    if fnmatch(file_name, each):
-                        watched_files.append(os.path.join(parent, file_name))
-                        break
-        return watched_files
-    
     @staticmethod
     def _get_path_names(work_dir: str):
         fitlog_path = os.path.join(work_dir, ".fitlog")
@@ -173,7 +157,8 @@ class Committer:
             shutil.move(gitignore_path, gitignore_backup_path)
         if os.path.exists(fitlog_path):
             shutil.move(fitlog_path, git_path)
-        if os.path.isfile(os.path.join(git_path, ".gitignore")):  # 使用 .fitlog 下的 .gitignore
+        if os.path.isfile(os.path.join(git_path, ".gitignore")):
+            # 使用 .fitlog 下的 .gitignore
             shutil.move(os.path.join(git_path, ".gitignore"), work_dir)
     
     @staticmethod
@@ -187,7 +172,8 @@ class Committer:
         
         if os.path.exists(git_path):
             shutil.move(git_path, fitlog_path)
-        if os.path.exists(gitignore_path):  # 把 .gitignore 移动到 .fitlog 下
+        if os.path.exists(gitignore_path):
+            # 把 .gitignore 移动到 .fitlog 下
             shutil.move(gitignore_path, os.path.join(fitlog_path, ""))
         if os.path.exists(git_backup_path):
             shutil.move(git_backup_path, git_path)
@@ -255,7 +241,7 @@ class Committer:
                         _colored_string(
                             "It seems like other fitlog is trying to auto-commit too "
                             "(If there is no other fitlog running, this is a bug)"
-                            ", will wait another {} seconds.".format((WAITING_ROUND-i-1)*WAITING_TIME), 'blue'
+                            ", will wait another {} seconds.".format((WAITING_ROUND - i - 1) * WAITING_TIME), 'blue'
                         )
                     )
                 print(
@@ -268,20 +254,34 @@ class Committer:
             return True
         else:
             # 如果都不存在，则认为 fitlog 项目文件夹损坏
-            print(_colored_string(".fitlog folder is not found", "red"))
+            if wait:
+                print(_colored_string(".fitlog folder is not found", "red"))
             return False
     
-    def _commit_files(self, watched_files: List[str], commit_message: str):
-        """利用当前 git（如果运行正常，应该是 fitlog 模式）进行一次 commit
-
-        :param watched_files: 即将被 commit 的文件的列表
-        :param commit_message: commit的message
+    def _commit(self, commit_message: str) -> None:
+        """使用 fitlog 进行自动 commit, 只加入符合规则的文件
+        
+        :param commit_message: fitlog 自动 commit 的 log
         """
+        if len(self.watched_rules) == 0:
+            self.watched_rules.append(["*.py"])
+        try:
+            text = open(os.path.join(self.work_dir, ".gitignore"), "r").read()
+            if text.startswith("\n".join(gitignore_list)):
+                flag = True
+            else:
+                flag = False
+        except :
+            flag = True
+        if flag:
+            with open(os.path.join(self.work_dir, ".gitignore"), "w") as fout:
+                fout.write("\n".join(gitignore_list + ["!" + r for r in self.watched_rules]))
+        else:
+            raise RuntimeError("Fitlog's .gitignore is damaged or mixed with your own .gitignore.")
         repo = Repo(self.work_dir)
-        for file in watched_files:
-            repo.index.add(file)
-        repo.index.add(".gitignore")
-        repo.index.commit(commit_message)
+        repo.git.add(self.work_dir)
+        if repo.is_dirty():
+            repo.git.commit('-m', commit_message)
     
     def _save_log(self, logs: List[str]):
         """ 将要存储的信息存储到默认的 fitlog
@@ -411,23 +411,11 @@ class Committer:
         flag = self._check_directory(self.work_dir, cli=False, wait=True)
         if not flag:
             return Info(1, "Error: Fitlog project is damaged")
-        commit_files = self._get_watched_files()
-        if commit_files is None:
-            return Info(1, "Error: no file matches the rules")
         logs = [_arguments_flag, "Run ", " ".join(sys.argv), "\n"]
         logs += [_system_flag]
-        sleep_cnt = 0
-        while os.path.isdir(os.path.join(self.work_dir, ".git_backup")) or \
-                os.path.isfile(os.path.join(self.work_dir, ".gitignore_backup")):
-            time.sleep(1)
-            sleep_cnt += 1
-            if sleep_cnt == 10:
-                raise TimeoutError("One auto-commit must run after another. Please run again a few seconds later."
-                                   "\nIf you fail several times, please refer to our documents.")
         self._switch_to_fast_git(self.work_dir)
         try:
-            commit_files = self._get_watched_files()
-            self._commit_files(commit_files, commit_message)
+            self._commit(commit_message)
             print(_colored_string('Auto commit by fitlog', 'blue'))
         except BaseException as e:
             print(_colored_string('Some error occurs during committing.', 'red'))
@@ -554,7 +542,7 @@ class Committer:
         if self._check_directory(pj_path, fix=True):
             return 0
         # 如果已有 git 项目，则切换模式
-        if os.path.exists(os.path.join(pj_path, ".git")):
+        if os.path.exists(os.path.join(pj_path, ".git")) or os.path.exists(os.path.join(pj_path, ".gitignore")):
             self._switch_to_fast_git(pj_path)
         
         tools_path = os.path.realpath(__file__)[:-len("committer.py")] + version
