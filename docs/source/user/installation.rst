@@ -17,10 +17,18 @@ fitlog 依赖以下几个包::
 
     pip install fitlog
 
-您也可以从 github 中安装 fitlog 的最新的版本
+您也可以从 github 中安装 fitlog 的最新稳定版
 
 ..  code:: shell
 
     pip install git+https://github.com/fastnlp/fitlog.git
 
+或者从 gitee 安装 fitlog 的最新稳定版或正在开发的版本
 
+..  code:: shell
+
+    # 最新的稳定版
+    pip install git+https://gitee.com/fastnlp/fitlog.git
+
+    # 正在开发的版本
+    pip install git+https://gitee.com/fastnlp/fitlog.Git@dev

@@ -16,18 +16,11 @@ fitlog 的配置文件有 **.fitconfig**
     [fit_settings]
     watched_rules = *.py
 
-    [log_settings]
-    default_log_dir = ./logs
-    save_on_first_metric_or_loss = True
 
-``watched_rules`` 配置的是 fitlog 会自动进行 commit 的文件类型，等号后面是一系列用英文逗号 ``,`` 隔开的规则，
-每个规则使用 Python 内置的 `fnmatch <https://docs.python.org/3/library/fnmatch.html>`_ 函数来进行匹配。
+``watched_rules`` 配置的是 fitlog 会自动进行 commit 的文件的规则，等号后面是一系列用英文逗号 ``,`` 隔开的规则，
+这些规则会被写到 .fitlog/.gitignore 中，用于选取需要被 commit 的文件。
 你可以添加适当的空格来让配置项更加可读，例如： `watched_rules = *.py, *.mat, test_*.bak` 。
 
-``default_log_dir`` 配置的是 fitlog 记录实验日志的目录，默认位于项目根目录下的 **logs** 文件夹。
-
-``save_on_first_metric_or_loss`` 配置的是否在生成第一个 loss 或者 metric 的时才在日志文件夹下创建一个新的文件夹。
-默认值为真，这样实验过程中出错或手动终止的实验就不会产生新的文件夹。
 
 default.cfg
 -------------

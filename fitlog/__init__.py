@@ -345,5 +345,5 @@ elif os.environ['FITLOG_FLAG'] == "NO_COMMIT":
     _logger.no_commit()
     print("[fitlog] FITLOG_FLAG is NO_COMMIT. 'fitlog.commit()' will not work.")
 else:
-    print("[fitlog] FITLOG_FLAG should be 'DEBUG', 'NO_COMMIT' or 'NULL")
+    print("[fitlog] FITLOG_FLAG should be 'DEBUG', 'NO_COMMIT' or 'NULL'")
     os.environ['FITLOG_FLAG'] = "NULL"
