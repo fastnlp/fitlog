@@ -267,7 +267,7 @@ class Committer:
             self.watched_rules.append(["*.py"])
         try:
             text = open(os.path.join(self.work_dir, ".gitignore"), "r").read()
-            if text.startswith("\n".join(gitignore_list)):
+            if text.startswith("\n".join(gitignore_list)) or text.startswith(".git_backup"):
                 flag = True
             else:
                 flag = False
