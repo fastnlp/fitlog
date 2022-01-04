@@ -15,11 +15,11 @@ See "fitlog help <command>" for more information on a specific command
 """
 import sys
 from docopt import docopt
-from .init_cmd import init_cmd
-from .list_cmd import list_cmd
-from .revert_cmd import revert_cmd
-from .log_cmd import log_cmd
-from .. import __version__ as version
+from fitlog.fastcmd.init_cmd import init_cmd
+from fitlog.fastcmd.list_cmd import list_cmd
+from fitlog.fastcmd.revert_cmd import revert_cmd
+from fitlog.fastcmd.log_cmd import log_cmd
+from fitlog import __version__ as version
 
 cmd_map = {
     "init": init_cmd,
