@@ -429,9 +429,9 @@ class Logger:
         :param name: 如果你传入的 value 不是字典，你需要传入 value 对应的名字
         :return:
         """
+        value = deepcopy(value)
         if isinstance(value, argparse.Namespace):
             value = vars(value)
-            value=deepcopy(value)
             _check_dict_value(value)
         elif isinstance(value, ConfigParser):
             value = _convert_configparser_to_dict(value)  # no need to check
