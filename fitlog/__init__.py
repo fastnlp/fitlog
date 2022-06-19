@@ -103,7 +103,7 @@ def get_log_id():
     return get_log_folder(absolute=False)
 
 
-def commit(file: str, fit_msg: str = None):
+def commit(file: str=None, fit_msg: str = None):
     """
     用户用此命令进行自动 commit, 期望的使用方法如下::
         
@@ -245,7 +245,7 @@ def add_hyper(value: Union[int, str, float, dict, argparse.Namespace, ConfigPars
     _logger.add_hyper(value, name)
 
 
-def add_hyper_in_file(file_path: str):
+def add_hyper_in_file(file_path: str=None):
     """
     从文件读取参数。如下面的文件所示，两行"#####hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
     如果多次出现，只会记录第一次出现的值。demo.py::

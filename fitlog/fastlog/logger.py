@@ -131,14 +131,21 @@ class Logger:
         self._no_commit = flag
     
     @_check_debug
-    def commit(self, file: str, fit_msg: str = None):
+    def commit(self, file: str=None, fit_msg: str = None):
         """
         调用 committer.commit 进行自动 commit
 
-        :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可
+        :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可, 如果为 None，则通过调用栈自动获取
         :param fit_msg: 针对该实验的说明
         :return:
         """
+        if file is None:
+            try:
+                import inspect
+                module = inspect.getmodule(inspect.stack()[3][0])
+                file = module.__file__
+            except:
+                raise RuntimeError("Please pass the file parameter.")
         if self._no_commit:
             return
         msg = committer.commit(file=file, commit_message=fit_msg)
@@ -488,7 +495,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    def add_hyper_in_file(self, file_path: str):
+    def add_hyper_in_file(self, file_path: str=None):
         """
         从文件读取参数。如demo.py所示，两行"#######hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
         如果多次出现，只会记录第一次出现的值。另外等号最右侧的不能是一个变量，fitlog无法知道变量取什么值。demo.py::
@@ -522,6 +529,13 @@ class Logger:
         :param file_path: 文件路径
         :return:
         """
+        if file_path is None:
+            try:
+                import inspect
+                module = inspect.getmodule(inspect.stack()[4][0])
+                file_path = module.__file__
+            except:
+                raise RuntimeError("Please pass the file_path parameter.")
         file_path = os.path.abspath(file_path)
         if not os.path.isfile(file_path):
             raise RuntimeError("{} is not a regular file.".format(file_path))
