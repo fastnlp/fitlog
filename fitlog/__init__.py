@@ -24,7 +24,8 @@ __all__ = [
     "get_log_id",
     "get_commit_id",
     "get_fit_id",
-    "create_log_folder"
+    "create_log_folder",
+    "FitlogConfig"
 ]
 
 import os
@@ -32,6 +33,7 @@ import os
 os.environ['GIT_PYTHON_REFRESH'] = "quiet"
 
 from fitlog.fastlog import logger as _logger
+from fitlog.fastlog.logger import FitlogConfig
 from fitlog.fastgit import Committer, committer as _committer
 from typing import Union
 import argparse
