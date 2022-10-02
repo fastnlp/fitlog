@@ -18,6 +18,22 @@ import warnings
 import numpy as np
 import numbers
 
+class FitlogConfig:
+    """
+    用于add_hyper函数的基类。
+    继承后无需实例化直接传入add_hyper。
+    """
+    pass
+
+def _get_config_args(conf:FitlogConfig):
+    """
+    读取FitlogConfig内的超参。
+    """
+    config_dict = {
+        k:v for k,v in vars(conf).items() if not k.startswith("_")
+    }
+    return config_dict    
+
 
 def _check_debug(func):
     """
@@ -460,6 +476,8 @@ class Logger:
             _check_dict_value(value)
         elif isinstance(value, ConfigParser):
             value = _convert_configparser_to_dict(value)  # no need to check
+        elif issubclass(value, FitlogConfig):
+            value = _get_config_args(value)
         else:
             try:
                 import dataclasses
