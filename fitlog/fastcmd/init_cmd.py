@@ -1,6 +1,6 @@
 """
 Usage:
-    fitlog init [<name>] [--hide] [--no-git]
+    fitlog init [<name>] [--hide] [--with-git]
     fitlog -h | --help
 
 Arguments:
@@ -9,7 +9,7 @@ Arguments:
 Options:
     -h --help               This is a command to initialize a fitlog project
     --hide                  Hide .fitconfig inside .fitlog folder
-    --no-git                Not initialize with a standard git
+    --with-git              Initialize fitlog with a standard git
 
 Examples:
     fitlog init project     Create a your project named project
@@ -23,4 +23,4 @@ def init_cmd(argv=None):
     args = docopt(__doc__, argv=argv)
 
     name = args['<name>'] if args['<name>'] else '.'
-    committer.init_project(name, hide=args["--hide"], git=not args["--no-git"])
+    committer.init_project(name, hide=args["--hide"], git=args["--with-git"])

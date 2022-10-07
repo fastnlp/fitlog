@@ -12,10 +12,28 @@ from configparser import ConfigParser
 
 from .log_read import is_dirname_log_record
 from ..fastgit import committer
+from ..fastgit.committer import _colored_string
 
 import warnings
 import numpy as np
 import numbers
+
+class FitlogConfig:
+    """
+    用于add_hyper函数的基类。
+    继承后无需实例化直接传入add_hyper。
+    """
+    pass
+
+def _get_config_args(conf:FitlogConfig):
+    """
+    读取FitlogConfig内的超参。
+    """
+    config_dict = {
+        k:v for k,v in vars(conf).items() if not k.startswith("_")
+    }
+    return config_dict    
+
 
 def _check_debug(func):
     """
@@ -69,6 +87,7 @@ class Logger:
         self.default_log_dir = None
         self._cache = []
         self._debug = False
+        self._no_commit = False
         self.fit_id = None
         self.fit_msg = None
         self.git_id = None
@@ -76,7 +95,7 @@ class Logger:
         
         self._log_dir = None  # 这是哪个大的log文件, 比如logs/
         self._save_log_dir = None  # 存在哪个文件内的，比如log_20191020_193021/。如果
-
+    
     @_check_log_dir
     def get_log_dir(self, absolute=False):
         """
@@ -93,7 +112,7 @@ class Logger:
             if log_dir:
                 log_dir = os.path.basename(log_dir)
         return log_dir
-
+    
     @_check_log_dir
     def get_log_folder(self, absolute=False):
         """
@@ -110,7 +129,7 @@ class Logger:
             if log_dir:
                 log_dir = os.path.basename(log_dir)
         return log_dir
-
+    
     def debug(self, flag=True):
         """
         再引入logger之后就调用，本次运行不会记录任何东西。所有函数无任何效用
@@ -119,15 +138,32 @@ class Logger:
         """
         self._debug = flag
     
+    def no_commit(self, flag=True):
+        """
+        再引入logger之后就调用，本次运行不会记录任何东西。所有函数无任何效用
+
+        :return:
+        """
+        self._no_commit = flag
+    
     @_check_debug
-    def commit(self, file: str, fit_msg: str = None):
+    def commit(self, file: str=None, fit_msg: str = None):
         """
         调用 committer.commit 进行自动 commit
 
-        :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可
+        :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可, 如果为 None，则通过调用栈自动获取
         :param fit_msg: 针对该实验的说明
         :return:
         """
+        if file is None:
+            try:
+                import inspect
+                module = inspect.getmodule(inspect.stack()[3][0])
+                file = module.__file__
+            except:
+                raise RuntimeError("Please pass the file parameter.")
+        if self._no_commit:
+            return
         msg = committer.commit(file=file, commit_message=fit_msg)
         if msg['status'] == 0:  # 成功了
             self.fit_id = committer.last_commit[0]
@@ -139,7 +175,12 @@ class Logger:
             # if not self.save_on_first_metric_or_loss:
             #     self.create_log_folder()
         else:
-            raise RuntimeError("It seems like you are not running under a folder governed by fitlog.\n" + msg['msg'])
+            print(
+                _colored_string("Put your code inside a fitlog project, or use 'fitlog init' to initialize it\n", "red")
+            )
+            raise RuntimeError(
+                "It seems like you are not running under a folder governed by fitlog.\n" + msg['msg']
+            )
     
     @_check_debug
     @_check_log_dir
@@ -153,7 +194,7 @@ class Logger:
         self._create_log_files()
     
     @_check_debug
-    def set_log_dir(self, log_dir: str, new_log: bool=False):
+    def set_log_dir(self, log_dir: str, new_log: bool = False):
         """
         设定log 文件夹的路径，在进行其它操作前必须先指定日志路径
 
@@ -163,7 +204,7 @@ class Logger:
         """
         if new_log:
             self._clear()
-
+        
         if self.initialized:
             if self._log_dir != log_dir:
                 raise RuntimeError("Don't set log dir again.")
@@ -171,7 +212,9 @@ class Logger:
                 return
         
         if not os.path.exists(log_dir):
-            raise NotADirectoryError("`{}` is not exist.".format(log_dir))
+            print("Create logging folder in `{}`.".format(log_dir))
+            os.makedirs(log_dir)
+            # raise NotADirectoryError("`{}` is not exist.".format(log_dir))
         if not os.path.isdir(log_dir):
             raise FileExistsError("`{}` is not a directory.".format(log_dir))
         
@@ -197,12 +240,12 @@ class Logger:
                     self.git_msg = res['msg'][1]
         except BaseException as e:
             pass
-
+        
         if not self.save_on_first_metric_or_loss:
             self.create_log_folder()
-
+        
         self._start_time = time.time()
-
+    
     def _clear(self):
         """
         内部函数，将logger置为未初始化
@@ -216,9 +259,9 @@ class Logger:
                 delattr(self, attr_name)
         for attr_name in ['_save_log_dir', '_log_dir']:
             setattr(self, attr_name, None)
-
+        
         for logger_name in ['meta_logger', 'hyper_logger', 'metric_logger', 'other_logger', 'progress_logger',
-                          'loss_logger', "best_metric_logger", "file_logger"]:
+                            'loss_logger', "best_metric_logger", "file_logger"]:
             if hasattr(self, logger_name):
                 _logger = getattr(self, logger_name)
                 handlers = _logger.handlers[:]
@@ -227,7 +270,7 @@ class Logger:
                     handler.flush()
                     _logger.removeHandler(handler)
                 delattr(self, logger_name)
-
+    
     def _create_log_files(self):
         """
         创建日志文件
@@ -262,7 +305,7 @@ class Logger:
                 logger.setLevel(logging.INFO)
                 logger.propagate = False
                 logger.addHandler(handler)
-                setattr(self, name+'_logger', logger)
+                setattr(self, name + '_logger', logger)
             self.__add_meta()
     
     @_check_debug
@@ -271,11 +314,11 @@ class Logger:
         """
         logger自动调用此方法添加meta信息
         """
-        if self.fit_id is None: # 没有获取过
+        if self.fit_id is None:  # 没有获取过
             if committer.last_commit is not None:
                 self.fit_id = committer.last_commit[0]
                 self.fit_msg = committer.last_commit[1]
-
+        
         _dict = {}
         for value, name in zip([self.fit_id, self.git_id, self.fit_msg, self.git_msg],
                                ['fit_id', 'git_id', 'fit_msg', 'git_msg']):
@@ -290,7 +333,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    def finish(self, status: int=0, send_to_bot: str=None):
+    def finish(self, status: int = 0, send_to_bot: str = None):
         """
         使用此方法告知 fitlog 你的实验已经正确结束。你可以使用此方法来筛选出失败的实验。
 
@@ -301,13 +344,13 @@ class Logger:
         if status not in (0, 1):
             raise ValueError("status only supports 0,1 to stand for 'finish','error'.")
         if hasattr(self, 'meta_logger'):
-            if status==0:
+            if status == 0:
                 _dict = {'meta': {'state': 'finish'}}
             else:
                 _dict = {'meta': {'state': 'error'}}
             self._write_to_logger(json.dumps(_dict), 'meta_logger')
-        self.add_other(value=get_hour_min_second(time.time()-self._start_time), name='cost_time')
-
+        self.add_other(value=get_hour_min_second(time.time() - self._start_time), name='cost_time')
+        
         if send_to_bot is not None:
             if isinstance(send_to_bot, str):
                 if status == 0:
@@ -320,24 +363,24 @@ class Logger:
                     "msg_type": "post",
                     "content": {
                         "post": {
-                                "zh_cn": {
-                                    "title": title,
-                                    "content": [
-                                        [
-                                            {
-                                                "tag": "text",
-                                                "text": text
-                                            },
-                                        ]
+                            "zh_cn": {
+                                "title": title,
+                                "content": [
+                                    [
+                                        {
+                                            "tag": "text",
+                                            "text": text
+                                        },
                                     ]
-                                }
+                                ]
+                            }
                         }
                     }
                 }
                 requests.post(url=send_to_bot, headers={'Content-Type': 'application/json'}, data=json.dumps(data))
             else:
                 print("[send_to_bot] 应该设置为飞书机器人的 webhook 地址")
-
+    
     @_check_debug
     @_check_log_dir
     def add_best_metric(self, value: Union[int, str, float, dict], name: str = None):
@@ -355,10 +398,10 @@ class Logger:
         _dict = _parse_value(value, name=name, parent_name='metric')
         
         self._write_to_logger(json.dumps(_dict), 'best_metric_logger')
-
+    
     @_check_debug
     @_check_log_dir
-    def add_to_file(self, value:Union[str, dict]):
+    def add_to_file(self, value: Union[str, dict]):
         """
         将str记录到文件中，前端可以从网页跳转打开文件。记录是append到之前的记录之后。每个str之后会自动添加一个换行符
 
@@ -369,7 +412,7 @@ class Logger:
         if isinstance(value, dict):
             value = json.dumps(value, indent=2)
         self._write_to_logger(value, 'file_logger')
-
+    
     @_check_debug
     @_check_log_dir
     def add_metric(self, value: Union[int, str, float, dict], step: int, name: str = None, epoch: int = None):
@@ -427,12 +470,25 @@ class Logger:
         :param name: 如果你传入的 value 不是字典，你需要传入 value 对应的名字
         :return:
         """
+        value = deepcopy(value)
         if isinstance(value, argparse.Namespace):
             value = vars(value)
-            value=deepcopy(value)
             _check_dict_value(value)
         elif isinstance(value, ConfigParser):
             value = _convert_configparser_to_dict(value)  # no need to check
+        elif issubclass(value, FitlogConfig):
+            value = _get_config_args(value)
+        else:
+            try:
+                import dataclasses
+                if dataclasses.is_dataclass(value):
+                    _dict = {}
+                    for field in value.__dataclass_fields__:
+                        v = getattr(value, field)
+                        _dict[field] = v
+                    value = _dict
+            except:  # python 3.7以上才有这个
+                pass
         
         _dict = _parse_value(value, name=name, parent_name='hyper')
         
@@ -457,7 +513,7 @@ class Logger:
     
     @_check_debug
     @_check_log_dir
-    def add_hyper_in_file(self, file_path: str):
+    def add_hyper_in_file(self, file_path: str=None):
         """
         从文件读取参数。如demo.py所示，两行"#######hyper"(至少5个#)之间的参数会被读取出来，并组成一个字典。每个变量最多只能出现在一行中，
         如果多次出现，只会记录第一次出现的值。另外等号最右侧的不能是一个变量，fitlog无法知道变量取什么值。demo.py::
@@ -491,6 +547,13 @@ class Logger:
         :param file_path: 文件路径
         :return:
         """
+        if file_path is None:
+            try:
+                import inspect
+                module = inspect.getmodule(inspect.stack()[4][0])
+                file_path = module.__file__
+            except:
+                raise RuntimeError("Please pass the file_path parameter.")
         file_path = os.path.abspath(file_path)
         if not os.path.isfile(file_path):
             raise RuntimeError("{} is not a regular file.".format(file_path))
@@ -512,7 +575,7 @@ class Logger:
                         values = line.split('=')
                         # 删除str开头结尾的'"
                         last_value = values[-1].rstrip("'").rstrip('"').lstrip("'").lstrip('"')
-                        if last_value=='False':
+                        if last_value == 'False':
                             last_value = False
                         elif last_value == 'True':
                             last_value = True
@@ -535,12 +598,13 @@ class Logger:
             raise RuntimeError("Cannot set total_steps twice.")
         self.total_steps = total_steps
         self._write_to_logger(json.dumps({"total_steps": total_steps}), 'progress_logger')
-
-    def set_rng_seed(self, rng_seed:int = None, random:bool = True, numpy:bool = True,
-                     pytorch:bool=True, deterministic:bool=True):
+    
+    def set_rng_seed(self, rng_seed: int = None, random: bool = True, numpy: bool = True,
+                     pytorch: bool = True, deterministic: bool = True):
         """
         设置模块的随机数种子。由于pytorch还存在cudnn导致的非deterministic的运行，所以一些情况下可能即使seed一样，结果也不一致
             需要在fitlog.commit()或fitlog.set_log_dir()之后运行才会记录该rng_seed到log中
+            
         :param int rng_seed: 将这些模块的随机数设置到多少，默认为随机生成一个。
         :param bool, random: 是否将python自带的random模块的seed设置为rng_seed.
         :param bool, numpy: 是否将numpy的seed设置为rng_seed.
@@ -550,7 +614,7 @@ class Logger:
         if rng_seed is None:
             import time
             import math
-            rng_seed = int(math.modf(time.time())[0]*1000000)
+            rng_seed = int(math.modf(time.time())[0] * 1000000)
         if random:
             import random
             random.seed(rng_seed)
@@ -574,7 +638,7 @@ class Logger:
             self.add_other(rng_seed, 'rng_seed')
         os.environ['PYTHONHASHSEED'] = str(rng_seed)  # 为了禁止hash随机化，使得实验可复现。
         return rng_seed
-
+    
     @_check_debug
     @_check_log_dir
     def _save(self):
@@ -605,12 +669,13 @@ class Logger:
             _logger.info(_str)
         else:  # 如果还没有初始化就先cache下来
             self._cache.append([_str, logger_name])
-
+    
     def is_debug(self):
         """
         返回当前是否是debug状态
         """
         return self._debug
+
 
 def _convert_configparser_to_dict(config: ConfigParser) -> dict:
     """

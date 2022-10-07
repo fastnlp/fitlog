@@ -374,7 +374,7 @@ function save_filter_conditions(){
             value = filter.value;
         }else if(filter.tagName==='SELECT'){
             var _index=filter.selectedIndex;
-            if(filter.options[_index].value!=='' && filter.options[_index].value!==undefined)
+            if(filter.options[_index]!==undefined && filter.options[_index].value!==undefined && filter.options[_index].value!=='')
                 value  = '=' + filter.options[_index].value;
         }
         if(value!==undefined &&value!==''){

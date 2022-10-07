@@ -15,7 +15,7 @@ Options:
 """
 from docopt import docopt
 import os
-from ..fastserver.app import start_app
+from fitlog.fastserver.app import start_app
 
 
 def log_cmd(argv=None):  # argv=None 仅供调试使用
