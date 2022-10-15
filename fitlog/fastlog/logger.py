@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import requests
@@ -25,14 +26,16 @@ class FitlogConfig:
     """
     pass
 
-def _get_config_args(conf:FitlogConfig):
+def _get_config_args(conf: FitlogConfig):
     """
     读取FitlogConfig内的超参。
     """
+    if inspect.isclass(conf):
+        conf = conf()
     config_dict = {
-        k:v for k,v in vars(conf).items() if not k.startswith("_")
+        k: conf.__getattribute__(k) for k in dir(conf) if not k.startswith("_")
     }
-    return config_dict    
+    return config_dict
 
 
 def _check_debug(func):
