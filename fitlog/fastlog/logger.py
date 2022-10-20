@@ -37,6 +37,9 @@ def _get_config_args(conf: FitlogConfig):
     config_dict = {
         k: conf.__getattribute__(k) for k in dir(conf) if not k.startswith("_")
     }
+    for k, v in config_dict.items():
+        if inspect.isfunction(v):
+            config_dict[k] = v.__name__
     return config_dict
 
 
