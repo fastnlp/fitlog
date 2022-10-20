@@ -24,7 +24,9 @@ class FitlogConfig:
     用于add_hyper函数的基类。
     继承后无需实例化直接传入add_hyper。
     """
-    pass
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            self.__setattr__(k, v)
 
 def _get_config_args(conf: FitlogConfig):
     """
@@ -479,7 +481,9 @@ class Logger:
             _check_dict_value(value)
         elif isinstance(value, ConfigParser):
             value = _convert_configparser_to_dict(value)  # no need to check
-        elif issubclass(value, FitlogConfig):
+        elif inspect.isclass(value) and issubclass(value, FitlogConfig):
+            value = _get_config_args(value)
+        elif isinstance(value, FitlogConfig):
             value = _get_config_args(value)
         else:
             try:
