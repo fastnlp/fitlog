@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import requests
@@ -23,17 +24,24 @@ class FitlogConfig:
     用于add_hyper函数的基类。
     继承后无需实例化直接传入add_hyper。
     """
-    pass
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            self.__setattr__(k, v)
 
-def _get_config_args(conf:FitlogConfig):
+def _get_config_args(conf: FitlogConfig):
     """
     读取FitlogConfig内的超参。
     """
+    if inspect.isclass(conf):
+        conf = conf()
     config_dict = {
-        k:v for k,v in vars(conf).items() if not k.startswith("_")
+        k: conf.__getattribute__(k) for k in dir(conf) if not k.startswith("_")
     }
-    return config_dict    
-
+    for k, v in config_dict.items():
+        if inspect.isfunction(v):
+            config_dict[k] = v.__name__
+    return config_dict
+    
 
 def _check_debug(func):
     """
@@ -476,7 +484,9 @@ class Logger:
             _check_dict_value(value)
         elif isinstance(value, ConfigParser):
             value = _convert_configparser_to_dict(value)  # no need to check
-        elif issubclass(value, FitlogConfig):
+        elif inspect.isclass(value) and issubclass(value, FitlogConfig):
+            value = _get_config_args(value)
+        elif isinstance(value, FitlogConfig):
             value = _get_config_args(value)
         else:
             try:
