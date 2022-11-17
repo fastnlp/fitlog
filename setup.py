@@ -18,7 +18,7 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     license='Apache license',
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     include_package_data=True,
     packages=find_packages(),
     install_requires=reqs.strip().split('\n'),
