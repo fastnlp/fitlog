@@ -41,7 +41,7 @@ def _get_config_args(conf: FitlogConfig):
         if inspect.isfunction(v):
             config_dict[k] = v.__name__
     return config_dict
-
+    
 
 def _check_debug(func):
     """
