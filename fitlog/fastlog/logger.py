@@ -176,6 +176,7 @@ class Logger:
         if msg['status'] == 0:  # 成功了
             self.fit_id = committer.last_commit[0]
             self.fit_msg = committer.last_commit[1]
+            return self.fit_id
             # if not self.initialized: # 感觉没有必要
             #     self.default_log_dir = os.path.join(committer.work_dir, config.get('log_settings', 'default_log_dir'))
             #     self.save_on_first_metric_or_loss = config.getboolean('log_settings', 'save_on_first_metric_or_loss')

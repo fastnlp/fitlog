@@ -105,7 +105,7 @@ def get_log_id():
     return get_log_folder(absolute=False)
 
 
-def commit(file: str=None, fit_msg: str = None):
+def commit(file: str=None, fit_msg: str = None) -> str:
     """
     用户用此命令进行自动 commit, 期望的使用方法如下::
         
@@ -119,8 +119,10 @@ def commit(file: str=None, fit_msg: str = None):
 
     :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可
     :param fit_msg: 针对该实验的说明
+
+    :return: 如果 commit 成功会返回对应的 commit_id
     """
-    _logger.commit(file, fit_msg)
+    return _logger.commit(file, fit_msg)
 
 
 def set_log_dir(log_dir: str, new_log: bool = False):
