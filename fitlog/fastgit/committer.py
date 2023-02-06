@@ -192,7 +192,7 @@ class Committer:
         fitlog_path, git_path, git_backup_path, gitignore_path, gitignore_backup_path = Committer._get_path_names(
             work_dir)
         
-        if os.path.exists(fitlog_path) or os.path.exists(git_backup_path) or os.path.exists(git_path):
+        if os.path.exists(fitlog_path) or os.path.exists(git_backup_path):
             #  存在 .fitlog 或者存在 .git 变成的 .git_backup
             if fix:
                 if os.path.exists(fitlog_path) and os.path.exists(git_backup_path):
