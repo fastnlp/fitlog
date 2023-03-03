@@ -39,14 +39,14 @@ from typing import Union
 import argparse
 from configparser import ConfigParser
 
-__version__ = '0.9.14'
+__version__ = '0.9.16'
 
 
 def get_commit_id(file):
     """用户用此命令获取上一次 Git 记录的 id, 期望的使用方法如下::
-        
+
         id = fitlog.get_commit_id(__file__)
-        
+
     :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可:
     :return: Git 的上次记录的 commit-id 的前七位；错误时返回 `error`
     """
@@ -60,10 +60,10 @@ def get_commit_id(file):
 
 def get_fit_id(file):
     """用户用此命令获取上一次 fitlog 自动记录 commit 的 id, 期望的使用方法如下::
-        
+
         id = fitlog.get_fit_id(__file__)
-        
-    
+
+
     :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可
     :return: Fitlog 的上次自动记录的 commit-id 的前七位；错误时返回 `error`
     """
@@ -105,12 +105,12 @@ def get_log_id():
     return get_log_folder(absolute=False)
 
 
-def commit(file: str=None, fit_msg: str = None) -> str:
+def commit(file: str=None, fit_msg: str = None):
     """
     用户用此命令进行自动 commit, 期望的使用方法如下::
-        
+
         import fitlog
-        
+
         fitlog.commit(__file__)
         \"\"\"
         Your training code
@@ -119,8 +119,6 @@ def commit(file: str=None, fit_msg: str = None) -> str:
 
     :param file: 以该路径往上寻找.fitlog所在文件夹。一般传入__file__即可
     :param fit_msg: 针对该实验的说明
-
-    :return: 如果 commit 成功会返回对应的 commit_id
     """
     return _logger.commit(file, fit_msg)
 

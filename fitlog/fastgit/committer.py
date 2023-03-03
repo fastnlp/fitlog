@@ -191,7 +191,6 @@ class Committer:
         """
         fitlog_path, git_path, git_backup_path, gitignore_path, gitignore_backup_path = Committer._get_path_names(
             work_dir)
-        
         if os.path.exists(fitlog_path) or os.path.exists(git_backup_path):
             #  存在 .fitlog 或者存在 .git 变成的 .git_backup
             if fix:
@@ -255,10 +254,10 @@ class Committer:
             if wait:
                 print(_colored_string(".fitlog folder is not found", "red"))
             return False
-    
+
     def _commit(self, commit_message: str) -> None:
         """使用 fitlog 进行自动 commit, 只加入符合规则的文件
-        
+
         :param commit_message: fitlog 自动 commit 的 log
         """
         if len(self.watched_rules) == 0:
@@ -280,7 +279,7 @@ class Committer:
         repo.git.add(self.work_dir)
         if repo.is_dirty():
             repo.git.commit('-m', commit_message)
-    
+
     def _save_log(self, logs: List[str]):
         """ 将要存储的信息存储到默认的 fitlog
 
@@ -289,7 +288,7 @@ class Committer:
         """
         with open(os.path.join(self.work_dir, ".fitlog", "fit_logs"), "a", encoding='utf8') as file_out:
             file_out.writelines(logs)
-    
+
     def _get_commits(self, cli: bool = False) -> Info:
         """从项目目录下的记录获取 fastgit 的所有 commit-id
 
@@ -312,7 +311,7 @@ class Committer:
             return Info(0, commit_ids)
         except FileNotFoundError:
             return Info(1, "Error: Some error occurs")
-    
+
     def _get_last_commit(self, cli: bool = False) -> Info:
         """从项目目录下的记录获取 fastgit 的上一次 commit-id
 
@@ -328,7 +327,7 @@ class Committer:
                 return Info(0, commit_ids[-1])
             else:
                 return Info(1, "Error: Not a git repository (or no commit)")
-    
+
     def _revert(self, commit_id: str, path: str = None, cli: bool = False, id_suffix: bool = False) -> Info:
         """回退 fastgit 的一个目标版本到指定放置路径
 
@@ -367,7 +366,7 @@ class Committer:
                     path = os.path.abspath(path)
                 if id_suffix:
                     path += "_" + commit_id[:6]
-                
+
                 if os.path.abspath(path).startswith(os.path.join(work_dir, "")):
                     if cli:
                         print(_colored_string("The <path> can't in your project directory.", "red"))
@@ -388,7 +387,7 @@ class Committer:
             if cli:
                 print(_colored_string('Not in a fitlog directory', 'red'))
             return Info(1, "Error: Not in a fitlog directory")
-    
+
     # 对用户暴露的接口
     def commit(self, file: str, commit_message: str = None) -> Info:
         """用户用该方法进行 commit
@@ -414,7 +413,7 @@ class Committer:
         self._switch_to_fast_git(self.work_dir)
         try:
             self._commit(commit_message)
-            print(_colored_string('Auto commit by fitlog', 'blue'))
+            print(_colored_string(f'Auto commit by fitlog', 'blue'))
         except BaseException as e:
             print(_colored_string('Some error occurs during committing.', 'red'))
             self._switch_to_standard_git(self.work_dir)
